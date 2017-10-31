@@ -3,10 +3,16 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+
+#include <Box2D/Box2D.h>
 
 #include "gfx_program.h"
 
@@ -42,9 +48,14 @@ int main(int argc, char **argv) {
 	}
 
 	gfx::program prog;
-	prog.attach(load_text_file("../particle.vert"), gfx::program::shader_type::VERTEX);
-	prog.attach(load_text_file("../particle.frag"), gfx::program::shader_type::FRAGMENT);
+	prog.attach(load_text_file("../box.vert"), gfx::program::shader_type::VERTEX);
+	prog.attach(load_text_file("../box.frag"), gfx::program::shader_type::FRAGMENT);
 	prog.link();
+
+	gfx::program sensor_prog;
+	sensor_prog.attach(load_text_file("../sensor.vert"), gfx::program::shader_type::VERTEX);
+	sensor_prog.attach(load_text_file("../sensor.frag"), gfx::program::shader_type::FRAGMENT);
+	sensor_prog.link();
 
 	gfx::program black_overlay;
 	black_overlay.attach(load_text_file("../2d_passthrough.vert"), gfx::program::shader_type::VERTEX);
@@ -56,50 +67,81 @@ int main(int argc, char **argv) {
 		-1.0,  1.0, 0.0, 1.0,  1.0,  1.0, 1.0, 1.0
 	};
 
+	static const std::array<b2Vec2, 3> sensor_vertices {{
+		{ 0.0f, 0.0f }, { 2.0f, 20.0f }, { -2.0f, 20.0f },
+	}};
+
 	std::default_random_engine generator;
 	std::uniform_real_distribution<float> velocity_distribution(-10.0f, 10.0f);
+	std::uniform_real_distribution<float> angular_distribution(-glm::radians(1.0f), glm::radians(1.0f));
 	std::uniform_real_distribution<float> position_distribution(-100.0f, 100.0f);
-	std::uniform_real_distribution<float> colour_distribution(0.0f, 1.0f);
 
-	static constexpr size_t sprites = 5000;
+	struct { GLuint rectangle, sensor; } vertex_arrays;
+	{
+		struct { GLuint rectangle_vertex, rectangle_colour, sensor_vertex, position; } buffers;
+		glGenVertexArrays(2, &vertex_arrays.rectangle);
+		glGenBuffers(4, &buffers.rectangle_vertex);
 
-	std::array<glm::vec2, sprites> sprite_velocity;
-	for(auto &vel : sprite_velocity) vel = { velocity_distribution(generator), velocity_distribution(generator) };
-	std::array<glm::vec2, sprites> sprite_positions;
-	for(auto &pos : sprite_positions) pos = { position_distribution(generator), position_distribution(generator) };
-	std::array<glm::vec3, sprites> sprite_colours;
-	for(auto &col : sprite_colours) col = { colour_distribution(generator), colour_distribution(generator), colour_distribution(generator) };
+		glBindVertexArray(vertex_arrays.rectangle);
+		glBindBuffer(GL_ARRAY_BUFFER, buffers.rectangle_vertex);
+		glBufferData(GL_ARRAY_BUFFER, rectangle_verts.size() * sizeof(GLfloat), rectangle_verts.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), reinterpret_cast<const void*>(0));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), reinterpret_cast<const void*>(2 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
 
-	GLuint vao, vbo, positions, colours;
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-	glGenBuffers(1, &positions);
-	glGenBuffers(1, &colours);
+		glBindVertexArray(vertex_arrays.sensor);
+		glBindBuffer(GL_ARRAY_BUFFER, buffers.sensor_vertex);
+		glBufferData(GL_ARRAY_BUFFER, sensor_vertices.size() * sizeof(sensor_vertices[0]), sensor_vertices.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void*>(0));
+		glEnableVertexAttribArray(0);
 
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, rectangle_verts.size() * sizeof(GLfloat), rectangle_verts.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), reinterpret_cast<const void*>(0));
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), reinterpret_cast<const void*>(2 * sizeof(GLfloat)));
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, positions);
-	glBufferData(GL_ARRAY_BUFFER, sprite_positions.size() * sizeof(sprite_positions[0]), nullptr, GL_STREAM_DRAW);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-	glVertexAttribDivisor(2, 1);
-	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, colours);
-	glBufferData(GL_ARRAY_BUFFER, sprite_colours.size() * sizeof(sprite_colours[0]), sprite_colours.data(), GL_STATIC_DRAW);
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-	glVertexAttribDivisor(3, 1);
-	glEnableVertexAttribArray(3);
-	glBindVertexArray(0);
-	glDeleteBuffers(1, &vbo);
-	glBindVertexArray(vao);
+		glBindVertexArray(0);
+		glDeleteBuffers(4, &buffers.rectangle_vertex);
+	}
 
 	const glm::mat4 projection = glm::ortho(-100.0f * (4.0f / 3.0f), 100.0f * (4.0f / 3.0f), -100.0f, 100.f);
 	using uniform_type = gfx::program::uniform_type;
 	const auto b1 = prog.set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
+
+	const float simulation_timestep = 1.0f/60.0f;
+
+	b2World world(b2Vec2(0.0f, 0.0f));
+
+	b2PolygonShape sensorShape;
+	sensorShape.Set(sensor_vertices.data(), sensor_vertices.size());
+	b2FixtureDef sensorFixtDef;
+	sensorFixtDef.density = 0.0f;
+	sensorFixtDef.shape = &sensorShape;
+	sensorFixtDef.isSensor = true;
+	sensorFixtDef.filter.groupIndex = -1;
+
+	b2PolygonShape boxBox;
+	boxBox.SetAsBox(1.0f, 1.0f);
+	b2FixtureDef boxFixtDef;
+	boxFixtDef.shape = &boxBox;
+	boxFixtDef.density = 1.0f;
+
+	static constexpr size_t AGENTS = 128;
+
+	struct agent {
+		b2Body *body;
+	};
+	std::array<agent, AGENTS> agents;
+
+	for(auto &agent : agents) {
+		b2BodyDef boxDef;
+		boxDef.type = b2_dynamicBody;
+		boxDef.linearDamping = 0.1f;
+		boxDef.angularDamping = 0.5f;
+		boxDef.position.Set(position_distribution(generator), position_distribution(generator));
+		boxDef.linearVelocity = b2Vec2(velocity_distribution(generator), velocity_distribution(generator));
+		boxDef.angularVelocity = angular_distribution(generator);
+		b2Body *box = world.CreateBody(&boxDef);
+		box->CreateFixture(&boxFixtDef);
+		box->CreateFixture(&sensorFixtDef);
+		agent = { box };
+	}
 
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -108,35 +150,79 @@ int main(int argc, char **argv) {
 	while(true) {
 		const double this_frame = glfwGetTime();
 		const double delta = this_frame - previous_frame;
-		printf("Frame time: %.3fms (%.1f FPS)\n", delta * 1000.0, 1.0/delta);
+
 		glEnable(GL_BLEND);
 		black_overlay.activate();
 		black_overlay.set_uniform<uniform_type::FLOAT>("alpha", static_cast<float>(delta) * 5.0f);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		glDisable(GL_BLEND);
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		prog.activate();
-		prog.set_uniform<uniform_type::FLOAT>("test", static_cast<GLfloat>(sin(glfwGetTime())));
-		const auto instances = sprite_positions.size();
-		for(size_t i = 0; i < instances; i++) {
-			auto &pos = sprite_positions[i];
-			auto &vel = sprite_velocity[i];
+		world.Step(simulation_timestep, 10, 10);
 
-			const glm::vec2 diff = glm::vec2(0.0f) - pos;
-			const float dist = glm::length(diff);
-			const float accel = 10000.0f / std::pow(dist, 2.0f);
+		// Sensors
+		{
+			sensor_prog.activate();
+			glBindVertexArray(vertex_arrays.sensor);
 
-			vel += glm::normalize(diff) * accel * static_cast<float>(delta);
-			pos += vel * static_cast<float>(delta);
-			if(dist > 200.0f) {
-				vel = { velocity_distribution(generator), velocity_distribution(generator) };
-				pos = { position_distribution(generator), position_distribution(generator) };
-				sprite_colours[i] = { colour_distribution(generator), colour_distribution(generator), colour_distribution(generator) };
+			for(const auto &agent : agents) {
+				auto &box = agent.body;
+				const b2Vec2 pos = box->GetPosition();
+				const float angle = box->GetAngle();
+				const glm::mat4 model =
+					glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) *
+					glm::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));
+				prog.set_uniform<uniform_type::MAT4>("model", glm::value_ptr(model));
+				bool detected = false;
+				for(const b2ContactEdge *edge = box->GetContactList(); edge != nullptr && !detected; edge = edge->next) {
+					const auto contact = edge->contact;
+					const b2Fixture * fixture = contact->GetFixtureA();
+					if(fixture->GetBody() != box) fixture = contact->GetFixtureB();
+					if(fixture->IsSensor() && contact->IsTouching()) {
+						detected = true;
+					}
+				}
+				if(!detected) {
+					prog.set_uniform<uniform_type::FLOAT3>("box_colour", 0.0f, 1.0f, 0.0f);
+				} else {
+					prog.set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
+					const auto dir = glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) * 100.0f;
+					box->ApplyForceToCenter(b2Vec2 { dir.x, dir.y }, true);
+				}
+
+				prog.activate();
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 			}
 		}
-		glBindBuffer(GL_ARRAY_BUFFER, positions);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sprite_positions.size() * sizeof(sprite_positions[0]), sprite_positions.data());
-		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, sprites);
+
+		// Agents
+		{
+			prog.activate();
+			glBindVertexArray(vertex_arrays.rectangle);
+
+			for(const auto &agent : agents) {
+				auto &box = agent.body;
+				const b2Vec2 pos = box->GetPosition();
+				const float angle = box->GetAngle();
+				const b2Vec2 vel = box->GetLinearVelocity();
+				const glm::mat4 model =
+					glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) *
+					glm::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));
+				prog.set_uniform<uniform_type::MAT4>("model", glm::value_ptr(model));
+				const glm::vec3 c = glm::mix(
+					glm::vec3(1.0f, 0.0f, 0.0f),
+					glm::vec3(0.0f, 1.0f, 0.0f),
+					glm::clamp(glm::length(glm::vec2(vel.x, vel.y)) / 100.0f, 0.0f, 1.0f)
+				);
+				prog.set_uniform<uniform_type::FLOAT3>("box_colour", c.x, c.y, c.z);
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+				if(pos.y < -100.0f) box->SetTransform(b2Vec2(pos.x, 100.0f), angle);
+				if(pos.y > 100.0f) box->SetTransform(b2Vec2(pos.x, -100.0f), angle);
+				if(pos.x < -100.0f * (4.0 / 3.0)) box->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
+				if(pos.x > 100.0f * (4.0 / 3.0)) box->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
+			}
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
