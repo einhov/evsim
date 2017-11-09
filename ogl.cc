@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
 	double previous_frame = glfwGetTime();
-	while(true) {
+	do {
 		const double this_frame = glfwGetTime();
 		const double delta = this_frame - previous_frame;
 
@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 		previous_frame = this_frame;
-	}
+	} while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
 	glfwTerminate();
 	return 0;
