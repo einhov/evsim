@@ -16,6 +16,7 @@
 #include <Box2D/Box2D.h>
 
 #include "gfx_program.h"
+#include "datatypes.h"
 
 const std::string load_text_file(std::string_view filename) {
 	std::ifstream file(filename.data());
@@ -26,7 +27,7 @@ const std::string load_text_file(std::string_view filename) {
 
 
 int main(int argc, char **argv) {
-	fuzzy_init();
+	fuzzy_init(2);
 
 	//initiating openGL
 	if(!glfwInit()) {
@@ -95,12 +96,8 @@ int main(int argc, char **argv) {
 		struct { GLuint rectangle_vertex, rectangle_colour, sensor_vertex_left, sensor_vertex_right, position; } buffers;
 
 		//Man må ha alle her sant?
-		glGenVertexArrays(2, &vertex_arrays.sensor_left);
-		glGenVertexArrays(2, &vertex_arrays.sensor_right);
-		glGenVertexArrays(2, &vertex_arrays.rectangle);
-		glGenBuffers(4, &buffers.rectangle_vertex);
-		glGenBuffers(2, &buffers.sensor_vertex_left);
-		glGenBuffers(2, &buffers.sensor_vertex_right);
+		glGenVertexArrays(3, &vertex_arrays.rectangle);
+		glGenBuffers(5, &buffers.rectangle_vertex);
 
 		glBindVertexArray(vertex_arrays.rectangle);
 		glBindBuffer(GL_ARRAY_BUFFER, buffers.rectangle_vertex);
@@ -123,7 +120,7 @@ int main(int argc, char **argv) {
 		glEnableVertexAttribArray(0);
 
 		glBindVertexArray(0);
-		glDeleteBuffers(4, &buffers.rectangle_vertex);
+		glDeleteBuffers(5, &buffers.rectangle_vertex);
 	}
 
 	//Setting world camera
@@ -175,8 +172,8 @@ int main(int argc, char **argv) {
 	for(auto &agent : agents) {
 		b2BodyDef boxDef;
 		boxDef.type = b2_dynamicBody;
-		boxDef.linearDamping = 0.1f;
-		boxDef.angularDamping = 0.5f;
+		boxDef.linearDamping = 1.0f;
+		boxDef.angularDamping = 5.0f;
 		boxDef.position.Set(position_distribution(generator), position_distribution(generator));
 		boxDef.linearVelocity = b2Vec2(velocity_distribution(generator), velocity_distribution(generator));
 		boxDef.angularVelocity = angular_distribution(generator);
@@ -221,31 +218,46 @@ int main(int argc, char **argv) {
 				bool detected_left = false;
 				bool detected_right = false;
 				bool detected = false;
+
+				//set agent state and send it to the algorithm
+				agent_state s;
+				std::vector<float> test = {0.0, 0.0};
+				s.sensor_food = test;
+				s.sensor_poison = test;
+				s.Linear_velocity = box->GetLocalVector(box->GetLinearVelocity());
+				s.Angular_velocity = box->GetAngularVelocity();
+
 				for(const b2ContactEdge *edge = box->GetContactList(); edge != nullptr && !detected; edge = edge->next) {
 					const auto contact = edge->contact;
 					const b2Fixture * fixture = contact->GetFixtureA();
 					if(fixture->GetBody() != box) fixture = contact->GetFixtureB();
 					if(fixture->IsSensor() && contact->IsTouching()) {
-						std::cout << "int value: " << *(int *)fixture->GetUserData() << std::endl;
+						//std::cout << "int value: " << *(int *)fixture->GetUserData() << std::endl;
 						if(*(int *)fixture->GetUserData() == 1) {
 							detected_left = true;
+							s.sensor_food[0] = 1.0;
 						}
-						else
+						else{
 							detected_right = true;
-
+							s.sensor_food[1] = 1.0;
+						}
 					}
 				}
-				bool outputAction = fuzzy_getAction(detected_left, detected_right);
-				std::cout << "Detected: " << detected_left << " Fuzzy output : " << outputAction << std::endl;
-				if(detected_left || detected_right) {
-					const auto dir = glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) * 30.0f;
-					box->ApplyForceToCenter(b2Vec2 { dir.x, dir.y }, true);
+				//box = b2Body
 
-				}
+
+
+				auto force = fuzzy_getAction(s);
+
+				//if(detected_left || detected_right) {
+				const auto dir = glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) * 90.0f  * force.linear_force;
+				box->ApplyForceToCenter(b2Vec2 { dir.x, dir.y }, true);
+				//}
+				box->ApplyTorque(-force.angular_force * 100, true);
 
 				prog.set_uniform<uniform_type::FLOAT3>("box_colour", 0.0f, 1.0f, 0.0f);
 				if(detected_left){
-					box->ApplyTorque(4, true);
+					//box->ApplyTorque(4, true);
 					prog.set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
 				}
 				glBindVertexArray(vertex_arrays.sensor_left);
@@ -253,7 +265,7 @@ int main(int argc, char **argv) {
 
 				prog.set_uniform<uniform_type::FLOAT3>("box_colour", 0.0f, 1.0f, 0.0f);
 				if(detected_right) {
-					box->ApplyTorque(-4, true);
+					//box->ApplyTorque(-4, true);
 					prog.set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
 				}
 				glBindVertexArray(vertex_arrays.sensor_right);
@@ -300,4 +312,3 @@ int main(int argc, char **argv) {
 	glfwTerminate();
 	return 0;
 }
-
