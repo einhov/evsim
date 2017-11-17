@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 project (asd)
 
 set (CMAKE_VERBOSE_MAKEFILE ON)
-add_executable (ogl ogl.cc gfx_program.cc fuzzy.cc fuzzy.h datatypes.h)
+add_executable (ogl ogl.cc gfx_program.cc gfx_program.h fuzzy.cc fuzzy.h datatypes.h ga.h ga.cc)
 
 set_property (TARGET ogl PROPERTY CXX_STANDARD 17)
 

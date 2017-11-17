@@ -7,10 +7,11 @@ using namespace fl;
 
 Engine* engine;
 InputVariable* obstacle;
-std::vector<InputVariable*> food;
-std::vector<InputVariable*> poison;
-OutputVariable* mSteer;
-OutputVariable* linearVelocity;
+InputVariable* linear_velocity_in;
+InputVariable* angular_velocity_in;
+std::vector<InputVariable*> food, poison;
+OutputVariable* angular_velocity_out;
+OutputVariable* linear_velocity_out;
 int sensor_size;
 
 int fuzzy_init(int size){
@@ -49,39 +50,61 @@ int fuzzy_init(int size){
 		poison.push_back(poison_i);
 	}
 
-	linearVelocity = new OutputVariable;
-	linearVelocity->setName("linearVelocity");
-	linearVelocity->setDescription("");
-	linearVelocity->setEnabled(true);
-	linearVelocity->setRange(0.000, 1.000);
-	linearVelocity->setLockValueInRange(false);
-	linearVelocity->setAggregation(new Maximum);
-	linearVelocity->setDefuzzifier(new Centroid(100));
-	linearVelocity->setDefaultValue(fl::nan);
-	linearVelocity->setLockPreviousValue(false);
-	linearVelocity->addTerm(new Trapezoid("none", 0.000, 0.000, 0.125, 0.25));
-	linearVelocity->addTerm(new Triangle("slow", 0.0, 0.25, 0.50));
-	linearVelocity->addTerm(new Triangle("medium", 0.250, 0.5, 0.750));
-	linearVelocity->addTerm(new Triangle("fast", 0.50, 0.75, 1.0));
-	linearVelocity->addTerm(new Trapezoid("hyperspeed", 0.750, 0.875, 1.000, 1.000));
-	engine->addOutputVariable(linearVelocity);
+	linear_velocity_in = new InputVariable;
+	linear_velocity_in->setName("linear_velocity_in");
+	linear_velocity_in->setDescription("");
+	linear_velocity_in->setEnabled(true);
+	linear_velocity_in->setRange(-1.000, 1.000);
+	linear_velocity_in->setLockValueInRange(false);
+	linear_velocity_in->addTerm(new Trapezoid("left", -0.000, -0.000, -0.5, 0));
+	linear_velocity_in->addTerm(new Triangle("center", -0.500, 0, 0.500));
+	linear_velocity_in->addTerm(new Trapezoid("right", 0, 0, 1.000, 1.000));
+	engine->addInputVariable(linear_velocity_in);
 
-	mSteer = new OutputVariable;
-	mSteer->setName("mSteer");
-	mSteer->setDescription("");
-	mSteer->setEnabled(true);
-	mSteer->setRange(0.000, 1.000);
-	mSteer->setLockValueInRange(false);
-	mSteer->setAggregation(new Maximum);
-	mSteer->setDefuzzifier(new Centroid(100));
-	mSteer->setDefaultValue(fl::nan);
-	mSteer->setLockPreviousValue(false);
-	mSteer->addTerm(new Trapezoid("hard_left", 0.000, 0.000, 0.125, 0.25));
-	mSteer->addTerm(new Triangle("left", 0.0, 0.25, 0.50));
-	mSteer->addTerm(new Triangle("center", 0.250, 0.5, 0.750));
-	mSteer->addTerm(new Triangle("right", 0.50, 0.75, 1.0));
-	mSteer->addTerm(new Trapezoid("hard_right", 0.750, 0.875, 1.000, 1.000));
-	engine->addOutputVariable(mSteer);
+	angular_velocity_in = new InputVariable;
+	angular_velocity_in->setName("angular_velocity");
+	angular_velocity_in->setDescription("");
+	angular_velocity_in->setEnabled(true);
+	angular_velocity_in->setRange(-1.000, 1.000);
+	angular_velocity_in->setLockValueInRange(false);
+	angular_velocity_in->addTerm(new Trapezoid("left", -1.000, -1.000, -0.5, 0));
+	angular_velocity_in->addTerm(new Triangle("center", -0.500, 0, 0.500));
+	angular_velocity_in->addTerm(new Trapezoid("right", 0, 0, 1.000, 1.000));
+	engine->addInputVariable(angular_velocity_in);
+
+	linear_velocity_out = new OutputVariable;
+	linear_velocity_out->setName("linearVelocity");
+	linear_velocity_out->setDescription("");
+	linear_velocity_out->setEnabled(true);
+	linear_velocity_out->setRange(0.000, 1.000);
+	linear_velocity_out->setLockValueInRange(false);
+	linear_velocity_out->setAggregation(new Maximum);
+	linear_velocity_out->setDefuzzifier(new Centroid(100));
+	linear_velocity_out->setDefaultValue(fl::nan);
+	linear_velocity_out->setLockPreviousValue(false);
+	linear_velocity_out->addTerm(new Trapezoid("none", 0.000, 0.000, 0.125, 0.25));
+	linear_velocity_out->addTerm(new Triangle("slow", 0.0, 0.25, 0.50));
+	linear_velocity_out->addTerm(new Triangle("medium", 0.250, 0.5, 0.750));
+	linear_velocity_out->addTerm(new Triangle("fast", 0.50, 0.75, 1.0));
+	linear_velocity_out->addTerm(new Trapezoid("hyperspeed", 0.750, 0.875, 1.000, 1.000));
+	engine->addOutputVariable(linear_velocity_out);
+
+	angular_velocity_out = new OutputVariable;
+	angular_velocity_out->setName("mSteer");
+	angular_velocity_out->setDescription("");
+	angular_velocity_out->setEnabled(true);
+	angular_velocity_out->setRange(-1.000, 1.000);
+	angular_velocity_out->setLockValueInRange(false);
+	angular_velocity_out->setAggregation(new Maximum);
+	angular_velocity_out->setDefuzzifier(new Centroid(100));
+	angular_velocity_out->setDefaultValue(fl::nan);
+	angular_velocity_out->setLockPreviousValue(false);
+	angular_velocity_out->addTerm(new Trapezoid("hard_left", -1.000, -1.000, -0.75, -0.5));
+	angular_velocity_out->addTerm(new Triangle("left", -0.75, -0.5, -0.25));
+	angular_velocity_out->addTerm(new Triangle("center", -0.4, 0, 0.4));
+	angular_velocity_out->addTerm(new Triangle("right", 0.25, 0.5, 0.75));
+	angular_velocity_out->addTerm(new Trapezoid("hard_right", 0.50, 0.75, 1.000, 1.000));
+	engine->addOutputVariable(angular_velocity_out);
 
 	RuleBlock* mamdani = new RuleBlock;
 	mamdani->setName("mamdani");
@@ -126,17 +149,21 @@ force_increment fuzzy_getAction(agent_state state) {
 	 }
 
 	for(int i = 0; i < sensor_size; i++){
-		std::cout << state.sensor_food[i] << std::endl;
+		//std::cout << state.sensor_food[i] << std::endl;
 		food[i]->setValue(state.sensor_food[i]);
 		poison[i]->setValue(0.0);
+
+		linear_velocity_in->setValue(0.0);
+		angular_velocity_in->setValue(state.Angular_velocity);
+
 	}
 	engine->process();
-	std::cout << "S- Out : " << mSteer->getValue() << " Fuzzy output : " << mSteer->fuzzyOutputValue() << std::endl;
-	std::cout << "LV Out : " << linearVelocity->getValue() << " Fuzzy output : " << linearVelocity->fuzzyOutputValue() << std::endl;
+	//std::cout << "S- Out : " << angular_velocity_out->getValue() << " Fuzzy output : " << angular_velocity_out->fuzzyOutputValue() << std::endl;
+	//std::cout << "LV Out : " << linear_velocity_out->getValue() << " Fuzzy output : " << linear_velocity_out->fuzzyOutputValue() << std::endl;
 
 	force_increment force;
-	force.linear_force = linearVelocity->getValue();
-	force.angular_force = mSteer->getValue() - 0.5;
+	force.linear_force = linear_velocity_out->getValue();
+	force.angular_force = angular_velocity_out->getValue();
 	return force;
 }
 
