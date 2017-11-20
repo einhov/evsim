@@ -17,6 +17,7 @@
 
 #include "gfx_program.h"
 #include "datatypes.h"
+#include "ga.h"
 
 const std::string load_text_file(std::string_view filename) {
 	std::ifstream file(filename.data());
@@ -27,7 +28,7 @@ const std::string load_text_file(std::string_view filename) {
 
 
 int main(int argc, char **argv) {
-	fuzzy_init(2);
+	GA_init(1);
 
 	//initiating openGL
 	if(!glfwInit()) {
@@ -95,7 +96,6 @@ int main(int argc, char **argv) {
 	{
 		struct { GLuint rectangle_vertex, rectangle_colour, sensor_vertex_left, sensor_vertex_right, position; } buffers;
 
-		//Man må ha alle her sant?
 		glGenVertexArrays(3, &vertex_arrays.rectangle);
 		glGenBuffers(5, &buffers.rectangle_vertex);
 
@@ -189,6 +189,7 @@ int main(int argc, char **argv) {
 	glDisable(GL_DEPTH_TEST);
 	double previous_frame = glfwGetTime();
 	do {
+		GA_run();
 		const double this_frame = glfwGetTime();
 		const double delta = this_frame - previous_frame;
 
@@ -220,7 +221,7 @@ int main(int argc, char **argv) {
 				bool detected = false;
 
 				//set agent state and send it to the algorithm
-				agent_state s;
+				Agent_state s;
 				std::vector<float> test = {0.0, 0.0};
 				s.sensor_food = test;
 				s.sensor_poison = test;
@@ -254,7 +255,8 @@ int main(int argc, char **argv) {
 				box->ApplyForceToCenter(b2Vec2 { dir.x, dir.y }, true);
 				//}
 				box->ApplyTorque(-force.angular_force * 100, true);
-
+				std::cout << "linear force -: " << force.linear_force << std::endl;
+				std::cout << "angular force : " << force.angular_force << std::endl;
 				prog.set_uniform<uniform_type::FLOAT3>("box_colour", 0.0f, 1.0f, 0.0f);
 				if(detected_left){
 					//box->ApplyTorque(4, true);
@@ -312,3 +314,4 @@ int main(int argc, char **argv) {
 	glfwTerminate();
 	return 0;
 }
+

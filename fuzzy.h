@@ -5,6 +5,7 @@
 
 
 int fuzzy_init(int sensor_size);
-force_increment fuzzy_getAction(agent_state state);
+Force_increment fuzzy_getAction(Agent_state state);
+void fuzzy_set_rulebook(std::vector<std::string> rules);
 
 #endif // FUZZY_H

@@ -12,12 +12,13 @@ InputVariable* angular_velocity_in;
 std::vector<InputVariable*> food, poison;
 OutputVariable* angular_velocity_out;
 OutputVariable* linear_velocity_out;
+RuleBlock* mamdani;
 int sensor_size;
 
 int fuzzy_init(int size){
 	sensor_size = size;
 	engine = new Engine;
-	engine->setName("ObstacleAvoidance");
+	engine->setName("fuzzy_controller");
 	engine->setDescription("");
 	InputVariable* food_i;
 
@@ -62,7 +63,7 @@ int fuzzy_init(int size){
 	engine->addInputVariable(linear_velocity_in);
 
 	angular_velocity_in = new InputVariable;
-	angular_velocity_in->setName("angular_velocity");
+	angular_velocity_in->setName("angular_velocity_in");
 	angular_velocity_in->setDescription("");
 	angular_velocity_in->setEnabled(true);
 	angular_velocity_in->setRange(-1.000, 1.000);
@@ -73,14 +74,15 @@ int fuzzy_init(int size){
 	engine->addInputVariable(angular_velocity_in);
 
 	linear_velocity_out = new OutputVariable;
-	linear_velocity_out->setName("linearVelocity");
+	linear_velocity_out->setName("linear_velocity_out");
 	linear_velocity_out->setDescription("");
 	linear_velocity_out->setEnabled(true);
 	linear_velocity_out->setRange(0.000, 1.000);
 	linear_velocity_out->setLockValueInRange(false);
 	linear_velocity_out->setAggregation(new Maximum);
 	linear_velocity_out->setDefuzzifier(new Centroid(100));
-	linear_velocity_out->setDefaultValue(fl::nan);
+	//linear_velocity_out->setDefaultValue(fl::nan);
+	linear_velocity_out->setDefaultValue(0.0);
 	linear_velocity_out->setLockPreviousValue(false);
 	linear_velocity_out->addTerm(new Trapezoid("none", 0.000, 0.000, 0.125, 0.25));
 	linear_velocity_out->addTerm(new Triangle("slow", 0.0, 0.25, 0.50));
@@ -90,14 +92,15 @@ int fuzzy_init(int size){
 	engine->addOutputVariable(linear_velocity_out);
 
 	angular_velocity_out = new OutputVariable;
-	angular_velocity_out->setName("mSteer");
+	angular_velocity_out->setName("angular_velocity_out");
 	angular_velocity_out->setDescription("");
 	angular_velocity_out->setEnabled(true);
 	angular_velocity_out->setRange(-1.000, 1.000);
 	angular_velocity_out->setLockValueInRange(false);
 	angular_velocity_out->setAggregation(new Maximum);
 	angular_velocity_out->setDefuzzifier(new Centroid(100));
-	angular_velocity_out->setDefaultValue(fl::nan);
+	//angular_velocity_out->setDefaultValue(fl::nan);
+	angular_velocity_out->setDefaultValue(0.0);
 	angular_velocity_out->setLockPreviousValue(false);
 	angular_velocity_out->addTerm(new Trapezoid("hard_left", -1.000, -1.000, -0.75, -0.5));
 	angular_velocity_out->addTerm(new Triangle("left", -0.75, -0.5, -0.25));
@@ -106,7 +109,7 @@ int fuzzy_init(int size){
 	angular_velocity_out->addTerm(new Trapezoid("hard_right", 0.50, 0.75, 1.000, 1.000));
 	engine->addOutputVariable(angular_velocity_out);
 
-	RuleBlock* mamdani = new RuleBlock;
+	mamdani = new RuleBlock;
 	mamdani->setName("mamdani");
 	mamdani->setDescription("");
 	mamdani->setEnabled(true);
@@ -114,27 +117,20 @@ int fuzzy_init(int size){
 	mamdani->setDisjunction(new AlgebraicSum);
 	mamdani->setImplication(new AlgebraicProduct);
 	mamdani->setActivation(new General);
-	//food left
-	mamdani->addRule(Rule::parse("if food0 is near then mSteer is hard_left", engine));
-	mamdani->addRule(Rule::parse("if food0 is far then mSteer is left", engine));
-	mamdani->addRule(Rule::parse("if food0 is false then mSteer is center", engine));
+	engine->addRuleBlock(mamdani);
+}
 
-	//food right
-	mamdani->addRule(Rule::parse("if food1 is near then mSteer is hard_right", engine));
-	mamdani->addRule(Rule::parse("if food1 is far then mSteer is right", engine));
-	mamdani->addRule(Rule::parse("if food1 is false then mSteer is center", engine));
+void fuzzy_set_rulebook(std::vector<std::string> rules){
+	std::cout << mamdani->rules().size() << std::endl;
+	for(auto rule : mamdani->rules()) {
+		delete rule;
+	}
+	mamdani->rules().clear();
 
-	//food center
-	mamdani->addRule(Rule::parse("if food0 is near and (food1 is near) then linearVelocity is hyperspeed", engine));
-	mamdani->addRule(Rule::parse("if food0 is near and food1 is not near then linearVelocity is slow", engine));
-	mamdani->addRule(Rule::parse("if food1 is near and food0 is not near then linearVelocity is slow", engine));
-	mamdani->addRule(Rule::parse("if food0 is false then linearVelocity is fast", engine));
-	mamdani->addRule(Rule::parse("if food0 is false then linearVelocity is fast", engine));
-
-	//poison
-	mamdani->addRule(Rule::parse("if poison0 is near then mSteer is hard_right", engine));
-	mamdani->addRule(Rule::parse("if poison1 is near then mSteer is hard_left", engine));
-
+	for(int i = 0; i < rules.size(); i++){
+		mamdani->addRule(Rule::parse(rules[i], engine));
+	}
+	engine->removeRuleBlock("mamdani");
 	engine->addRuleBlock(mamdani);
 
 	std::string status;
@@ -142,33 +138,23 @@ int fuzzy_init(int size){
 		throw Exception("[engine error] engine is not ready:\n" + status, FL_AT);
 }
 
-force_increment fuzzy_getAction(agent_state state) {
+Force_increment fuzzy_getAction(Agent_state state) {
 	std::string check;
 	 if (not engine->isReady(&check)){
 		FL_LOG(check);
 	 }
 
 	for(int i = 0; i < sensor_size; i++){
-		//std::cout << state.sensor_food[i] << std::endl;
 		food[i]->setValue(state.sensor_food[i]);
 		poison[i]->setValue(0.0);
-
 		linear_velocity_in->setValue(0.0);
-		angular_velocity_in->setValue(state.Angular_velocity);
+		angular_velocity_in->setValue(0.5);
 
 	}
 	engine->process();
-	//std::cout << "S- Out : " << angular_velocity_out->getValue() << " Fuzzy output : " << angular_velocity_out->fuzzyOutputValue() << std::endl;
-	//std::cout << "LV Out : " << linear_velocity_out->getValue() << " Fuzzy output : " << linear_velocity_out->fuzzyOutputValue() << std::endl;
-
-	force_increment force;
+	Force_increment force;
 	force.linear_force = linear_velocity_out->getValue();
 	force.angular_force = angular_velocity_out->getValue();
 	return force;
 }
 
-/*
-int main(int argc, char **argv){
-	fuzzy_init(10);
-}
-*/
