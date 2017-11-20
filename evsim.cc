@@ -201,8 +201,8 @@ int main(int argc, char **argv) {
 
 	static bool draw = true;
 	glfwSetKeyCallback(window, [] (GLFWwindow*, int key, int, int action, int) {
-		if(key == GLFW_KEY_F) {
-			draw = action != GLFW_RELEASE;
+		if(key == GLFW_KEY_F && action == GLFW_PRESS) {
+			draw = !draw;
 		}
 	});
 
