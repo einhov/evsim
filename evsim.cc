@@ -79,13 +79,19 @@ int main(int argc, char **argv) {
 	}};
 
 	constexpr float sensor_length = 50.0f;
-	constexpr float sensor_half_width = 2.0f;
+	constexpr float sensor_half_width = 10.0f;
 
 	static const std::array<b2Vec2, 3> sensor_left {{
-		{ 0.0f, 0.0f }, {-sensor_half_width, sensor_length }, { 0.0f, sensor_length },
+		{ 0.0f, 0.0f }, {-sensor_half_width/2, sensor_length }, { 0.0f, sensor_length },
+	}};
+	static const std::array<b2Vec2, 3> sensor_far_left {{
+		{ 0.0f, 0.0f }, {-sensor_half_width, sensor_length }, { -sensor_half_width/2, sensor_length },
 	}};
 	static const std::array<b2Vec2, 3> sensor_right {{
-		{ 0.0f, 0.0f }, { 0.0f, sensor_length }, { sensor_half_width, sensor_length },
+		{ 0.0f, 0.0f }, { 0.0f, sensor_length }, { sensor_half_width/2, sensor_length },
+	}};
+	static const std::array<b2Vec2, 3> sensor_far_right {{
+		{ 0.0f, 0.0f}, { sensor_half_width/2, sensor_length }, { sensor_half_width, sensor_length },
 	}};
 
 	static std::default_random_engine generator;
@@ -94,11 +100,11 @@ int main(int argc, char **argv) {
 	static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
 	static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 
-	struct { GLuint rectangle, sensor, sensorr; } vertex_arrays;
+	struct { GLuint rectangle, sensor_left, sensor_right, sensor_far_left, sensor_far_right; } vertex_arrays;
 	{
-		struct { GLuint rectangle_vertex, sensor_vertex, sensor_vertex_right; } buffers;
-		glGenVertexArrays(3, &vertex_arrays.rectangle);
-		glGenBuffers(3, &buffers.rectangle_vertex);
+		struct { GLuint rectangle_vertex, sensor_vertex_left, sensor_vertex_right, sensor_vertex_far_left, sensor_vertex_far_right; } buffers;
+		glGenVertexArrays(5, &vertex_arrays.rectangle);
+		glGenBuffers(5, &buffers.rectangle_vertex);
 
 		glBindVertexArray(vertex_arrays.rectangle);
 		glBindBuffer(GL_ARRAY_BUFFER, buffers.rectangle_vertex);
@@ -108,20 +114,32 @@ int main(int argc, char **argv) {
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 
-		glBindVertexArray(vertex_arrays.sensor);
-		glBindBuffer(GL_ARRAY_BUFFER, buffers.sensor_vertex);
+		glBindVertexArray(vertex_arrays.sensor_left);
+		glBindBuffer(GL_ARRAY_BUFFER, buffers.sensor_vertex_left);
 		glBufferData(GL_ARRAY_BUFFER, sensor_left.size() * sizeof(sensor_left[0]), sensor_left.data(), GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void*>(0));
 		glEnableVertexAttribArray(0);
 
-		glBindVertexArray(vertex_arrays.sensorr);
+		glBindVertexArray(vertex_arrays.sensor_right);
 		glBindBuffer(GL_ARRAY_BUFFER, buffers.sensor_vertex_right);
 		glBufferData(GL_ARRAY_BUFFER, sensor_right.size() * sizeof(sensor_right[0]), sensor_right.data(), GL_STATIC_DRAW);
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void*>(0));
 		glEnableVertexAttribArray(0);
 
+		glBindVertexArray(vertex_arrays.sensor_far_left);
+		glBindBuffer(GL_ARRAY_BUFFER, buffers.sensor_vertex_far_left);
+		glBufferData(GL_ARRAY_BUFFER, sensor_far_left.size() * sizeof(sensor_far_left[0]), sensor_far_left.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void*>(0));
+		glEnableVertexAttribArray(0);
+
+		glBindVertexArray(vertex_arrays.sensor_far_right);
+		glBindBuffer(GL_ARRAY_BUFFER, buffers.sensor_vertex_far_right);
+		glBufferData(GL_ARRAY_BUFFER, sensor_far_right.size() * sizeof(sensor_far_right[0]), sensor_far_right.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, reinterpret_cast<const void*>(0));
+		glEnableVertexAttribArray(0);
+
 		glBindVertexArray(0);
-		glDeleteBuffers(3, &buffers.rectangle_vertex);
+		glDeleteBuffers(5, &buffers.rectangle_vertex);
 	}
 
 	const glm::mat4 projection = glm::ortho(-100.0f * (4.0f / 3.0f), 100.0f * (4.0f / 3.0f), -100.0f, 100.f);
@@ -133,23 +151,41 @@ int main(int argc, char **argv) {
 	b2World world(b2Vec2(0.0f, 0.0f));
 	world.SetContinuousPhysics(true);
 
-	b2PolygonShape sensorShape;
-	sensorShape.Set(sensor_left.data(), sensor_left.size());
-	b2FixtureDef sensorFixtDef;
-	sensorFixtDef.density = 0.0f;
-	sensorFixtDef.shape = &sensorShape;
-	sensorFixtDef.isSensor = true;
-	sensorFixtDef.filter.groupIndex = -1;
-	sensorFixtDef.userData = reinterpret_cast<void*>(0);
+	b2PolygonShape sensor_shape_left;
+	sensor_shape_left.Set(sensor_left.data(), sensor_left.size());
+	b2FixtureDef sensor_fixt_def_left;
+	sensor_fixt_def_left.density = 0.0f;
+	sensor_fixt_def_left.shape = &sensor_shape_left;
+	sensor_fixt_def_left.isSensor = true;
+	sensor_fixt_def_left.filter.groupIndex = -1;
+	sensor_fixt_def_left.userData = reinterpret_cast<void*>(0);
 
-	b2PolygonShape sensorShapeRight;
-	sensorShapeRight.Set(sensor_right.data(), sensor_right.size());
-	b2FixtureDef sensorFixtDefRight;
-	sensorFixtDefRight.density = 0.0f;
-	sensorFixtDefRight.shape = &sensorShapeRight;
-	sensorFixtDefRight.isSensor = true;
-	sensorFixtDefRight.filter.groupIndex = -1;
-	sensorFixtDefRight.userData = reinterpret_cast<void*>(1);
+	b2PolygonShape sensor_shape_right;
+	sensor_shape_right.Set(sensor_right.data(), sensor_right.size());
+	b2FixtureDef sensor_fixt_def_right;
+	sensor_fixt_def_right.density = 0.0f;
+	sensor_fixt_def_right.shape = &sensor_shape_right;
+	sensor_fixt_def_right.isSensor = true;
+	sensor_fixt_def_right.filter.groupIndex = -1;
+	sensor_fixt_def_right.userData = reinterpret_cast<void*>(1);
+
+	b2PolygonShape sensor_shape_far_left;
+	sensor_shape_far_left.Set(sensor_far_left.data(), sensor_far_left.size());
+	b2FixtureDef sensor_fixt_def_far_left;
+	sensor_fixt_def_far_left.density = 0.0f;
+	sensor_fixt_def_far_left.shape = &sensor_shape_far_left;
+	sensor_fixt_def_far_left.isSensor = true;
+	sensor_fixt_def_far_left.filter.groupIndex = -1;
+	sensor_fixt_def_far_left.userData = reinterpret_cast<void*>(2);
+
+	b2PolygonShape sensor_shape_far_right;
+	sensor_shape_far_right.Set(sensor_far_right.data(), sensor_far_right.size());
+	b2FixtureDef sensor_fixt_def_far_right;
+	sensor_fixt_def_far_right.density = 0.0f;
+	sensor_fixt_def_far_right.shape = &sensor_shape_far_right;
+	sensor_fixt_def_far_right.isSensor = true;
+	sensor_fixt_def_far_right.filter.groupIndex = -1;
+	sensor_fixt_def_far_right.userData = reinterpret_cast<void*>(3);
 
 	b2PolygonShape boxBox;
 	boxBox.SetAsBox(1.0f, 1.0f);
@@ -162,7 +198,7 @@ int main(int argc, char **argv) {
 
 	struct agent {
 		b2Body *body;
-		std::array<bool, 2> detected;
+		std::array<bool, 4> detected;
 		int score;
 		int generation_score;
 		NEAT::NeuralNetwork nn;
@@ -181,8 +217,10 @@ int main(int argc, char **argv) {
 		boxDef.angularVelocity = angular_distribution(generator);
 		b2Body *box = world.CreateBody(&boxDef);
 		box->CreateFixture(&boxFixtDef);
-		box->CreateFixture(&sensorFixtDef);
-		box->CreateFixture(&sensorFixtDefRight);
+		box->CreateFixture(&sensor_fixt_def_left);
+		box->CreateFixture(&sensor_fixt_def_right);
+		box->CreateFixture(&sensor_fixt_def_far_left);
+		box->CreateFixture(&sensor_fixt_def_far_right);
 		agent = { box, false, 0 };
 	}
 
@@ -214,8 +252,8 @@ int main(int argc, char **argv) {
 	params.DontUseBiasNeuron = false;
 	params.CompatTreshold = 0.1;
 
-	NEAT::Genome s(0, 5, 0, 2, false, NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID, 0, params, 0);
-	auto &linear_gene = s.m_NeuronGenes[5];
+	NEAT::Genome s(0, 7, 0, 2, false, NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID, 0, params, 0);
+	auto &linear_gene = s.m_NeuronGenes[7];
 	assert(linear_gene.Type() == NEAT::OUTPUT);
 	linear_gene.m_ActFunction = NEAT::UNSIGNED_SIGMOID;
 	NEAT::Population pop(s, params, true, 1.0, static_cast<int>(glfwGetTime()));
@@ -300,7 +338,8 @@ int main(int argc, char **argv) {
 					const b2Fixture * fixture = contact->GetFixtureA();
 					assert(fixture->GetBody() == body);
 					if(fixture->IsSensor() && contact->IsTouching()) {
-						agent.detected[fixture->GetUserData() != nullptr ? 1 : 0] = true;
+						agent.detected[reinterpret_cast<uintptr_t>(fixture->GetUserData())] = true;
+						//agent.detected[fixture->GetUserData() != nullptr ? 1 : 0] = true;
 					} else if(!fixture->IsSensor() && contact->IsTouching()) {
 						auto food = contact->GetFixtureB()->GetBody();
 						food->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
@@ -310,6 +349,8 @@ int main(int argc, char **argv) {
 				const std::vector<double> inputs {
 					agent.detected[0] ? 1.0 : 0.0,
 					agent.detected[1] ? 1.0 : 0.0,
+					agent.detected[2] ? 1.0 : 0.0,
+					agent.detected[3] ? 1.0 : 0.0,
 					[&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }(),
 					body->GetAngularVelocity(),
 					1.0
@@ -376,7 +417,7 @@ int main(int argc, char **argv) {
 				} else {
 					prog.set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
 				}
-				glBindVertexArray(vertex_arrays.sensor);
+				glBindVertexArray(vertex_arrays.sensor_left);
 				glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 
 				if(!agent.detected[1]) {
@@ -384,7 +425,23 @@ int main(int argc, char **argv) {
 				} else {
 					prog.set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
 				}
-				glBindVertexArray(vertex_arrays.sensorr);
+				glBindVertexArray(vertex_arrays.sensor_right);
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+
+				if(!agent.detected[2]) {
+					prog.set_uniform<uniform_type::FLOAT3>("box_colour", 0.0f, 1.0f, 0.0f);
+				} else {
+					prog.set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
+				}
+				glBindVertexArray(vertex_arrays.sensor_far_left);
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
+
+				if(!agent.detected[3]) {
+					prog.set_uniform<uniform_type::FLOAT3>("box_colour", 0.0f, 1.0f, 0.0f);
+				} else {
+					prog.set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
+				}
+				glBindVertexArray(vertex_arrays.sensor_far_right);
 				glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 			}
 		}
