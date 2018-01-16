@@ -12,5 +12,7 @@ find_package (Box2D REQUIRED)
 find_package (glm REQUIRED)
 find_package (Boost REQUIRED)
 
-include_directories (${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${BOX2D_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} MultiNEAT/include)
-target_link_libraries (evsim ${GLEW_LIBRARIES} glfw ${OPENGL_gl_LIBRARY} ${BOX2D_LIBRARIES} ${CMAKE_SOURCE_DIR}/MultiNEAT/libMultiNEAT.a)
+add_subdirectory(lib/MultiNEAT)
+
+include_directories (${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${BOX2D_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} lib/MultiNEAT/src)
+target_link_libraries (evsim ${GLEW_LIBRARIES} glfw ${OPENGL_gl_LIBRARY} ${BOX2D_LIBRARIES} MultiNEAT)

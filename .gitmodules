@@ -1,0 +1,3 @@
+[submodule "lib/MultiNEAT"]
+	path = lib/MultiNEAT
+	url = https://github.com/andrewei/MultiNEAT.git

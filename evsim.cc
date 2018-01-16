@@ -22,6 +22,7 @@
 #include <NeuralNetwork.h>
 #include <Parameters.h>
 
+
 const std::string load_text_file(std::string_view filename) {
 	std::ifstream file(filename.data());
 	std::stringstream buffer;
@@ -187,7 +188,7 @@ int main(int argc, char **argv) {
 
 	boxBox.SetAsBox(0.5f, 0.5f);
 	boxFixtDef.filter.groupIndex = 0;
-	boxFixtDef.isSensor = false;
+	boxFixtDef.isSensor = true;
 
 	static constexpr size_t FOODS = 50;
 	std::array<b2Body *, FOODS> foods;
@@ -213,7 +214,7 @@ int main(int argc, char **argv) {
 	params.DontUseBiasNeuron = false;
 	params.CompatTreshold = 0.1;
 
-	NEAT::Genome s(0, 5, 0, 2, false, NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID, 0, params);
+	NEAT::Genome s(0, 5, 0, 2, false, NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID, 0, params, 0);
 	auto &linear_gene = s.m_NeuronGenes[5];
 	assert(linear_gene.Type() == NEAT::OUTPUT);
 	linear_gene.m_ActFunction = NEAT::UNSIGNED_SIGMOID;
