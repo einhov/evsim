@@ -16,13 +16,16 @@
 #include <Box2D/Box2D.h>
 
 #include "gfx_program.h"
+#include "sim.h"
+#include "species_neat.h"
+#include "body.h"
 
 #include <Genome.h>
 #include <Population.h>
 #include <NeuralNetwork.h>
 #include <Parameters.h>
 
-const std::string load_text_file(std::string_view filename) {
+static const std::string load_text_file(std::string_view filename) {
 	std::ifstream file(filename.data());
 	std::stringstream buffer;
 	buffer << file.rdbuf();
@@ -67,24 +70,10 @@ int main(int argc, char **argv) {
 		{ 0.0f, 0.0f }, { 1.0f, 200.0f }, { -1.0f, 200.0f },
 	}};
 
-	constexpr float sensor_length = 50.0f;
-	constexpr float sensor_half_width = 2.0f;
-
-	static const std::array<b2Vec2, 3> sensor_left {{
-		{ 0.0f, 0.0f }, {-sensor_half_width, sensor_length }, { 0.0f, sensor_length },
-	}};
-	static const std::array<b2Vec2, 3> sensor_right {{
-		{ 0.0f, 0.0f }, { 0.0f, sensor_length }, { sensor_half_width, sensor_length },
-	}};
-
-	static std::default_random_engine generator;
-	static std::uniform_real_distribution<float> velocity_distribution(-10.0f, 10.0f);
-	static std::uniform_real_distribution<float> angular_distribution(-glm::radians(45.0f), glm::radians(45.0f));
-	static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
-	static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
-
 	struct { GLuint rectangle, sensor, sensorr; } vertex_arrays;
 	{
+		using evsim::sensor_left;
+		using evsim::sensor_right;
 		struct { GLuint rectangle_vertex, sensor_vertex, sensor_vertex_right; } buffers;
 		glGenVertexArrays(3, &vertex_arrays.rectangle);
 		glGenBuffers(3, &buffers.rectangle_vertex);
@@ -122,72 +111,19 @@ int main(int argc, char **argv) {
 	b2World world(b2Vec2(0.0f, 0.0f));
 	world.SetContinuousPhysics(true);
 
-	b2PolygonShape sensorShape;
-	sensorShape.Set(sensor_left.data(), sensor_left.size());
-	b2FixtureDef sensorFixtDef;
-	sensorFixtDef.density = 0.0f;
-	sensorFixtDef.shape = &sensorShape;
-	sensorFixtDef.isSensor = true;
-	sensorFixtDef.filter.groupIndex = -1;
-	sensorFixtDef.userData = reinterpret_cast<void*>(0);
+	evsim::species_neat herbivores(world);
+	herbivores.initialise(64, static_cast<int>(glfwGetTime()));
 
-	b2PolygonShape sensorShapeRight;
-	sensorShapeRight.Set(sensor_right.data(), sensor_right.size());
-	b2FixtureDef sensorFixtDefRight;
-	sensorFixtDefRight.density = 0.0f;
-	sensorFixtDefRight.shape = &sensorShapeRight;
-	sensorFixtDefRight.isSensor = true;
-	sensorFixtDefRight.filter.groupIndex = -1;
-	sensorFixtDefRight.userData = reinterpret_cast<void*>(1);
+	static std::default_random_engine generator;
+	static std::uniform_real_distribution<float> velocity_distribution(-10.0f, 10.0f);
+	static std::uniform_real_distribution<float> angular_distribution(-glm::radians(45.0f), glm::radians(45.0f));
+	static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
+	static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 
-	b2PolygonShape boxBox;
-	boxBox.SetAsBox(1.0f, 1.0f);
-	b2FixtureDef boxFixtDef;
-	boxFixtDef.shape = &boxBox;
-	boxFixtDef.density = 1.0f;
-	boxFixtDef.filter.groupIndex = -1;
-
-	static constexpr size_t AGENTS = 64;
-
-	struct agent {
-		b2Body *body;
-		std::array<bool, 2> detected;
-		int score;
-		int generation_score;
-		NEAT::NeuralNetwork nn;
-		NEAT::Genome *genome;
-		int species;
-	};
-	std::array<agent, AGENTS> agents;
-
-	for(auto &agent : agents) {
-		b2BodyDef boxDef;
-		boxDef.type = b2_dynamicBody;
-		boxDef.linearDamping = 10.0f;
-		boxDef.angularDamping = 10.0f;
-		boxDef.position.Set(pos_x_distribution(generator), pos_y_distribution(generator));
-		boxDef.linearVelocity = b2Vec2(velocity_distribution(generator), velocity_distribution(generator));
-		boxDef.angularVelocity = angular_distribution(generator);
-		b2Body *box = world.CreateBody(&boxDef);
-		box->CreateFixture(&boxFixtDef);
-		box->CreateFixture(&sensorFixtDef);
-		box->CreateFixture(&sensorFixtDefRight);
-		agent = { box, false, 0 };
-	}
-
-	boxBox.SetAsBox(0.5f, 0.5f);
-	boxFixtDef.filter.groupIndex = 0;
-	boxFixtDef.isSensor = false;
-
-	static constexpr size_t FOODS = 50;
-	std::array<b2Body *, FOODS> foods;
-	for(auto &food : foods) {
-		b2BodyDef foodDef;
-		foodDef.type = b2_staticBody;
-		foodDef.position.Set(pos_x_distribution(generator), pos_y_distribution(generator));
-		food = world.CreateBody(&foodDef);
-		food->CreateFixture(&boxFixtDef);
-	}
+	static constexpr size_t FOODS = 60;
+	std::array<evsim::food, FOODS> foods;
+	for(auto &food : foods)
+		food.init_body(world);
 
 	static bool draw = true;
 	glfwSetKeyCallback(window, [] (GLFWwindow*, int key, int, int action, int) {
@@ -195,33 +131,6 @@ int main(int argc, char **argv) {
 			draw = !draw;
 		}
 	});
-
-	NEAT::Parameters params;
-	params.PopulationSize = AGENTS;
-	params.MinSpecies = 3;
-	params.MaxSpecies = 20;
-	params.DontUseBiasNeuron = false;
-	params.CompatTreshold = 0.1;
-
-	NEAT::Genome s(0, 5, 0, 2, false, NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID, 0, params);
-	auto &linear_gene = s.m_NeuronGenes[5];
-	assert(linear_gene.Type() == NEAT::OUTPUT);
-	linear_gene.m_ActFunction = NEAT::UNSIGNED_SIGMOID;
-	NEAT::Population pop(s, params, true, 1.0, static_cast<int>(glfwGetTime()));
-
-	[&pop,&agents] {
-		size_t n = 0;
-		int s = 0;
-		for(auto &species : pop.m_Species) {
-			for(auto &individual : species.m_Individuals) {
-				agents[n].genome = &individual;
-				agents[n].species = s;
-				individual.BuildPhenotype(agents[n].nn);
-				if(++n >= AGENTS) return;
-			}
-			s++;
-		}
-	}();
 
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -239,6 +148,7 @@ int main(int argc, char **argv) {
 			fprintf(stderr, "Step: %d\n", step);
 			step++;
 			double total = 0;
+			auto &agents = herbivores.agents;
 			for(auto &agent : agents) {
 				total += agent.score;
 				agent.generation_score += agent.score;
@@ -250,27 +160,16 @@ int main(int argc, char **argv) {
 				step = 0;
 				fprintf(stderr, "Generation: %d\n", generation);
 				for(auto &agent : agents) {
-					agent.genome->SetFitness(agent.generation_score / static_cast<double>(STEPS_PER_GENERATION));
-					agent.genome->m_Evaluated = true;
+					agent.genotype->SetFitness(agent.generation_score / static_cast<double>(STEPS_PER_GENERATION));
+					agent.genotype->m_Evaluated = true;
 					agent.generation_score = 0;
 				}
-				fprintf(stderr, "Best genome: %lf\n", pop.GetBestGenome().GetFitness());
+				auto &pop = *herbivores.population;
+				fprintf(stderr, "Best genotype: %lf\n", pop.GetBestGenome().GetFitness());
 				pop.Epoch();
 				fprintf(stderr, "Best ever  : %lf\n", pop.GetBestFitnessEver());
 				fprintf(stderr, "Species: %zu\n", pop.m_Species.size());
-				[&pop,&agents] {
-					size_t n = 0;
-					int s = 0;
-					for(auto &species : pop.m_Species) {
-						for(auto &individual : species.m_Individuals) {
-							agents[n].genome = &individual;
-							agents[n].species = s;
-							individual.BuildPhenotype(agents[n].nn);
-							if(++n >= AGENTS) return;
-						}
-						s++;
-					}
-				}();
+				herbivores.distribute_genomes();
 				generation++;
 			}
 		}
@@ -279,23 +178,33 @@ int main(int argc, char **argv) {
 
 		// Update agents
 		{
+			auto &agents = herbivores.agents;
 			for(auto &agent : agents) {
 				auto &body = agent.body;
 				const auto angle = body->GetAngle();
 				const auto pos = body->GetPosition();
+
 				agent.detected = {};
 				for(const b2ContactEdge *edge = body->GetContactList(); edge != nullptr; edge = edge->next) {
 					const auto contact = edge->contact;
 					const b2Fixture * fixture = contact->GetFixtureA();
 					assert(fixture->GetBody() == body);
 					if(fixture->IsSensor() && contact->IsTouching()) {
-						agent.detected[fixture->GetUserData() != nullptr ? 1 : 0] = true;
+						using evsim::fixture_type;
+						const auto part = *static_cast<const fixture_type*>(fixture->GetUserData());
+						agent.detected[part == fixture_type::sensor_right ? 1 : 0] = true;
 					} else if(!fixture->IsSensor() && contact->IsTouching()) {
 						auto food = contact->GetFixtureB()->GetBody();
 						food->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
 						agent.score++;
 					}
 				}
+
+				if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
+				if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
+				if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
+				if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
+
 				const std::vector<double> inputs {
 					agent.detected[0] ? 1.0 : 0.0,
 					agent.detected[1] ? 1.0 : 0.0,
@@ -303,31 +212,21 @@ int main(int argc, char **argv) {
 					body->GetAngularVelocity(),
 					1.0
 				};
-				agent.nn.Flush();
-				agent.nn.Input(const_cast<std::vector<double>&>(inputs));
-				agent.nn.Activate();
-				const auto output = agent.nn.Output();
+				agent.phenotype.Flush();
+				agent.phenotype.Input(const_cast<std::vector<double>&>(inputs));
+				agent.phenotype.Activate();
+				const auto output = agent.phenotype.Output();
 
 				const auto forward = glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) * static_cast<float>(output[0]) * 1000.0f;
 				body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
 				body->ApplyTorque(output[1] * glm::radians(3.0f * 360.0f * 5.0f), true);
-
-				if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
-				if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
-				if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
-				if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
 			}
 		}
 
 		// Update food
 		{
 			for(auto &food : foods) {
-				const auto pos = food->GetPosition();
-				const auto angle = food->GetAngle();
-				if(pos.y < -100.0f) food->SetTransform(b2Vec2(pos.x, 100.0f), angle);
-				if(pos.y > 100.0f) food->SetTransform(b2Vec2(pos.x, -100.0f), angle);
-				if(pos.x < -100.0f * (4.0 / 3.0)) food->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
-				if(pos.x > 100.0f * (4.0 / 3.0)) food->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
+				food.update();
 			}
 		}
 
@@ -343,6 +242,7 @@ int main(int argc, char **argv) {
 		// Draw sensors
 		constexpr bool render_sensors = true;
 		if constexpr(render_sensors) {
+			auto &agents = herbivores.agents;
 			for(const auto &agent : agents) {
 				const auto body = agent.body;
 				const b2Vec2 pos = body->GetPosition();
@@ -374,6 +274,7 @@ int main(int argc, char **argv) {
 		{
 			glBindVertexArray(vertex_arrays.rectangle);
 
+			auto &agents = herbivores.agents;
 			for(const auto &agent : agents) {
 				const auto box = agent.body;
 				const b2Vec2 pos = box->GetPosition();
@@ -401,7 +302,7 @@ int main(int argc, char **argv) {
 		// Draw foods
 		{
 			for(const auto &food : foods) {
-				const b2Vec2 pos = food->GetPosition();
+				const b2Vec2 pos = food.body->GetPosition();
 				const glm::mat4 model =
 					glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) * glm::scale(glm::vec3(0.5f));
 				prog.set_uniform<uniform_type::MAT4>("model", glm::value_ptr(model));
