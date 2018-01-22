@@ -1,7 +1,14 @@
 cmake_minimum_required (VERSION 2.6)
 project (evsim)
 
-add_executable (evsim evsim.cc gfx_program.cc)
+add_executable (evsim
+	evsim.cc
+	gfx_program.cc
+	sim.cc
+	species_neat.cc
+	body.cc
+)
+add_definitions(-DUSE_BOOST_RANDOM)
 
 set_property (TARGET evsim PROPERTY CXX_STANDARD 17)
 

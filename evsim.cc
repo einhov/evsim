@@ -58,16 +58,6 @@ int main(int argc, char **argv) {
 	prog.attach(load_text_file("../box.frag"), gfx::program::shader_type::FRAGMENT);
 	prog.link();
 
-	static constexpr bool trails = false;
-
-	std::optional<gfx::program> black_overlay;
-	if constexpr(trails) {
-		black_overlay.emplace();
-		black_overlay->attach(load_text_file("../2d_passthrough.vert"), gfx::program::shader_type::VERTEX);
-		black_overlay->attach(load_text_file("../black.frag"), gfx::program::shader_type::FRAGMENT);
-		black_overlay->link();
-	}
-
 	static const std::vector<GLfloat> rectangle_verts {
 		-1.0, -1.0, 0.0, 0.0,  1.0, -1.0, 1.0, 0.0,
 		-1.0,  1.0, 0.0, 1.0,  1.0,  1.0, 1.0, 1.0
@@ -347,15 +337,7 @@ int main(int argc, char **argv) {
 		const double this_frame = glfwGetTime();
 		const double delta = this_frame - previous_frame;
 
-		if constexpr(trails) {
-			glEnable(GL_BLEND);
-			black_overlay->activate();
-			black_overlay->set_uniform<uniform_type::FLOAT>("alpha", static_cast<float>(delta) * 5.0f);
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-			glDisable(GL_BLEND);
-		} else {
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		}
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		prog.activate();
 		// Draw sensors
