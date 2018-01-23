@@ -4,8 +4,9 @@ project (evsim)
 add_executable (evsim
 	evsim.cc
 	gfx_program.cc
-	sim.cc
+	consumable.cc
 	species_neat.cc
+	species_neat_draw.cc
 	body.cc
 )
 add_definitions(-DUSE_BOOST_RANDOM)

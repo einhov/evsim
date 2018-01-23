@@ -11,6 +11,9 @@ enum class fixture_type {
 
 b2Body *build_body(b2World &world);
 
+extern const std::array<b2Vec2, 3> sensor_left;
+extern const std::array<b2Vec2, 3> sensor_right;
+
 };
 
 #endif

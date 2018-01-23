@@ -4,7 +4,6 @@
 #include <Box2D/Box2D.h>
 
 #include "body.h"
-#include "sim.h"
 
 namespace evsim {
 
