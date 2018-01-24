@@ -60,6 +60,8 @@ static struct {
 		program->attach(load_text_file("../box.vert"), gfx::program::shader_type::VERTEX);
 		program->attach(load_text_file("../box.frag"), gfx::program::shader_type::FRAGMENT);
 		program->link();
+
+		hot = true;
 	}
 
 } model;
