@@ -9,14 +9,25 @@ add_executable (evsim
 	species_neat_draw.cc
 	body.cc
 )
-add_definitions(-DUSE_BOOST_RANDOM)
 
+add_definitions(-DUSE_BOOST_RANDOM)
 set_property (TARGET evsim PROPERTY CXX_STANDARD 17)
 
-find_package (glfw3 REQUIRED)
-find_package (GLEW REQUIRED)
-find_package (OpenGL REQUIRED)
-find_package (Box2D REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(glm REQUIRED)
+find_package(Boost REQUIRED)
 
-include_directories (${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${BOX2D_INCLUDE_DIRS} MultiNEAT/include)
-target_link_libraries (evsim ${GLEW_LIBRARIES} glfw ${OPENGL_gl_LIBRARY} ${BOX2D_LIBRARIES} ${CMAKE_SOURCE_DIR}/MultiNEAT/libMultiNEAT.a)
+add_subdirectory(lib/MultiNEAT)
+
+#git submodule Box2d has to be build first with "premake ifndef config=release"
+
+set(BOX2D_INCLUDED_INCLUDE_DIR
+    ${CMAKE_SOURCE_DIR}/Box2D/Box2D/
+)
+
+set(BOX2D_INCLUDED_LIBRARY ${CMAKE_SOURCE_DIR}/Box2D/Box2D/Build/gmake/bin/Release/libBox2D.a)
+
+include_directories (${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${BOX2D_INCLUDED_INCLUDE_DIR} ${GLM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} lib/MultiNEAT/src)
+target_link_libraries (evsim ${GLEW_LIBRARIES} glfw ${OPENGL_gl_LIBRARY} ${BOX2D_INCLUDED_LIBRARY} MultiNEAT)

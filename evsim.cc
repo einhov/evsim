@@ -48,7 +48,7 @@ int evsim(int argc, char **argv) {
 	species_neat herbivores(world);
 	herbivores.initialise(64, static_cast<int>(glfwGetTime()));
 
-	static constexpr size_t FOODS = 25;
+	static constexpr size_t FOODS = 50;
 	std::array<consumable, FOODS> foods;
 	for(auto &food : foods)
 		food.init_body(world);

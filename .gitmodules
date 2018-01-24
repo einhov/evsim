@@ -1,0 +1,6 @@
+[submodule "lib/MultiNEAT"]
+	path = lib/MultiNEAT
+	url = https://github.com/andrewei/MultiNEAT.git
+[submodule "Box2D"]
+	path = Box2D
+	url = https://github.com/andrewei/Box2D.git
