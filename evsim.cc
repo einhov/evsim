@@ -78,7 +78,7 @@ int evsim(int argc, char **argv) {
 			herbivores.step();
 			if(step >= STEPS_PER_GENERATION) {
 				step = 0;
-				fprintf(stderr, "Generation: %d\n", generation);
+				fprintf(stderr, "Generation: %d\n", generation);			
 				herbivores.epoch(STEPS_PER_GENERATION);
 				generation++;
 			}

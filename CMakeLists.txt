@@ -8,6 +8,7 @@ add_executable (evsim
 	species_neat.cc
 	species_neat_draw.cc
 	body.cc
+	neat_plot.cc
 )
 
 add_definitions(-DUSE_BOOST_RANDOM)

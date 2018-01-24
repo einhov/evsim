@@ -9,6 +9,7 @@
 #include "species_neat.h"
 #include "body.h"
 #include "consumable.h"
+#include "neat_plot.h"
 
 namespace evsim {
 
@@ -123,6 +124,7 @@ void species_neat::epoch(int steps) {
 		agent.genotype->m_Evaluated = true;
 		agent.generation_score = 0;
 	}
+	plot_best();
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 	population->Epoch();
 	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
@@ -154,4 +156,9 @@ void species_neat::agent::message(const std::any &msg) {
 	}
 }
 
-};
+void species_neat::plot_best() {
+	const auto genome = population->GetBestGenome();
+	plot_genome(genome, "agent_best", population.get());
+}
+
+}

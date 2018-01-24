@@ -22,6 +22,7 @@ class species_neat {
 		void step();
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
+                void plot_best();
 
 	private:
 		void clear();
@@ -43,7 +44,6 @@ class species_neat {
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;
 		};
-
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		b2World &world;
