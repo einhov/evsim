@@ -23,8 +23,7 @@ class species_neat {
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
 
-	//private:
-	public:
+	private:
 		void clear();
 		void distribute_genomes();
 
