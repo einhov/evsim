@@ -45,7 +45,7 @@ int evsim(int argc, char **argv) {
 	b2World world(b2Vec2(0.0f, 0.0f));
 	world.SetContinuousPhysics(true);
 
-	species_neat herbivores(world);
+	static species_neat herbivores(world);
 	herbivores.initialise(64, static_cast<int>(glfwGetTime()));
 
 	static constexpr size_t FOODS = 50;
@@ -57,6 +57,9 @@ int evsim(int argc, char **argv) {
 	glfwSetKeyCallback(window, [] (GLFWwindow*, int key, int, int action, int) {
 		if(key == GLFW_KEY_F && action == GLFW_PRESS) {
 			draw = !draw;
+		}
+		if(key == GLFW_KEY_P && action == GLFW_PRESS) {
+			herbivores.plot = !herbivores.plot ;
 		}
 	});
 

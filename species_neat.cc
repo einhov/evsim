@@ -124,7 +124,9 @@ void species_neat::epoch(int steps) {
 		agent.genotype->m_Evaluated = true;
 		agent.generation_score = 0;
 	}
-	plot_best();
+	if(plot) {
+		plot_best();
+	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 	population->Epoch();
 	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());

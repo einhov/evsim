@@ -15,7 +15,7 @@ namespace evsim {
 class species_neat {
 	public:
 		species_neat(b2World &world) :
-			world(world), population_size(0), active_genomes(0) {}
+		        world(world), population_size(0), active_genomes(0), plot(false) {}
 		bool initialise(size_t size, int seed);
 		void pre_tick();
 		void tick();
@@ -23,6 +23,7 @@ class species_neat {
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
                 void plot_best();
+                bool plot;
 
 	private:
 		void clear();
