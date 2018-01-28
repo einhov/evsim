@@ -1,10 +1,14 @@
 #include <random>
+#include <iterator>
+#include <algorithm>
+#include <utility>
 
 #include <Genome.h>
 #include <Parameters.h>
 #include <NeuralNetwork.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/vector_angle.hpp>
 
 #include "species_neat.h"
 #include "body.h"
@@ -63,7 +67,7 @@ bool species_neat::initialise(size_t size, int seed) {
 	params.CompatTreshold = 0.1;
 
 	NEAT::Genome genesis(
-		0, 5, 0, 2, false,
+		0, 3 + agent::vision_segments, 0, 2, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 		0, params, 0
 	);
@@ -74,7 +78,7 @@ bool species_neat::initialise(size_t size, int seed) {
 
 void species_neat::pre_tick() {
 	for(auto &agent : agents) {
-		agent.detected = {};
+		agent.vision = {};
 	}
 }
 
@@ -89,15 +93,16 @@ void species_neat::tick() {
 		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
 		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
 
-		const std::vector<double> inputs {
-			agent.detected[0] ? 1.0 : 0.0,
-			agent.detected[1] ? 1.0 : 0.0,
-			[&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }(),
-			body->GetAngularVelocity(),
-			1.0
-		};
+		std::vector<double> inputs;
+		std::transform(agent.vision.cbegin(), agent.vision.cend(), std::back_inserter(inputs), [](const auto &elem) {
+			return elem * 100.0f;
+		});
+		inputs.emplace_back([&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }());
+		inputs.emplace_back(body->GetAngularVelocity());
+		inputs.emplace_back(1.0);
+
 		agent.phenotype.Flush();
-		agent.phenotype.Input(const_cast<std::vector<double>&>(inputs));
+		agent.phenotype.Input(inputs);
 		agent.phenotype.Activate();
 		const auto output = agent.phenotype.Output();
 
@@ -130,6 +135,38 @@ void species_neat::epoch(int steps) {
 	distribute_genomes();
 }
 
+void species_neat::agent::on_sensor(const msg_contact &contact) {
+	const auto forward = glm::rotate(glm::vec2 { 0.0f, 1.0f }, body->GetAngle());
+	const glm::vec2 diff = [this,&contact] {
+		const auto s = body->GetPosition();
+		const auto o = contact.fixture_foreign->GetBody()->GetPosition();
+		return glm::vec2(o.x, o.y) - glm::vec2(s.x, s.y);
+	}();
+	const auto diff_angle = glm::orientedAngle(forward, glm::normalize(diff));
+	const double offset =
+		vision_segments -
+		(std::clamp(tan(diff_angle) * sensor_length / (0.5f * sensor_width), -1.0f, 1.0f) + 1.0) /
+		2.0 * vision_segments
+	;
+	const auto [integer, fraction] = [offset] {
+		float integer;
+		float fraction = std::modf(offset, &integer);
+		return std::make_pair(static_cast<int>(integer), fraction);
+	}();
+	static const float hypotenuse = sensor_length / cos(sensor_fov / 2.0);
+	const float fac = glm::clamp(hypotenuse - glm::length(diff), 0.0f, hypotenuse) / hypotenuse;
+	if(fraction <= 0.5) {
+		if(integer > 0)
+			vision[integer - 1] += (0.5 - fraction) * fac;
+		if(integer < vision_segments)
+			vision[integer] += (0.5 + fraction) * fac;
+	} else {
+		if(integer < vision_segments - 1)
+			vision[integer + 1] += (fraction - 0.5) * fac;
+		vision[integer] += (1.5 - fraction) * fac;
+	}
+}
+
 void species_neat::agent::message(const std::any &msg) {
 	const auto &type = msg.type();
 	if(type == typeid(msg_contact)) {
@@ -139,12 +176,9 @@ void species_neat::agent::message(const std::any &msg) {
 			return;
 
 		const auto &native_userdata = contact.fixture_native->GetUserData();
-		assert(native_userdata != nullptr);
 		const auto &native_fixture_type = *static_cast<fixture_type*>(native_userdata);
-		if(native_fixture_type == fixture_type::sensor_left) {
-			detected[0] = true;
-		} else if(native_fixture_type == fixture_type::sensor_right) {
-			detected[1] = true;
+		if(native_fixture_type == fixture_type::sensor) {
+			on_sensor(contact);
 		} else if(native_fixture_type == fixture_type::torso) {
 			const auto &food = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
 			food->message(std::make_any<msg_consume>(msg_consume { this }));
