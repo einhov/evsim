@@ -7,7 +7,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "species_neat.h"
+#include "predator_neat.h"
 #include "body.h"
 #include "gfx_program.h"
 
@@ -66,7 +66,7 @@ static struct {
 
 } model;
 
-void species_neat::draw(const glm::mat4 &projection) const {
+void predator_neat::draw(const glm::mat4 &projection) const {
 	using uniform_type = gfx::program::uniform_type;
 
 	if(!model.hot) model.init();
@@ -74,7 +74,7 @@ void species_neat::draw(const glm::mat4 &projection) const {
 	model.program->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 
 	// Draw sensors
-	constexpr bool render_sensors = false;
+	constexpr bool render_sensors = true;
 	if constexpr(render_sensors) {
 		for(const auto &agent : agents) {
 			const auto body = agent.body;
@@ -124,7 +124,7 @@ void species_neat::draw(const glm::mat4 &projection) const {
 			{ 97,242,0 }, { 184,230,0 }, { 0,82,204 }
 		}};
 		const auto &c = colours[agent.species % colours.size()];
-		model.program->set_uniform<uniform_type::FLOAT3>("box_colour", c.x / 255.0f, c.y / 255.0f, c.z / 255.0f);
+		model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}
 }

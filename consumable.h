@@ -5,6 +5,7 @@
 
 #include <Box2D/Box2D.h>
 
+#include "fixture_type.h"
 #include "entity.h"
 
 namespace evsim {

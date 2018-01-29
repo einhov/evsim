@@ -6,6 +6,8 @@ add_executable (evsim
 	gfx_program.cc
 	consumable.cc
 	species_neat.cc
+	predator_neat.cc
+	predator_neat_draw.cc
 	species_neat_draw.cc
 	body.cc
 	neat_plot.cc

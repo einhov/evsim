@@ -1,5 +1,5 @@
-#ifndef SPECIES_NEAT_H
-#define SPECIES_NEAT_H
+#ifndef PREDATOR_NEAT_H
+#define PREDATOR_NEAT_H
 
 #include <vector>
 #include <memory>
@@ -12,17 +12,9 @@
 
 namespace evsim {
 
-struct msg_kill {
-	entity *consumer;
-};
-
-struct msg_killed {
-};
-static void relocate_agent(b2Body *body);
-
-class species_neat {
+class predator_neat {
 	public:
-		species_neat(b2World &world) :
+                predator_neat(b2World &world) :
 		        world(world), population_size(0), active_genomes(0), plot(false) {}
 		bool initialise(size_t size, int seed);
 		void pre_tick();
@@ -58,6 +50,6 @@ class species_neat {
 		b2World &world;
 };
 
-};
+}
 
 #endif

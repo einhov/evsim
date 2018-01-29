@@ -19,6 +19,7 @@ static std::uniform_real_distribution<float> velocity_distribution(-10.0f, 10.0f
 static std::uniform_real_distribution<float> angular_distribution(-glm::radians(45.0f), glm::radians(45.0f));
 static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
 static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
+static const fixture_type food_type = fixture_type::food;
 
 void consumable::init_body(b2World &world) {
 	b2PolygonShape shape;
@@ -28,7 +29,7 @@ void consumable::init_body(b2World &world) {
 	fixture.density = 1.0f;
 	fixture.filter.groupIndex = 0;
 	fixture.isSensor = true;
-	fixture.userData = reinterpret_cast<void*>(0x900df00d);
+	fixture.userData = const_cast<void*>(static_cast<const void*>(&food_type));
 
 	b2BodyDef def;
 	def.type = b2_staticBody;

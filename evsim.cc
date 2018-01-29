@@ -5,7 +5,9 @@
 
 #include "consumable.h"
 #include "species_neat.h"
+#include "predator_neat.h"
 #include "entity.h"
+#include "config.h"
 
 namespace evsim {
 
@@ -46,10 +48,11 @@ int evsim(int argc, char **argv) {
 	world.SetContinuousPhysics(true);
 
 	static species_neat herbivores(world);
-	herbivores.initialise(64, static_cast<int>(glfwGetTime()));
+	herbivores.initialise(build_config::herbivores_size, static_cast<int>(glfwGetTime()));
+	static predator_neat predator(world);
+	predator.initialise(build_config::predator_size, static_cast<int>(glfwGetTime()+1));
 
-	static constexpr size_t FOODS = 50;
-	std::array<consumable, FOODS> foods;
+	std::array<consumable, build_config::FOODS> foods;
 	for(auto &food : foods)
 		food.init_body(world);
 
@@ -79,10 +82,12 @@ int evsim(int argc, char **argv) {
 			fprintf(stderr, "Step: %d\n", step);
 			step++;
 			herbivores.step();
+			predator.step();
 			if(step >= STEPS_PER_GENERATION) {
 				step = 0;
 				fprintf(stderr, "Generation: %d\n", generation);			
 				herbivores.epoch(STEPS_PER_GENERATION);
+				predator.epoch(STEPS_PER_GENERATION);
 				generation++;
 			}
 		}
@@ -90,6 +95,7 @@ int evsim(int argc, char **argv) {
 		world.Step(simulation_timestep, 1, 1);
 
 		herbivores.pre_tick();
+		predator.pre_tick();
 
 		// Distribute contact messages
 		for(b2Contact *contact = world.GetContactList(); contact != nullptr; contact = contact->GetNext()) {
@@ -110,6 +116,7 @@ int evsim(int argc, char **argv) {
 
 		// Update agents
 		herbivores.tick();
+		predator.tick();
 
 		glfwPollEvents();
 		if(!draw) continue;
@@ -119,6 +126,7 @@ int evsim(int argc, char **argv) {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		predator.draw(projection);
 		herbivores.draw(projection);
 
 		// Draw foods

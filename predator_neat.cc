@@ -6,8 +6,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-#include "fixture_type.h"
 #include "species_neat.h"
+#include "fixture_type.h"
+#include "predator_neat.h"
 #include "body.h"
 #include "consumable.h"
 #include "neat_plot.h"
@@ -15,11 +16,7 @@
 
 namespace evsim {
 
-static std::default_random_engine generator(std::random_device{}());
-static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
-static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
-
-void species_neat::clear() {
+void predator_neat::clear() {
 	for(const auto &agent : agents)
 		world.DestroyBody(agent.body);
 	agents.clear();
@@ -28,7 +25,7 @@ void species_neat::clear() {
 	active_genomes = 0;
 }
 
-void species_neat::distribute_genomes() {
+void predator_neat::distribute_genomes() {
 	auto &n = active_genomes;
 	n = 0;
 	int s = 0;
@@ -43,7 +40,7 @@ void species_neat::distribute_genomes() {
 	}
 }
 
-bool species_neat::initialise(size_t size, int seed) {
+bool predator_neat::initialise(size_t size, int seed) {
 	if(population_size > 0)
 		clear();
 
@@ -54,7 +51,7 @@ bool species_neat::initialise(size_t size, int seed) {
 	static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
 	static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 	for(auto &agent : agents) {
-		agent.body = build_body(world);
+		agent.body = build_predator_body(world);
 		agent.body->SetTransform(
 			b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)),
 			agent.body->GetAngle()
@@ -64,10 +61,10 @@ bool species_neat::initialise(size_t size, int seed) {
 
 	NEAT::Parameters params;
 	params.PopulationSize = population_size;
-	params.MinSpecies = build_config::hv_min_species;
-	params.MaxSpecies = build_config::hv_max_species;
-	params.DontUseBiasNeuron = build_config::hv_dont_use_bias_neuron;
-	params.CompatTreshold = build_config::hv_compat_treshold;
+	params.MinSpecies = build_config::pr_min_species;
+	params.MaxSpecies = build_config::pr_max_species;
+	params.DontUseBiasNeuron = build_config::pr_dont_use_bias_neuron;
+	params.CompatTreshold = build_config::pr_compat_treshold;
 
 	NEAT::Genome genesis(
 		0, 5, 0, 2, false,
@@ -75,17 +72,19 @@ bool species_neat::initialise(size_t size, int seed) {
 		0, params, 0
 	);
 
+	genesis.m_NeuronGenes[5].m_ActFunction = NEAT::UNSIGNED_SIGMOID;
+
 	population = std::make_unique<NEAT::Population>(genesis, params, true, 1.0, seed);
 	distribute_genomes();
 }
 
-void species_neat::pre_tick() {
+void predator_neat::pre_tick() {
 	for(auto &agent : agents) {
 		agent.detected = {};
 	}
 }
 
-void species_neat::tick() {
+void predator_neat::tick() {
 	for(auto &agent : agents) {
 		auto &body = agent.body;
 		const auto angle = body->GetAngle();
@@ -108,14 +107,13 @@ void species_neat::tick() {
 		agent.phenotype.Activate();
 		const auto output = agent.phenotype.Output();
 
-		const auto forward = glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) *
-				static_cast<float>(output[0]) * build_config::hv_linear_speed;
+		const auto forward = glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) * static_cast<float>(output[0]) * 1000.0f;
 		body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
-		body->ApplyTorque(output[1] * build_config::hv_angular_speed, true);
+		body->ApplyTorque(output[1] * build_config::pr_angular_speed, true);
 	}
 }
 
-void species_neat::step() {
+void predator_neat::step() {
 	double total = 0;
 	for(auto &agent : agents) {
 		total += agent.score;
@@ -125,7 +123,7 @@ void species_neat::step() {
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
 
-void species_neat::epoch(int steps) {
+void predator_neat::epoch(int steps) {
 	for(auto &agent : agents) {
 		agent.genotype->SetFitness(agent.generation_score / static_cast<double>(steps));
 		agent.genotype->m_Evaluated = true;
@@ -141,41 +139,32 @@ void species_neat::epoch(int steps) {
 	distribute_genomes();
 }
 
-static void relocate_agent(b2Body *body) {
-	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
-}
-
-void species_neat::agent::message(const std::any &msg) {
+void predator_neat::agent::message(const std::any &msg) {
 	const auto &type = msg.type();
 	if(type == typeid(msg_contact)) {
 		const auto &contact = std::any_cast<msg_contact>(msg);
+		//if collition with other agent
+		if(*static_cast<fixture_type*>(contact.fixture_foreign->GetUserData()) == fixture_type::torso) {
 
-		if(*static_cast<fixture_type*>(contact.fixture_foreign->GetUserData()) != fixture_type::food) {
-			return;
+			const auto &native_userdata = contact.fixture_native->GetUserData();
+			assert(native_userdata != nullptr);
+			const auto &native_fixture_type = *static_cast<fixture_type*>(native_userdata);
+			if(native_fixture_type == fixture_type::sensor_left) {
+				detected[0] = true;
+			} else if(native_fixture_type == fixture_type::sensor_right) {
+				detected[1] = true;
+			} else if(native_fixture_type == fixture_type::torso_predator) {
+				const auto &agent = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
+				//Brabra, spiste en agent
+				agent->message(std::make_any<msg_kill>(msg_kill { this }));
+			}
 		}
-
-		const auto &native_userdata = contact.fixture_native->GetUserData();
-		assert(native_userdata != nullptr);
-		const auto &native_fixture_type = *static_cast<fixture_type*>(native_userdata);
-		if(native_fixture_type == fixture_type::sensor_left) {
-			detected[0] = true;
-		} else if(native_fixture_type == fixture_type::sensor_right) {
-			detected[1] = true;
-		} else if(native_fixture_type == fixture_type::torso) {
-			const auto &food = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
-			food->message(std::make_any<msg_consume>(msg_consume { this }));
-		}
-	} else if(type == typeid(msg_consumed)) {
+	} else if(type == typeid(msg_killed)) {
 		score++;
-	} else if(type == typeid(msg_kill)) {
-		const auto &consumer = std::any_cast<msg_kill>(msg).consumer;
-		score -= 10;
-		relocate_agent(body);
-		consumer->message(std::make_any<msg_killed>());
 	}
 }
 
-void species_neat::plot_best() {
+void predator_neat::plot_best() {
 	const auto genome = population->GetBestGenome();
 	plot_genome(genome, "agent_best", population.get());
 }
