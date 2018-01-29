@@ -34,13 +34,15 @@ class species_neat {
 
 		class agent : public entity {
 			public:
+				static constexpr int vision_segments = 3;
 				void message(const std::any &msg) override;
+				void on_sensor(const msg_contact &contact);
 
 				b2Body *body;
 				int score;
 				int generation_score;
 				int species;
-				std::array<bool, 2> detected;
+				std::array<float, vision_segments> vision;
 
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;

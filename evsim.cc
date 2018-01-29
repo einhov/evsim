@@ -3,16 +3,21 @@
 #include <Box2D/Box2D.h>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "evsim.h"
 #include "consumable.h"
 #include "species_neat.h"
 #include "entity.h"
 
 namespace evsim {
 
+configuration conf;
+
 int evsim(int argc, char **argv) {
 	if(!glfwInit()) {
 		return -1;
 	}
+
+	conf.draw_sensors = true;
 
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -37,7 +42,7 @@ int evsim(int argc, char **argv) {
 		-100.0f * (4.0f / 3.0f),
 		 100.0f * (4.0f / 3.0f),
 		-100.0f,
-		 100.f
+		 100.0f
 	);
 
 	const float simulation_timestep = 1.0f/60.0f;
@@ -60,6 +65,9 @@ int evsim(int argc, char **argv) {
 		}
 		if(key == GLFW_KEY_P && action == GLFW_PRESS) {
 			herbivores.plot = !herbivores.plot ;
+		}
+		if(key == GLFW_KEY_S && action == GLFW_PRESS) {
+			conf.draw_sensors = !conf.draw_sensors;
 		}
 	});
 

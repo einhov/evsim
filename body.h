@@ -4,15 +4,16 @@
 namespace evsim {
 
 enum class fixture_type {
-	sensor_left,
-	sensor_right,
+	sensor,
 	torso
 };
 
 b2Body *build_body(b2World &world);
 
-extern const std::array<b2Vec2, 3> sensor_left;
-extern const std::array<b2Vec2, 3> sensor_right;
+extern const std::array<b2Vec2, 3> sensor;
+extern const float sensor_fov;
+extern const float sensor_length;
+extern const float sensor_width;
 
 };
 

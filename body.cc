@@ -7,14 +7,12 @@
 
 namespace evsim {
 
-constexpr float sensor_length = 50.0f;
-constexpr float sensor_half_width = 2.0f;
+const float sensor_fov = glm::radians(60.0f);
+const float sensor_length = 25.0f;
+const float sensor_width = 2.0f * (sin(sensor_fov / 2.0f) * sensor_length) / cos(sensor_fov / 2.0f);
 
-const std::array<b2Vec2, 3> sensor_left {{
-	{ 0.0f, 0.0f }, {-sensor_half_width, sensor_length }, { 0.0f, sensor_length },
-}};
-const std::array<b2Vec2, 3> sensor_right {{
-	{ 0.0f, 0.0f }, { 0.0f, sensor_length }, { sensor_half_width, sensor_length },
+const std::array<b2Vec2, 3> sensor {{
+	{ 0.0f, 0.0f }, { -sensor_width / 2.0f, sensor_length }, { sensor_width / 2.0f, sensor_length }
 }};
 
 static std::default_random_engine generator;
@@ -28,31 +26,22 @@ struct body_part_def {
 	b2PolygonShape shape;
 };
 
-static body_part_def sensor_left_def;
-static body_part_def sensor_right_def;
+static body_part_def sensor_def;
 static body_part_def torso_def;
 static b2BodyDef body_def;
 
 static bool body_initialised;
 
-static const fixture_type sensor_left_type = fixture_type::sensor_left;
-static const fixture_type sensor_right_type = fixture_type::sensor_right;
+static const fixture_type sensor_type = fixture_type::sensor;
 static const fixture_type torso_type = fixture_type::torso;
 
 void init_body_data() {
-	sensor_left_def.shape.Set(sensor_left.data(), sensor_left.size());
-	sensor_left_def.fixture.density = 0.0f;
-	sensor_left_def.fixture.shape = &sensor_left_def.shape;
-	sensor_left_def.fixture.isSensor = true;
-	sensor_left_def.fixture.filter.groupIndex = -1;
-	sensor_left_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&sensor_left_type));
-
-	sensor_right_def.shape.Set(sensor_right.data(), sensor_right.size());
-	sensor_right_def.fixture.density = 0.0f;
-	sensor_right_def.fixture.shape = &sensor_right_def.shape;
-	sensor_right_def.fixture.isSensor = true;
-	sensor_right_def.fixture.filter.groupIndex = -1;
-	sensor_right_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&sensor_right_type));
+	sensor_def.shape.Set(sensor.data(), sensor.size());
+	sensor_def.fixture.density = 0.0f;
+	sensor_def.fixture.shape = &sensor_def.shape;
+	sensor_def.fixture.isSensor = true;
+	sensor_def.fixture.filter.groupIndex = -1;
+	sensor_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&sensor_type));
 
 	torso_def.shape.SetAsBox(1.0f, 1.0f);
 	torso_def.fixture.shape = &torso_def.shape;
@@ -75,8 +64,7 @@ b2Body *build_body(b2World &world) {
 		init_body_data();
 
 	auto body = world.CreateBody(&body_def);
-	body->CreateFixture(&sensor_left_def.fixture);
-	body->CreateFixture(&sensor_right_def.fixture);
+	body->CreateFixture(&sensor_def.fixture);
 	body->CreateFixture(&torso_def.fixture);
 	return body;
 }
