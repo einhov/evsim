@@ -20,31 +20,28 @@ void plot_genome(const NEAT::Genome &genome, const char* filename, const NEAT::P
 	fprintf(plotdata, "digraph graphname {\n");
 	fprintf(
 		plotdata,
-		"\tgraph [label=\"Showing the best Genome in the generation\n"
-		"Fitness: %3.2f\n"
-		"Generation: %d\t bestFitnessEver: %3.2f \", labelloc=t, fontsize=30];\n",
+		"graph [label=\"Showing the best genotype in the generation\n"
+		"Fitness: %3.2f\t Generation: %d\t Best recorded fitness: %3.2f \""
+		", labelloc=t, fontsize=30];\n",
 		fitness, generation, best_fitness
 	);
 
-	for (unsigned int i = 0; i < genome.NumLinks(); i++) {
-		int fromId = links[i].FromNeuronID();
-		if(fromId > input_count+output_count) {
-			set<int>::iterator it = hidden_nodes.find(fromId);
+	for(const auto &link : genome.m_LinkGenes) {
+		int from = link.FromNeuronID();
+		int to   = link.ToNeuronID();
+		if(from > input_count + output_count) {
+			set<int>::iterator it = hidden_nodes.find(from);
 			if (it == hidden_nodes.end()) {
-				hidden_nodes.insert(fromId);
+				hidden_nodes.insert(from);
 			}
 		}
+		fprintf(plotdata, "\t%d -> %d", from, to);
 		if(display_weights) {
 			fprintf(
-				plotdata,
-				"\t%d -> %d [label=%3.2f,weight=%3.2f];\n",
-				fromId, links[i].ToNeuronID(),
-				links[i].GetWeight(), links[i].GetWeight()
+				plotdata, " [label=%3.2f,weight=%3.2f]", link.GetWeight(), link.GetWeight()
 			);
 		}
-		else {
-			fprintf(plotdata, "\t%d -> %d;\n", fromId, links[i].ToNeuronID());
-		}
+		fputs(";\n", plotdata);
 	}
 	for(int i = 1; i <= input_count; i++) {
 		fprintf(plotdata, "\t%d [shape=circle, style=filled, fillcolor=green]\n", i);
@@ -52,7 +49,7 @@ void plot_genome(const NEAT::Genome &genome, const char* filename, const NEAT::P
 	for(int i = input_count + 1; i <= input_count + output_count; i++) {
 		fprintf(plotdata, "\t%d [shape=circle, style=filled, fillcolor=red]\n", i);
 	}
-	if(group_nodes){
+	if constexpr(group_nodes){
 		fprintf(plotdata, "\t{ rank=same; ");
 		for(int i = 1; i <= input_count; i++) {
 			fprintf(plotdata, "%d", i );
