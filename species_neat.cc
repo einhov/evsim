@@ -70,7 +70,6 @@ bool species_neat::initialise(size_t size, int seed) {
 	params.PopulationSize = population_size;
 	params.MinSpecies = build_config::hv_min_species;
 	params.MaxSpecies = build_config::hv_max_species;
-	params.DontUseBiasNeuron = build_config::hv_dont_use_bias_neuron;
 	params.CompatTreshold = build_config::hv_compat_treshold;
 
 	NEAT::Genome genesis(
@@ -113,8 +112,12 @@ void species_neat::tick() {
 		agent.phenotype.Activate();
 		const auto output = agent.phenotype.Output();
 
-		const auto forward = glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) *
-				static_cast<float>(output[0]) * build_config::hv_linear_speed;
+		const auto forward =
+			glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) *
+			static_cast<float>(output[0]) *
+			build_config::hv_linear_speed
+		;
+
 		body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
 		body->ApplyTorque(output[1] * build_config::hv_angular_speed, true);
 	}

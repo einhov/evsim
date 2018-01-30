@@ -53,11 +53,11 @@ int evsim(int argc, char **argv) {
 	world.SetContinuousPhysics(true);
 
 	static species_neat herbivores(world);
-	herbivores.initialise(build_config::herbivores_size, static_cast<int>(glfwGetTime()));
+	herbivores.initialise(build_config::herbivore_count, static_cast<int>(glfwGetTime()));
 	static predator_neat predator(world);
-	predator.initialise(build_config::predator_size, static_cast<int>(glfwGetTime()+1));
+	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
 
-	std::array<consumable, build_config::FOODS> foods;
+	std::array<consumable, build_config::food_count> foods;
 	for(auto &food : foods)
 		food.init_body(world);
 

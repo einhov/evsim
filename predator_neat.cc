@@ -64,7 +64,6 @@ bool predator_neat::initialise(size_t size, int seed) {
 	params.PopulationSize = population_size;
 	params.MinSpecies = build_config::pr_min_species;
 	params.MaxSpecies = build_config::pr_max_species;
-	params.DontUseBiasNeuron = build_config::pr_dont_use_bias_neuron;
 	params.CompatTreshold = build_config::pr_compat_treshold;
 
 	NEAT::Genome genesis(
@@ -107,7 +106,12 @@ void predator_neat::tick() {
 		agent.phenotype.Activate();
 		const auto output = agent.phenotype.Output();
 
-		const auto forward = glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) * static_cast<float>(output[0]) * 1000.0f;
+		const auto forward =
+			glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) *
+			static_cast<float>(output[0]) *
+			build_config::pr_linear_speed
+		;
+
 		body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
 		body->ApplyTorque(output[1] * build_config::pr_angular_speed, true);
 	}
@@ -175,9 +179,7 @@ void predator_neat::agent::message(const std::any &msg) {
 	const auto &type = msg.type();
 	if(type == typeid(msg_contact)) {
 		const auto &contact = std::any_cast<msg_contact>(msg);
-		//if collition with other agent
 		if(*static_cast<fixture_type*>(contact.fixture_foreign->GetUserData()) == fixture_type::torso) {
-
 			const auto &native_userdata = contact.fixture_native->GetUserData();
 			assert(native_userdata != nullptr);
 			const auto &native_fixture_type = *static_cast<fixture_type*>(native_userdata);
@@ -185,7 +187,6 @@ void predator_neat::agent::message(const std::any &msg) {
 				on_sensor(contact);
 			} else if(native_fixture_type == fixture_type::torso_predator) {
 				const auto &agent = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
-				//Brabra, spiste en agent
 				agent->message(std::make_any<msg_kill>(msg_kill { this }));
 			}
 		}

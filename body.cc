@@ -52,7 +52,6 @@ void init_body_data() {
 	torso_def.fixture.shape = &torso_def.shape;
 	torso_def.fixture.density = 1.0f;
 	torso_def.fixture.isSensor = true;
-	//torso_def.fixture.filter.groupIndex = -1;
 	torso_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&torso_type));
 
 	torso_predator_def.shape.SetAsBox(1.0f, 1.0f);

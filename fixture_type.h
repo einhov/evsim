@@ -1,5 +1,5 @@
-#ifndef FIXTURE_TYPE
-#define FIXTURE_TYPE
+#ifndef FIXTURE_TYPE_H
+#define FIXTURE_TYPE_H
 
 enum class fixture_type {
     sensor,

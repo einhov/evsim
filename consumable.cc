@@ -9,8 +9,9 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "gfx_program.h"
 #include "consumable.h"
+#include "fixture_type.h"
+#include "gfx_program.h"
 
 namespace evsim {
 
@@ -19,6 +20,7 @@ static std::uniform_real_distribution<float> velocity_distribution(-10.0f, 10.0f
 static std::uniform_real_distribution<float> angular_distribution(-glm::radians(45.0f), glm::radians(45.0f));
 static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
 static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
+
 static const fixture_type food_type = fixture_type::food;
 
 void consumable::init_body(b2World &world) {
