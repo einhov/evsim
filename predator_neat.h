@@ -14,16 +14,16 @@ namespace evsim {
 
 class predator_neat {
 	public:
-                predator_neat(b2World &world) :
-		        world(world), population_size(0), active_genomes(0), plot(false) {}
+		predator_neat(b2World &world) :
+		world(world), population_size(0), active_genomes(0), plot(false) {}
 		bool initialise(size_t size, int seed);
 		void pre_tick();
 		void tick();
 		void step();
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
-                void plot_best();
-                bool plot;
+		void plot_best();
+		bool plot;
 
 	private:
 		void clear();
@@ -34,13 +34,15 @@ class predator_neat {
 
 		class agent : public entity {
 			public:
+				static constexpr int vision_segments = 3;
 				void message(const std::any &msg) override;
+				void on_sensor(const msg_contact &contact);
 
 				b2Body *body;
 				int score;
 				int generation_score;
 				int species;
-				std::array<bool, 2> detected;
+				std::array<bool, vision_segments> vision;
 
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;

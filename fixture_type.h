@@ -2,8 +2,7 @@
 #define FIXTURE_TYPE
 
 enum class fixture_type {
-    sensor_left,
-    sensor_right,
+    sensor,
     torso,
     torso_predator,
     food

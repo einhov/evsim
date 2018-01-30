@@ -10,6 +10,11 @@ class entity {
 		virtual void message(const std::any &msg) = 0;
 };
 
+struct msg_contact {
+	b2Fixture *fixture_native;
+	b2Fixture *fixture_foreign;
+};
+
 };
 
 #endif

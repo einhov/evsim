@@ -13,7 +13,7 @@ add_executable (evsim
 	neat_plot.cc
 )
 
-add_definitions(-DUSE_BOOST_RANDOM)
+add_definitions(-DUSE_BOOST_RANDOM -DGLM_ENABLE_EXPERIMENTAL)
 set_property (TARGET evsim PROPERTY CXX_STANDARD 17)
 
 find_package(glfw3 REQUIRED)

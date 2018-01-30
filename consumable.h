@@ -10,11 +10,6 @@
 
 namespace evsim {
 
-struct msg_contact {
-	b2Fixture *fixture_native;
-	b2Fixture *fixture_foreign;
-};
-
 struct msg_consume {
 	entity *consumer;
 };
