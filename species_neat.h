@@ -30,8 +30,8 @@ class species_neat {
 		void step();
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
-                void plot_best();
-                bool plot;
+		void plot_best();
+		bool plot;
 
 	private:
 		void clear();

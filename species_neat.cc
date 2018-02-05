@@ -115,11 +115,11 @@ void species_neat::tick() {
 		const auto forward =
 			glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) *
 			static_cast<float>(output[0]) *
-			build_config::hv_linear_speed
+			build_config::hv_force
 		;
 
 		body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
-		body->ApplyTorque(output[1] * build_config::hv_angular_speed, true);
+		body->ApplyTorque(output[1] * build_config::hv_torque, true);
 	}
 }
 
