@@ -19,7 +19,8 @@ int evsim(int argc, char **argv) {
 		return -1;
 	}
 
-	conf.draw_sensors = true;
+	conf.draw_sensors_herbivore = true;
+	conf.draw_sensors_predator = true;
 
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -70,7 +71,10 @@ int evsim(int argc, char **argv) {
 			herbivores.plot = !herbivores.plot ;
 		}
 		if(key == GLFW_KEY_S && action == GLFW_PRESS) {
-			conf.draw_sensors = !conf.draw_sensors;
+			conf.draw_sensors_herbivore = !conf.draw_sensors_herbivore;
+		}
+		if(key == GLFW_KEY_D && action == GLFW_PRESS) {
+			conf.draw_sensors_predator = !conf.draw_sensors_predator;
 		}
 	});
 
