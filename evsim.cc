@@ -62,9 +62,13 @@ int evsim(int argc, char **argv) {
 		food.init_body(world);
 
 	static bool draw = true;
+	static bool pause = false;
 	glfwSetKeyCallback(window, [] (GLFWwindow*, int key, int, int action, int) {
 		if(key == GLFW_KEY_F && action == GLFW_PRESS) {
 			draw = !draw;
+		}
+		if(key == GLFW_KEY_O && action == GLFW_PRESS) {
+			pause = !pause;
 		}
 		if(key == GLFW_KEY_P && action == GLFW_PRESS) {
 			herbivores.plot = !herbivores.plot ;
@@ -82,6 +86,7 @@ int evsim(int argc, char **argv) {
 	int step = 0;
 	int tick = 0;
 	while(true) {
+		if(!pause){
 		const int STEPS_PER_GENERATION = 5;
 		const int TICKS_PER_STEP = 60 * 15;
 
@@ -126,7 +131,13 @@ int evsim(int argc, char **argv) {
 		herbivores.tick();
 		predator.tick();
 
+
 		glfwPollEvents();
+		}
+		else {
+			glfwPollEvents();
+		}
+
 		if(!draw) continue;
 
 		const double this_frame = glfwGetTime();
