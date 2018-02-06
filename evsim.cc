@@ -138,57 +138,52 @@ int evsim(int argc, char **argv) {
 	int tick = 0;
 	while(true) {
 		if(!pause){
-		const int STEPS_PER_GENERATION = 5;
-		const int TICKS_PER_STEP = 60 * 15;
+			const int STEPS_PER_GENERATION = 5;
+			const int TICKS_PER_STEP = 60 * 15;
 
-		if(tick++ >= TICKS_PER_STEP) {
-			tick = 0;
-			fprintf(stderr, "Step: %d\n", step);
-			step++;
-			herbivores.step();
-			predator.step();
-			if(step >= STEPS_PER_GENERATION) {
-				step = 0;
-				fprintf(stderr, "Generation: %d\n", generation);			
-				herbivores.epoch(STEPS_PER_GENERATION);
-				predator.epoch(STEPS_PER_GENERATION);
-				generation++;
+			if(tick++ >= TICKS_PER_STEP) {
+				tick = 0;
+				fprintf(stderr, "Step: %d\n", step);
+				step++;
+				herbivores.step();
+				predator.step();
+				if(step >= STEPS_PER_GENERATION) {
+					step = 0;
+					fprintf(stderr, "Generation: %d\n", generation);
+					herbivores.epoch(STEPS_PER_GENERATION);
+					predator.epoch(STEPS_PER_GENERATION);
+					generation++;
+				}
 			}
+
+			world.Step(simulation_timestep, 1, 1);
+
+			herbivores.pre_tick();
+			predator.pre_tick();
+
+			// Distribute contact messages
+			for(b2Contact *contact = world.GetContactList(); contact != nullptr; contact = contact->GetNext()) {
+				if(!contact->IsTouching()) continue;
+				auto fixture_A = contact->GetFixtureA();
+				auto fixture_B = contact->GetFixtureB();
+
+				if(auto userdata_A = fixture_A->GetBody()->GetUserData(); userdata_A != nullptr)
+					static_cast<entity*>(userdata_A)->message(
+						std::make_any<msg_contact>(msg_contact { fixture_A, fixture_B })
+					);
+
+				if(auto userdata_B = fixture_B->GetBody()->GetUserData(); userdata_B != nullptr)
+					static_cast<entity*>(userdata_B)->message(
+						std::make_any<msg_contact>(msg_contact { fixture_B, fixture_A })
+					);
+			}
+
+			// Update agents
+			herbivores.tick();
+			predator.tick();
 		}
-
-		world.Step(simulation_timestep, 1, 1);
-
-		herbivores.pre_tick();
-		predator.pre_tick();
-
-		// Distribute contact messages
-		for(b2Contact *contact = world.GetContactList(); contact != nullptr; contact = contact->GetNext()) {
-			if(!contact->IsTouching()) continue;
-			auto fixture_A = contact->GetFixtureA();
-			auto fixture_B = contact->GetFixtureB();
-
-			if(auto userdata_A = fixture_A->GetBody()->GetUserData(); userdata_A != nullptr)
-				static_cast<entity*>(userdata_A)->message(
-					std::make_any<msg_contact>(msg_contact { fixture_A, fixture_B })
-				);
-
-			if(auto userdata_B = fixture_B->GetBody()->GetUserData(); userdata_B != nullptr)
-				static_cast<entity*>(userdata_B)->message(
-					std::make_any<msg_contact>(msg_contact { fixture_B, fixture_A })
-				);
-		}
-
-		// Update agents
-		herbivores.tick();
-		predator.tick();
-
 
 		glfwPollEvents();
-		}
-		else {
-			glfwPollEvents();
-		}
-
 		if(!draw) continue;
 
 		const double this_frame = glfwGetTime();

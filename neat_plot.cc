@@ -76,5 +76,4 @@ void plot_genome(const NEAT::Genome &genome, const char* filename) {
 	fclose(plotdata);
 }
 
-
 }
