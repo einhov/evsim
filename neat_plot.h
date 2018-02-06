@@ -6,7 +6,10 @@
 
 namespace evsim {
 
-void plot_genome(const NEAT::Genome &genome, const char* filename, const NEAT::Population *population);
+struct msg_plot {
+};
+
+void plot_genome(const NEAT::Genome &genome, const char* filename);
 
 }
 

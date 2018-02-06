@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <Box2D/Box2D.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <optional>
 
 #include "evsim.h"
 #include "consumable.h"
@@ -9,10 +10,31 @@
 #include "predator_neat.h"
 #include "entity.h"
 #include "config.h"
+#include "fixture_type.h"
+#include "neat_plot.h"
+#include "body.h"
 
 namespace evsim {
 
 configuration conf;
+
+ class ClickQueryCallback : public b2QueryCallback {
+ public:
+	 std::optional<const b2Fixture*> found_fixture;
+
+	 bool ReportFixture(b2Fixture* fixture) {
+		 switch(*static_cast<fixture_type*>(fixture->GetUserData())) {
+			 case fixture_type::torso:
+				 found_fixture = fixture;
+				 return false;
+			 case fixture_type::torso_predator:
+				 found_fixture = fixture;
+				 return false;
+			 default:
+				 return true;
+		}
+	 }
+ };
 
 int evsim(int argc, char **argv) {
 	if(!glfwInit()) {
@@ -40,7 +62,7 @@ int evsim(int argc, char **argv) {
 		return -1;
 	}
 
-	const glm::mat4 projection = glm::ortho(
+	static const glm::mat4 projection = glm::ortho(
 		-100.0f * (4.0f / 3.0f),
 		 100.0f * (4.0f / 3.0f),
 		-100.0f,
@@ -49,7 +71,7 @@ int evsim(int argc, char **argv) {
 
 	const float simulation_timestep = 1.0f/60.0f;
 
-	b2World world(b2Vec2(0.0f, 0.0f));
+	static b2World world(b2Vec2(0.0f, 0.0f));
 	world.SetContinuousPhysics(true);
 
 	static species_neat herbivores(world);
@@ -75,6 +97,35 @@ int evsim(int argc, char **argv) {
 		}
 		if(key == GLFW_KEY_S && action == GLFW_PRESS) {
 			conf.draw_sensors = !conf.draw_sensors;
+		}
+	});
+	glfwSetMouseButtonCallback(window, [] (GLFWwindow* window, int button, int action, int mods) {
+		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+			double pos_x, pos_y;
+			glfwGetCursorPos(window, &pos_x, &pos_y);
+			glm::vec4 transformed {
+				-1 + 2.0*(pos_x)/(1024),
+				1 - 2.0*(pos_y)/(768),
+				0,
+				1
+			};
+			transformed = glm::inverse(projection) * transformed;
+			ClickQueryCallback queryCallback;
+			b2Vec2 lower(transformed.x-0.01, transformed.y-0.01);
+			b2Vec2 upper(transformed.x+0.01, transformed.y+0.01);
+			b2AABB aabb;
+			aabb.lowerBound = lower;
+			aabb.upperBound = upper;
+			world.QueryAABB( &queryCallback, aabb);
+			if(queryCallback.found_fixture) {
+				const auto *fixture = *queryCallback.found_fixture;
+				auto *agent = static_cast<entity*>(fixture->GetBody()->GetUserData());
+				agent->message(std::make_any<msg_plot>(msg_plot {}));
+				const b2Vec2 pos = fixture->GetBody()->GetPosition();
+				printf("Mouse pos : %f, %f : \n", transformed.x,transformed.y);
+				printf("Object found at : %f, %f\n", pos.x, pos.y);
+				fflush(stdout);
+			}
 		}
 	});
 

@@ -192,12 +192,14 @@ void predator_neat::agent::message(const std::any &msg) {
 		}
 	} else if(type == typeid(msg_killed)) {
 		score++;
+	} else if(type == typeid(msg_plot)) {
+		plot_genome(*genotype, "selected_agent");
 	}
 }
 
 void predator_neat::plot_best() {
 	const auto genome = population->GetBestGenome();
-	plot_genome(genome, "agent_best", population.get());
+	plot_genome(genome, "agent_best");
 }
 
 }
