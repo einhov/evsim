@@ -131,7 +131,7 @@ void species_neat::draw(const glm::mat4 &projection) const {
 			{ 229,184,0 }, { 0,204,163 }, { 229,57,57 },
 			{ 97,242,0 }, { 184,230,0 }, { 0,82,204 }
 		}};
-		const auto &c = colours[agent.species % colours.size()];
+		const auto &c = colours[agent.internal_species % colours.size()];
 		model.program->set_uniform<uniform_type::FLOAT3>("box_colour", c.x / 255.0f, c.y / 255.0f, c.z / 255.0f);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}

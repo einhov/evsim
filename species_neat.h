@@ -32,6 +32,27 @@ class species_neat {
 		void draw(const glm::mat4 &projection) const;
 		void plot_best();
 		bool plot;
+		friend class agent;
+
+		class agent : public entity {
+			public:
+				int yell_timer_max = 60;
+				int can_yell_timer = yell_timer_max;
+				static constexpr int vision_segments = 3;
+				void message(const std::any &msg) override;
+				void on_sensor(const msg_contact &contact);
+				void create_yell();
+				bool hear_yell = false;
+				b2Body *body;
+				int score;
+				int generation_score;
+				int internal_species;
+				species_neat* species;
+				std::array<float, vision_segments> vision;
+
+				NEAT::Genome *genotype;
+				NEAT::NeuralNetwork phenotype;
+		};
 
 	private:
 		void clear();
@@ -40,21 +61,6 @@ class species_neat {
 		size_t population_size;
 		size_t active_genomes;
 
-		class agent : public entity {
-			public:
-				static constexpr int vision_segments = 3;
-				void message(const std::any &msg) override;
-				void on_sensor(const msg_contact &contact);
-
-				b2Body *body;
-				int score;
-				int generation_score;
-				int species;
-				std::array<float, vision_segments> vision;
-
-				NEAT::Genome *genotype;
-				NEAT::NeuralNetwork phenotype;
-		};
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		b2World &world;

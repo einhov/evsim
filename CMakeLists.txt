@@ -11,6 +11,7 @@ add_executable (evsim
 	species_neat_draw.cc
 	body.cc
 	neat_plot.cc
+	yell.cc
 )
 
 add_definitions(-DUSE_BOOST_RANDOM -DGLM_ENABLE_EXPERIMENTAL)

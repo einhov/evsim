@@ -16,6 +16,7 @@
 #include "consumable.h"
 #include "neat_plot.h"
 #include "config.h"
+#include "evsim.h"
 
 namespace evsim {
 
@@ -39,7 +40,7 @@ void species_neat::distribute_genomes() {
 	for(auto &species : population->m_Species) {
 		for(auto &individual : species.m_Individuals) {
 			agents[n].genotype = &individual;
-			agents[n].species = s;
+			agents[n].internal_species = s;
 			individual.BuildPhenotype(agents[n].phenotype);
 			if(++n >= population_size) return;
 		}
@@ -64,6 +65,7 @@ bool species_neat::initialise(size_t size, int seed) {
 			agent.body->GetAngle()
 		);
 		agent.body->SetUserData(reinterpret_cast<void*>(&agent));
+		agent.species = this;
 	}
 
 	NEAT::Parameters params;
@@ -73,7 +75,7 @@ bool species_neat::initialise(size_t size, int seed) {
 	params.CompatTreshold = build_config::hv_compat_treshold;
 
 	NEAT::Genome genesis(
-		0, 3 + agent::vision_segments, 0, 2, false,
+		0, 4 + agent::vision_segments, 0, 3, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 		0, params, 0
 	);
@@ -105,6 +107,11 @@ void species_neat::tick() {
 		});
 		inputs.emplace_back([&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }());
 		inputs.emplace_back(body->GetAngularVelocity());
+		if(agent.hear_yell)
+			inputs.emplace_back(1.0);
+		else
+			inputs.emplace_back(0.0);
+		agent.hear_yell = false;
 		inputs.emplace_back(1.0);
 
 		agent.phenotype.Flush();
@@ -120,6 +127,12 @@ void species_neat::tick() {
 
 		body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
 		body->ApplyTorque(output[1] * build_config::hv_torque, true);
+		if(output[2] >= 0.1) {
+			agent.create_yell();
+		}
+		if(agent.can_yell_timer > 0) {
+			agent.can_yell_timer--;
+		}
 	}
 }
 
@@ -148,7 +161,6 @@ void species_neat::epoch(int steps) {
 	fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
 	distribute_genomes();
 }
-
 
 static void relocate_agent(b2Body *body) {
 	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
@@ -190,28 +202,43 @@ void species_neat::agent::message(const std::any &msg) {
 	const auto &type = msg.type();
 	if(type == typeid(msg_contact)) {
 		const auto &contact = std::any_cast<msg_contact>(msg);
-
-		if(*static_cast<fixture_type*>(contact.fixture_foreign->GetUserData()) != fixture_type::food) {
-			return;
-		}
-
 		const auto &native_userdata = contact.fixture_native->GetUserData();
 		const auto &native_fixture_type = *static_cast<fixture_type*>(native_userdata);
-		if(native_fixture_type == fixture_type::sensor) {
-			on_sensor(contact);
-		} else if(native_fixture_type == fixture_type::torso) {
-			const auto &food = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
-			food->message(std::make_any<msg_consume>(msg_consume { this }));
+		if(*static_cast<fixture_type*>(contact.fixture_foreign->GetUserData()) == fixture_type::food) {
+			if(native_fixture_type == fixture_type::sensor) {
+				on_sensor(contact);
+			} else if(native_fixture_type == fixture_type::torso) {
+				const auto &food = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
+				food->message(std::make_any<msg_consume>(msg_consume { this }));
+			}
+		}
+		else if(*static_cast<fixture_type*>(contact.fixture_foreign->GetUserData()) == fixture_type::yell) {
+			const auto *agent = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
+			if(native_fixture_type != fixture_type::torso) {
+				return;
+			}
+			if(agent != this) {
+				hear_yell = true;
+			}
 		}
 	} else if(type == typeid(msg_consumed)) {
 		score++;
 	} else if(type == typeid(msg_kill)) {
 		const auto &consumer = std::any_cast<msg_kill>(msg).consumer;
-		score -= 10;
+		score -= 2;
 		relocate_agent(body);
 		consumer->message(std::make_any<msg_killed>());
 	} else if(type == typeid(msg_plot)) {
 		plot_genome(*genotype, "selected_agent");
+	}
+}
+
+void species_neat::agent::create_yell() {
+	if(can_yell_timer == 0){
+		can_yell_timer = yell_timer_max;
+		auto yell_instance = std::make_unique<yell>();
+		yell_instance->init_body(species->world, this);
+		environmental_objects.push_back(std::move(yell_instance));
 	}
 }
 

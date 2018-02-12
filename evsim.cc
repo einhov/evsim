@@ -13,10 +13,13 @@
 #include "fixture_type.h"
 #include "neat_plot.h"
 #include "body.h"
+#include "yell.h"
 
 namespace evsim {
 
 configuration conf;
+std::vector<std::unique_ptr<environmental_entity>> environmental_objects;
+std::vector<environmental_entity*> to_be_destroyed;
 
  class ClickQueryCallback : public b2QueryCallback {
  public:
@@ -79,9 +82,11 @@ int evsim(int argc, char **argv) {
 	static predator_neat predator(world);
 	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
 
-	std::array<consumable, build_config::food_count> foods;
-	for(auto &food : foods)
-		food.init_body(world);
+	for(int i = 0; i < build_config::food_count; i++) {
+		auto consumable_instance = std::make_unique<consumable>();
+		consumable_instance->init_body(world);
+		environmental_objects.emplace_back(std::move(consumable_instance));
+	}
 
 	static bool draw = true;
 	static bool pause = false;
@@ -178,9 +183,23 @@ int evsim(int argc, char **argv) {
 					);
 			}
 
-			// Update agents
+			// Update objects
 			herbivores.tick();
 			predator.tick();
+			for(auto &env_obj : environmental_objects) {
+				env_obj->tick();
+			}
+
+			for(auto remove : to_be_destroyed) {
+				const auto found = std::find_if(
+					environmental_objects.begin(), environmental_objects.end(),
+					[&remove](const auto &a) { return a.get() == remove; }
+				);
+				if(found != environmental_objects.end()) {
+					environmental_objects.erase(found);
+				}
+			}
+			to_be_destroyed.clear();
 		}
 
 		glfwPollEvents();
@@ -191,12 +210,13 @@ int evsim(int argc, char **argv) {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Draw environmental objects
+		for(const auto &env_obj : environmental_objects){
+			env_obj->draw(projection);
+		}
+
 		predator.draw(projection);
 		herbivores.draw(projection);
-
-		// Draw foods
-		for(const auto &food : foods)
-			food.draw(projection);
 
 		glfwSwapBuffers(window);
 		previous_frame = this_frame;
