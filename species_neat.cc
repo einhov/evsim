@@ -244,12 +244,14 @@ void species_neat::agent::message(const std::any &msg) {
 		score -= 10;
 		relocate_agent(body);
 		consumer->message(std::make_any<msg_killed>());
+	} else if(type == typeid(msg_plot)) {
+		plot_genome(*genotype, "selected_agent");
 	}
 }
 
 void species_neat::plot_best() {
 	const auto genome = population->GetBestGenome();
-	plot_genome(genome, "agent_best", population.get());
+	plot_genome(genome, "agent_best");
 }
 
 }
