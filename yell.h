@@ -18,7 +18,7 @@ class yell : public environmental_entity {
 		void message(const std::any &msg) override {}
 		b2Body* body;
 		b2World* world;
-		species_neat::agent* holler;
+		species_neat::agent* hollerer;
 
 		void init_body(b2World &world, species_neat::agent *agent);
 		void draw(const glm::mat4 &projection) const override;

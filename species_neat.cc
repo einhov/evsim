@@ -264,7 +264,7 @@ void species_neat::agent::message(const std::any &msg) {
 			food->message(std::make_any<msg_consume>(msg_consume { this }));
 		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::yell) {
 			const yell *yell_heard = static_cast<yell*>(contact.fixture_foreign->GetBody()->GetUserData());
-			if(yell_heard->holler != this) {
+			if(yell_heard->hollerer != this) {
 				hear_yell = true;
 				centre_of_yell = yell_heard->body->GetPosition();
 			}

@@ -110,6 +110,9 @@ int evsim(int argc, char **argv) {
 		if(key == GLFW_KEY_D && action == GLFW_PRESS) {
 			conf.draw_sensors_predator = !conf.draw_sensors_predator;
 		}
+		if(key == GLFW_KEY_A && action == GLFW_PRESS) {
+			conf.draw_yell = !conf.draw_yell;
+		}
 	});
 	glfwSetMouseButtonCallback(window, [] (GLFWwindow* window, int button, int action, int mods) {
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {

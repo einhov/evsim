@@ -43,7 +43,7 @@ void yell::init_body(b2World &world, species_neat::agent *holler) {
 	body->CreateFixture(&fixture);
 	body->SetUserData(this);
 
-	this->holler = holler;
+	this->hollerer = holler;
 	this->world = &world;
 }
 
@@ -98,18 +98,20 @@ void yell::tick() {
 }
 
 void yell::draw(const glm::mat4 &projection) const {
-	using uniform_type = gfx::program::uniform_type;
-	if(!model.hot) model.init();
-	model.program->activate();
-	model.program->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
+	if(conf.draw_yell) {
+		using uniform_type = gfx::program::uniform_type;
+		if(!model.hot) model.init();
+		model.program->activate();
+		model.program->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 
-	const b2Vec2 pos = body->GetPosition();
-	const glm::mat4 mat_model =
-		glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) * glm::scale(glm::vec3(30.0f));
-	glBindVertexArray(model.vertex_arrays.body);
-	model.program->set_uniform<uniform_type::MAT4>("model", glm::value_ptr(mat_model));
-	model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.5f, 0.25f);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		const b2Vec2 pos = body->GetPosition();
+		const glm::mat4 mat_model =
+			glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) * glm::scale(glm::vec3(30.0f));
+		glBindVertexArray(model.vertex_arrays.body);
+		model.program->set_uniform<uniform_type::MAT4>("model", glm::value_ptr(mat_model));
+		model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.5f, 0.25f);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	}
 }
 
 yell::~yell() {
