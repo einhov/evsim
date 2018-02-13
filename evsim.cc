@@ -23,20 +23,23 @@ std::vector<environmental_entity*> to_be_destroyed;
 
  class ClickQueryCallback : public b2QueryCallback {
  public:
-	 std::optional<const b2Fixture*> found_fixture;
+	std::optional<const b2Fixture*> found_fixture;
 
-	 bool ReportFixture(b2Fixture* fixture) {
+	bool ReportFixture(b2Fixture* fixture) {
 		 switch(*static_cast<fixture_type*>(fixture->GetUserData())) {
-			 case fixture_type::torso:
-				 found_fixture = fixture;
-				 return false;
-			 case fixture_type::torso_predator:
-				 found_fixture = fixture;
-				 return false;
-			 default:
-				 return true;
+			case fixture_type::torso:
+				found_fixture = fixture;
+				return false;
+			case fixture_type::torso_predator:
+				found_fixture = fixture;
+				return false;
+			case fixture_type::yell:
+				std::cout << "Found yell" << std::endl;
+				return false;
+			default:
+				return true;
 		}
-	 }
+	}
  };
 
 int evsim(int argc, char **argv) {

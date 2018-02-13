@@ -25,8 +25,10 @@ static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 static const fixture_type yell_type = fixture_type::yell;
 
 void yell::init_body(b2World &world, species_neat::agent *holler) {
-	b2PolygonShape shape;
-	shape.SetAsBox(30.0f, 30.0f);
+	b2CircleShape shape;
+	shape.m_p.Set(0.0f, 0.0f); //position, relative to body position
+	shape.m_radius = 30.0f;
+
 	b2FixtureDef fixture;
 	fixture.shape = &shape;
 	fixture.density = 1.0f;
@@ -81,8 +83,8 @@ static struct {
 		glDeleteBuffers(1, &buffers.body);
 
 		program = std::make_unique<gfx::program>();
-		program->attach(load_text_file("../box.vert"), gfx::program::shader_type::VERTEX);
-		program->attach(load_text_file("../box.frag"), gfx::program::shader_type::FRAGMENT);
+		program->attach(load_text_file("../circle.vert"), gfx::program::shader_type::VERTEX);
+		program->attach(load_text_file("../circle.frag"), gfx::program::shader_type::FRAGMENT);
 		program->link();
 		hot = true;
 	}
