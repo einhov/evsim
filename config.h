@@ -26,7 +26,7 @@ constexpr size_t pr_min_species = 3;
 constexpr size_t pr_max_species = 20;
 constexpr double pr_compat_treshold = 0.1;
 constexpr float pr_force = 1000.0f;
-constexpr float pr_torque = 75.0f;
+constexpr float pr_torque = 45.0f;
 
 // Sensors
 constexpr float sensor_length = 45.0f;

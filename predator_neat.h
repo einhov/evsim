@@ -34,7 +34,6 @@ class predator_neat {
 
 		class agent : public entity {
 			public:
-				static constexpr int vision_segments = 5;
 				void message(const std::any &msg) override;
 				void on_sensor(const msg_contact &contact);
 
@@ -42,7 +41,11 @@ class predator_neat {
 				int score;
 				int generation_score;
 				int species;
-				std::array<float, vision_segments> vision;
+
+				static constexpr int vision_segments = 5;
+				using vision_texture = std::array<float, vision_segments>;
+				vision_texture vision_herbivore;
+				vision_texture vision_predator;
 
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;

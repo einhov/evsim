@@ -67,7 +67,7 @@ bool predator_neat::initialise(size_t size, int seed) {
 	params.CompatTreshold = build_config::pr_compat_treshold;
 
 	NEAT::Genome genesis(
-		0, 3 + agent::vision_segments, 0, 2, false,
+		0, 3 + agent::vision_segments * 3, 0, 2, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 		0, params, 0
 	);
@@ -78,7 +78,8 @@ bool predator_neat::initialise(size_t size, int seed) {
 
 void predator_neat::pre_tick() {
 	for(auto &agent : agents) {
-		agent.vision = {};
+		agent.vision_herbivore = {};
+		agent.vision_predator = {};
 	}
 }
 
@@ -93,10 +94,19 @@ void predator_neat::tick() {
 		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
 		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
 
-		std::vector<double> inputs;
-		std::transform(agent.vision.cbegin(), agent.vision.cend(), std::back_inserter(inputs), [](const auto &elem) {
+		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;
-		});
+		};
+
+		std::vector<double> inputs;
+		std::transform(
+			agent.vision_herbivore.cbegin(), agent.vision_herbivore.cend(),
+			std::back_inserter(inputs), vision_inserter
+		);
+		std::transform(
+			agent.vision_predator.cbegin(), agent.vision_predator.cend(),
+			std::back_inserter(inputs), vision_inserter
+		);
 		inputs.emplace_back([&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }());
 		inputs.emplace_back(body->GetAngularVelocity());
 		inputs.emplace_back(1.0);
@@ -144,6 +154,22 @@ void predator_neat::epoch(int steps) {
 }
 
 void predator_neat::agent::on_sensor(const msg_contact &contact) {
+	using vt = std::array<float, vision_segments>;
+	const auto vision_texture = [this,&contact]() -> std::optional<vt*> {
+		const auto &foreign_userdata = contact.fixture_foreign->GetUserData();
+		const auto &native_fixture_type = *static_cast<fixture_type*>(foreign_userdata);
+		switch(native_fixture_type) {
+			case fixture_type::torso:
+				return &vision_herbivore;
+			case fixture_type::torso_predator:
+				return &vision_predator;
+			default:
+				return {};
+		}
+	}();
+
+	if(!vision_texture) return;
+	auto &vision = **vision_texture;
 	const auto forward = glm::rotate(glm::vec2 { 0.0f, 1.0f }, body->GetAngle());
 	const glm::vec2 diff = [this,&contact] {
 		const auto s = body->GetPosition();
@@ -179,16 +205,17 @@ void predator_neat::agent::message(const std::any &msg) {
 	const auto &type = msg.type();
 	if(type == typeid(msg_contact)) {
 		const auto &contact = std::any_cast<msg_contact>(msg);
-		if(*static_cast<fixture_type*>(contact.fixture_foreign->GetUserData()) == fixture_type::torso) {
-			const auto &native_userdata = contact.fixture_native->GetUserData();
-			assert(native_userdata != nullptr);
-			const auto &native_fixture_type = *static_cast<fixture_type*>(native_userdata);
-			if(native_fixture_type == fixture_type::sensor) {
-				on_sensor(contact);
-			} else if(native_fixture_type == fixture_type::torso_predator) {
-				const auto &agent = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
-				agent->message(std::make_any<msg_kill>(msg_kill { this }));
-			}
+
+		const auto &native_userdata = contact.fixture_native->GetUserData();
+		const auto &native_fixture_type = *static_cast<fixture_type*>(native_userdata);
+		const auto &foreign_userdata = contact.fixture_foreign->GetUserData();
+		const auto &foreign_fixture_type = *static_cast<fixture_type*>(foreign_userdata);
+
+		if(native_fixture_type == fixture_type::sensor) {
+			on_sensor(contact);
+		} else if(native_fixture_type == fixture_type::torso_predator && foreign_fixture_type == fixture_type::torso) {
+			const auto &agent = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
+			agent->message(std::make_any<msg_kill>(msg_kill { this }));
 		}
 	} else if(type == typeid(msg_killed)) {
 		score++;

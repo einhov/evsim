@@ -89,7 +89,7 @@ void predator_neat::draw(const glm::mat4 &projection) const {
 	model.program->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 
 	// Draw sensors
-	if(conf.draw_sensors) {
+	if(conf.draw_sensors_predator) {
 		model.program_sensor->activate();
 		model.program_sensor->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 		glBindVertexArray(model.vertex_arrays.sensor);
@@ -103,7 +103,7 @@ void predator_neat::draw(const glm::mat4 &projection) const {
 				glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) *
 				glm::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));
 			model.program_sensor->set_uniform<uniform_type::MAT4>("model", glm::value_ptr(mat_model));
-			glTexSubImage1D(GL_TEXTURE_1D, 0, 0, agent::vision_segments, GL_RED, GL_FLOAT, agent.vision.data());
+			glTexSubImage1D(GL_TEXTURE_1D, 0, 0, agent::vision_segments, GL_RED, GL_FLOAT, agent.vision_herbivore.data());
 			glGenerateMipmap(GL_TEXTURE_1D);
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 		}

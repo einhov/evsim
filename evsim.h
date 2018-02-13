@@ -6,7 +6,8 @@
 namespace evsim {
 
 struct configuration {
-	bool draw_sensors;
+	bool draw_sensors_herbivore;
+	bool draw_sensors_predator;
 };
 
 extern std::vector<std::unique_ptr<environmental_entity>> environmental_objects;

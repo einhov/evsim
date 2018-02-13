@@ -44,14 +44,18 @@ class species_neat {
 				b2Vec2 centre_of_yell;
 				int yell_timer_max = 60;
 				int can_yell_timer = yell_timer_max;
-				static constexpr int vision_segments = 3;
 				bool hear_yell = false;
 				b2Body *body;
 				int score;
 				int generation_score;
 				int internal_species;
 				species_neat* species;
-				std::array<float, vision_segments> vision;
+
+				static constexpr int vision_segments = 3;
+				using vision_texture = std::array<float, vision_segments>;
+				vision_texture vision_food;
+				vision_texture vision_herbivore;
+				vision_texture vision_predator;
 
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;

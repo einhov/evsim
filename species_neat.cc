@@ -2,6 +2,7 @@
 #include <iterator>
 #include <algorithm>
 #include <utility>
+#include <optional>
 
 #include <Genome.h>
 #include <Parameters.h>
@@ -76,7 +77,7 @@ bool species_neat::initialise(size_t size, int seed) {
 	params.CompatTreshold = build_config::hv_compat_treshold;
 
 	NEAT::Genome genesis(
-		0, 6 + agent::vision_segments, 0, 3, false,
+		0, 6 + agent::vision_segments * 3, 0, 3, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 		0, params, 0
 	);
@@ -87,7 +88,9 @@ bool species_neat::initialise(size_t size, int seed) {
 
 void species_neat::pre_tick() {
 	for(auto &agent : agents) {
-		agent.vision = {};
+		agent.vision_food = {};
+		agent.vision_herbivore = {};
+		agent.vision_predator = {};
 	}
 }
 
@@ -102,10 +105,23 @@ void species_neat::tick() {
 		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
 		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
 
-		std::vector<double> inputs;
-		std::transform(agent.vision.cbegin(), agent.vision.cend(), std::back_inserter(inputs), [](const auto &elem) {
+		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;
-		});
+		};
+
+		std::vector<double> inputs;
+		std::transform(
+			agent.vision_food.cbegin(), agent.vision_food.cend(),
+			std::back_inserter(inputs), vision_inserter
+		);
+		std::transform(
+			agent.vision_herbivore.cbegin(), agent.vision_herbivore.cend(),
+			std::back_inserter(inputs), vision_inserter
+		);
+		std::transform(
+			agent.vision_predator.cbegin(), agent.vision_predator.cend(),
+			std::back_inserter(inputs), vision_inserter
+		);
 		inputs.emplace_back([&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }());
 		inputs.emplace_back(body->GetAngularVelocity());
 		if(agent.hear_yell) {
@@ -182,6 +198,25 @@ static void relocate_agent(b2Body *body) {
 }
 
 void species_neat::agent::on_sensor(const msg_contact &contact) {
+	using vt = std::array<float, vision_segments>;
+	const auto vision_texture = [this,&contact]() -> std::optional<vt*> {
+		const auto &foreign_userdata = contact.fixture_foreign->GetUserData();
+		const auto &native_fixture_type = *static_cast<fixture_type*>(foreign_userdata);
+		switch(native_fixture_type) {
+			case fixture_type::food:
+				return &vision_food;
+			case fixture_type::torso:
+				return &vision_herbivore;
+			case fixture_type::torso_predator:
+				return &vision_predator;
+			default:
+				return {};
+		}
+	}();
+
+	if(!vision_texture) return;
+	auto &vision = **vision_texture;
+
 	const auto forward = glm::rotate(glm::vec2 { 0.0f, 1.0f }, body->GetAngle());
 	const glm::vec2 diff = [this,&contact] {
 		const auto s = body->GetPosition();
@@ -219,19 +254,16 @@ void species_neat::agent::message(const std::any &msg) {
 		const auto &contact = std::any_cast<msg_contact>(msg);
 		const auto &native_userdata = contact.fixture_native->GetUserData();
 		const auto &native_fixture_type = *static_cast<fixture_type*>(native_userdata);
-		if(*static_cast<fixture_type*>(contact.fixture_foreign->GetUserData()) == fixture_type::food) {
-			if(native_fixture_type == fixture_type::sensor) {
-				on_sensor(contact);
-			} else if(native_fixture_type == fixture_type::torso) {
-				const auto &food = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
-				food->message(std::make_any<msg_consume>(msg_consume { this }));
-			}
-		}
-		else if(*static_cast<fixture_type*>(contact.fixture_foreign->GetUserData()) == fixture_type::yell) {
+		const auto &foreign_userdata = contact.fixture_foreign->GetUserData();
+		const auto &foreign_fixture_type = *static_cast<fixture_type*>(foreign_userdata);
+
+		if(native_fixture_type == fixture_type::sensor) {
+			on_sensor(contact);
+		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::food) {
+			const auto &food = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
+			food->message(std::make_any<msg_consume>(msg_consume { this }));
+		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::yell) {
 			const yell *yell_heard = static_cast<yell*>(contact.fixture_foreign->GetBody()->GetUserData());
-			if(native_fixture_type != fixture_type::torso) {
-				return;
-			}
 			if(yell_heard->holler != this) {
 				hear_yell = true;
 				centre_of_yell = yell_heard->body->GetPosition();
