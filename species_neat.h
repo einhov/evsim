@@ -36,12 +36,15 @@ class species_neat {
 
 		class agent : public entity {
 			public:
-				int yell_timer_max = 60;
-				int can_yell_timer = yell_timer_max;
-				static constexpr int vision_segments = 3;
 				void message(const std::any &msg) override;
 				void on_sensor(const msg_contact &contact);
 				void create_yell();
+				glm::vec2 find_yell_vector();
+
+				b2Vec2 centre_of_yell;
+				int yell_timer_max = 60;
+				int can_yell_timer = yell_timer_max;
+				static constexpr int vision_segments = 3;
 				bool hear_yell = false;
 				b2Body *body;
 				int score;

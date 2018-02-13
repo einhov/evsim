@@ -17,6 +17,7 @@
 #include "neat_plot.h"
 #include "config.h"
 #include "evsim.h"
+#include "yell.h"
 
 namespace evsim {
 
@@ -75,7 +76,7 @@ bool species_neat::initialise(size_t size, int seed) {
 	params.CompatTreshold = build_config::hv_compat_treshold;
 
 	NEAT::Genome genesis(
-		0, 4 + agent::vision_segments, 0, 3, false,
+		0, 6 + agent::vision_segments, 0, 3, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 		0, params, 0
 	);
@@ -107,10 +108,17 @@ void species_neat::tick() {
 		});
 		inputs.emplace_back([&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }());
 		inputs.emplace_back(body->GetAngularVelocity());
-		if(agent.hear_yell)
+		if(agent.hear_yell) {
 			inputs.emplace_back(1.0);
-		else
+			const auto vec = agent.find_yell_vector();
+			inputs.emplace_back(vec.x);
+			inputs.emplace_back(vec.y);
+		}
+		else {
 			inputs.emplace_back(0.0);
+			inputs.emplace_back(0.0);
+			inputs.emplace_back(0.0);
+		}
 		agent.hear_yell = false;
 		inputs.emplace_back(1.0);
 
@@ -134,6 +142,13 @@ void species_neat::tick() {
 			agent.can_yell_timer--;
 		}
 	}
+}
+
+glm::vec2 species_neat::agent::find_yell_vector() {
+	const auto c = centre_of_yell;
+	const auto a = body->GetPosition();
+	const auto ca = glm::vec2(c.x, c.y) - glm::vec2(a.x, a.y);
+	return glm::rotate(ca, -body->GetAngle());
 }
 
 void species_neat::step() {
@@ -213,12 +228,13 @@ void species_neat::agent::message(const std::any &msg) {
 			}
 		}
 		else if(*static_cast<fixture_type*>(contact.fixture_foreign->GetUserData()) == fixture_type::yell) {
-			const auto *agent = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
+			const yell *yell_heard = static_cast<yell*>(contact.fixture_foreign->GetBody()->GetUserData());
 			if(native_fixture_type != fixture_type::torso) {
 				return;
 			}
-			if(agent != this) {
+			if(yell_heard->holler != this) {
 				hear_yell = true;
+				centre_of_yell = yell_heard->body->GetPosition();
 			}
 		}
 	} else if(type == typeid(msg_consumed)) {

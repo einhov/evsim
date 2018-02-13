@@ -15,6 +15,7 @@ class environmental_entity : public entity{
 	public:
 		virtual void tick() = 0;
 		virtual void draw(const glm::mat4 &projection) const = 0;
+		virtual ~environmental_entity() {}
 };
 
 struct msg_contact {
@@ -22,6 +23,6 @@ struct msg_contact {
 	b2Fixture *fixture_foreign;
 };
 
-};
+}
 
 #endif

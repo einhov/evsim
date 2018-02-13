@@ -18,11 +18,11 @@ class yell : public environmental_entity {
 		void message(const std::any &msg) override {}
 		b2Body* body;
 		b2World* world;
-		species_neat::agent* agent;
+		species_neat::agent* holler;
 
 		void init_body(b2World &world, species_neat::agent *agent);
 		void draw(const glm::mat4 &projection) const override;
-		~yell();
+		~yell() override;
 };
 
 };
