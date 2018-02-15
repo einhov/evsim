@@ -14,6 +14,7 @@
 #include "consumable.h"
 #include "neat_plot.h"
 #include "config.h"
+#include "evsim.h"
 
 namespace evsim {
 
@@ -45,6 +46,7 @@ bool predator_neat::initialise(size_t size, int seed) {
 	if(population_size > 0)
 		clear();
 
+	conf.draw_sensors_predator = true;
 	population_size = size;
 	agents.resize(population_size);
 

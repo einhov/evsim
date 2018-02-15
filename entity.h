@@ -3,6 +3,7 @@
 
 #include <any>
 #include <Box2D/Box2D.h>
+#include <glm/glm.hpp>
 
 namespace evsim {
 
@@ -11,7 +12,7 @@ class entity {
 		virtual void message(const std::any &msg) = 0;
 };
 
-class environmental_entity : public entity{
+class environmental_entity : public entity {
 	public:
 		virtual void tick() = 0;
 		virtual void draw(const glm::mat4 &projection) const = 0;

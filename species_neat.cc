@@ -54,6 +54,7 @@ bool species_neat::initialise(size_t size, int seed) {
 	if(population_size > 0)
 		clear();
 
+	conf.draw_sensors_herbivore = true;
 	population_size = size;
 	agents.resize(population_size);
 

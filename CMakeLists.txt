@@ -12,6 +12,8 @@ add_executable (evsim
 	body.cc
 	neat_plot.cc
 	yell.cc
+	env_food.cc
+	input.cc
 )
 
 add_definitions(-DUSE_BOOST_RANDOM -DGLM_ENABLE_EXPERIMENTAL)

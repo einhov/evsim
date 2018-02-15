@@ -9,10 +9,11 @@
 #include <glm/glm.hpp>
 
 #include "entity.h"
+#include "species.h"
 
 namespace evsim {
 
-class predator_neat {
+class predator_neat : public species {
 	public:
 		predator_neat(b2World &world) :
 		world(world), population_size(0), active_genomes(0), plot(false) {}

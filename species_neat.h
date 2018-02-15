@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 
 #include "entity.h"
+#include "species.h"
 
 namespace evsim {
 
@@ -20,7 +21,7 @@ struct msg_killed {
 };
 static void relocate_agent(b2Body *body);
 
-class species_neat {
+class species_neat : public species {
 	public:
 		species_neat(b2World &world) :
 		        world(world), population_size(0), active_genomes(0), plot(false) {}

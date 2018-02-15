@@ -24,7 +24,7 @@ static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 
 static const fixture_type yell_type = fixture_type::yell;
 
-void yell::init_body(b2World &world, species_neat::agent *holler) {
+void yell::init_body(b2World &world, species_neat::agent *hollerer) {
 	b2CircleShape shape;
 	shape.m_p.Set(0.0f, 0.0f); //position, relative to body position
 	shape.m_radius = 30.0f;
@@ -38,12 +38,12 @@ void yell::init_body(b2World &world, species_neat::agent *holler) {
 
 	b2BodyDef def;
 	def.type = b2_staticBody;
-	def.position.Set(holler->body->GetPosition().x, holler->body->GetPosition().y);
+	def.position.Set(hollerer->body->GetPosition().x, hollerer->body->GetPosition().y);
 	body = world.CreateBody(&def);
 	body->CreateFixture(&fixture);
 	body->SetUserData(this);
 
-	this->hollerer = holler;
+	this->hollerer = hollerer;
 	this->world = &world;
 }
 
