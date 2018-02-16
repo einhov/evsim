@@ -145,9 +145,6 @@ void predator_neat::epoch(int steps) {
 		agent.genotype->m_Evaluated = true;
 		agent.generation_score = 0;
 	}
-	if(plot) {
-		plot_best();
-	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 	population->Epoch();
 	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
@@ -224,11 +221,6 @@ void predator_neat::agent::message(const std::any &msg) {
 	} else if(type == typeid(msg_plot)) {
 		plot_genome(*genotype, "selected_agent");
 	}
-}
-
-void predator_neat::plot_best() {
-	const auto genome = population->GetBestGenome();
-	plot_genome(genome, "agent_best");
 }
 
 }

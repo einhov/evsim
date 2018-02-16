@@ -24,15 +24,13 @@ static void relocate_agent(b2Body *body);
 class species_neat : public species {
 	public:
 		species_neat(b2World &world) :
-		        world(world), population_size(0), active_genomes(0), plot(false) {}
+		        world(world), population_size(0), active_genomes(0) {}
 		bool initialise(size_t size, int seed);
 		void pre_tick();
 		void tick();
 		void step();
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
-		void plot_best();
-		bool plot;
 		friend class agent;
 
 		class agent : public entity {
