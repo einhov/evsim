@@ -7,10 +7,11 @@
 #include <GLFW/glfw3.h>
 
 #include "entity.h"
-#include "species_neat.h"
 #include "evsim.h"
 #include "fixture_type.h"
 #include "neat_plot.h"
+
+#include "env/multi_food/species_neat.h"
 
 namespace evsim {
 

@@ -1,27 +1,25 @@
 #ifndef ENV_FOOD_H
 #define ENV_FOOD_H
 
-#include "environment.h"
-#include "species_neat.h"
-#include "predator_neat.h"
+#include "../../environment_base.h"
 
 namespace evsim {
+namespace food {
 
-class env_food : environment {
+class environment : environment_base {
 	public:
-		env_food();
+		environment();
 		void init();
 		void step();
 		void epoch();
 		void pre_tick();
 		void tick();
 		void draw();
-		species_neat herbivores;
-		predator_neat predator;
 		const int STEPS_PER_GENERATION = 5;
 		const int TICKS_PER_STEP = 60 * 15;
 };
 
+}
 }
 
 #endif

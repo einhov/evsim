@@ -5,15 +5,18 @@ add_executable (evsim
 	evsim.cc
 	gfx_program.cc
 	consumable.cc
-	species_neat.cc
-	predator_neat.cc
-	predator_neat_draw.cc
-	species_neat_draw.cc
 	body.cc
 	neat_plot.cc
 	yell.cc
-	env_food.cc
 	input.cc
+
+	env/multi_food/species_neat.cc
+	env/multi_food/predator_neat.cc
+	env/multi_food/predator_neat_draw.cc
+	env/multi_food/species_neat_draw.cc
+	env/multi_food/environment.cc
+
+	env/food/environment.cc
 )
 
 add_definitions(-DUSE_BOOST_RANDOM -DGLM_ENABLE_EXPERIMENTAL)

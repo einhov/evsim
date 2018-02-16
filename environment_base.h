@@ -5,7 +5,7 @@
 
 namespace evsim {
 
-class environment {
+class environment_base {
 	public:
 		virtual void init() = 0;
 		virtual void draw() = 0;
@@ -13,7 +13,7 @@ class environment {
 		virtual void epoch() = 0;
 		virtual void pre_tick() = 0;
 		virtual void tick() = 0;
-		virtual ~environment() {}
+		virtual ~environment_base() {}
 };
 
 }

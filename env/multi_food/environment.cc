@@ -1,20 +1,22 @@
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 
-#include "env_food.h"
+#include "../../environment_base.h"
+#include "../../species.h"
+#include "../../evsim.h"
+#include "../../config.h"
+#include "../../consumable.h"
+
 #include "environment.h"
-#include "species.h"
 #include "species_neat.h"
 #include "predator_neat.h"
-#include "evsim.h"
-#include "config.h"
-#include "consumable.h"
 
 namespace evsim {
+namespace multi_food {
 
-env_food::env_food() : herbivores(*conf.world), predator(*conf.world) {}
+environment::environment() : herbivores(*conf.world), predator(*conf.world) {}
 
-void env_food::init() {
+void environment::init() {
 	herbivores.initialise(build_config::herbivore_count, static_cast<int>(glfwGetTime()));
 	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
 
@@ -25,22 +27,22 @@ void env_food::init() {
 	}
 }
 
-void env_food::step() {
+void environment::step() {
 	herbivores.step();
 	predator.step();
 }
 
-void env_food::epoch() {
+void environment::epoch() {
 	herbivores.epoch(STEPS_PER_GENERATION);
 	predator.epoch(STEPS_PER_GENERATION);
 }
 
-void env_food::pre_tick() {
+void environment::pre_tick() {
 	herbivores.pre_tick();
 	predator.pre_tick();
 }
 
-void env_food::tick() {
+void environment::tick() {
 	herbivores.tick();
 	predator.tick();
 	for(auto &env_obj : environmental_objects) {
@@ -48,7 +50,7 @@ void env_food::tick() {
 	}
 }
 
-void env_food::draw() {
+void environment::draw() {
 	// Draw environmental objects
 	for(const auto &env_obj : environmental_objects){
 		env_obj->draw(conf.projection);
@@ -58,4 +60,5 @@ void env_food::draw() {
 	herbivores.draw(conf.projection);
 }
 
+}
 }
