@@ -10,13 +10,18 @@ add_executable (evsim
 	yell.cc
 	input.cc
 
-	env/multi_food/species_neat.cc
+	#Including food environment
+	env/food/environment.cc
+	env/food/herbivore_neat.cc
+	env/food/herbivore_neat_draw.cc
+
+	#Including multi_food environment
+	env/multi_food/environment.cc
+	env/multi_food/herbivore_neat.cc
+	env/multi_food/herbivore_neat_draw.cc
 	env/multi_food/predator_neat.cc
 	env/multi_food/predator_neat_draw.cc
-	env/multi_food/species_neat_draw.cc
-	env/multi_food/environment.cc
 
-	env/food/environment.cc
 )
 
 add_definitions(-DUSE_BOOST_RANDOM -DGLM_ENABLE_EXPERIMENTAL)

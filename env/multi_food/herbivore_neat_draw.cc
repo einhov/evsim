@@ -11,7 +11,7 @@
 #include "../../body.h"
 #include "../../gfx_program.h"
 
-#include "species_neat.h"
+#include "herbivore_neat.h"
 
 namespace evsim {
 namespace multi_food {
@@ -84,7 +84,7 @@ static struct {
 
 } model;
 
-void species_neat::draw(const glm::mat4 &projection) const {
+void herbivore_neat::draw(const glm::mat4 &projection) const {
 	using uniform_type = gfx::program::uniform_type;
 
 	if(!model.hot) model.init(agent::vision_segments);

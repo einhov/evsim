@@ -3,6 +3,8 @@
 
 #include "../../environment_base.h"
 
+#include "herbivore_neat.h"
+
 namespace evsim {
 namespace food {
 
@@ -15,6 +17,7 @@ class environment : environment_base {
 		void pre_tick();
 		void tick();
 		void draw();
+		herbivore_neat herbivores;
 		const int STEPS_PER_GENERATION = 5;
 		const int TICKS_PER_STEP = 60 * 15;
 };

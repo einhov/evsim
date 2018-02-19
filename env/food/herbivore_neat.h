@@ -1,5 +1,5 @@
-#ifndef SPECIES_NEAT_H
-#define SPECIES_NEAT_H
+#ifndef PREDATOR_NEAT_FOOD_H
+#define PREDATOR_NEAT_FOOD_H
 
 #include <vector>
 #include <memory>
@@ -12,7 +12,7 @@
 #include "../../species.h"
 
 namespace evsim {
-namespace multi_food {
+namespace food {
 
 struct msg_kill {
 	entity *consumer;
@@ -22,9 +22,9 @@ struct msg_killed {
 };
 static void relocate_agent(b2Body *body);
 
-class species_neat : public species {
+class herbivore_neat : public species {
 	public:
-		species_neat(b2World &world) :
+		herbivore_neat(b2World &world) :
 		        world(world), population_size(0), active_genomes(0) {}
 		bool initialise(size_t size, int seed);
 		void pre_tick();
@@ -38,18 +38,12 @@ class species_neat : public species {
 			public:
 				void message(const std::any &msg) override;
 				void on_sensor(const msg_contact &contact);
-				void create_yell();
-				glm::vec2 find_yell_vector();
 
-				b2Vec2 centre_of_yell;
-				int yell_timer_max = 60;
-				int can_yell_timer = yell_timer_max;
-				bool hear_yell = false;
 				b2Body *body;
 				int score;
 				int generation_score;
 				int internal_species;
-				species_neat* species;
+				herbivore_neat* species;
 
 				static constexpr int vision_segments = 3;
 				using vision_texture = std::array<float, vision_segments>;

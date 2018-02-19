@@ -11,7 +11,7 @@
 #include "fixture_type.h"
 #include "neat_plot.h"
 
-#include "env/multi_food/species_neat.h"
+#include "env/multi_food/herbivore_neat.h"
 
 namespace evsim {
 

@@ -8,7 +8,7 @@
 #include "../../consumable.h"
 
 #include "environment.h"
-#include "species_neat.h"
+#include "herbivore_neat.h"
 #include "predator_neat.h"
 
 namespace evsim {

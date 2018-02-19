@@ -13,7 +13,9 @@
 #include "body.h"
 #include "yell.h"
 #include "input.h"
+
 #include "env/multi_food/environment.h"
+#include "env/food/environment.h"
 
 namespace evsim {
 
@@ -67,7 +69,7 @@ int evsim(int argc, char **argv) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
 	double previous_frame = glfwGetTime();
-	multi_food::environment env;
+	food::environment env;
 	env.init();
 	while(true) {
 		if(!conf.pause) {
