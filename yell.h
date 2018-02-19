@@ -5,8 +5,7 @@
 
 #include <Box2D/Box2D.h>
 
-#include "entity.h"
-#include "env/multi_food/herbivore_neat.h"
+#include "agent_base.h"
 
 namespace evsim {
 
@@ -18,9 +17,9 @@ class yell : public environmental_entity {
 		void message(const std::any &msg) override {}
 		b2Body* body;
 		b2World* world;
-		multi_food::herbivore_neat::agent *hollerer;
+		agent_base *hollerer;
 
-		void init_body(b2World &world, multi_food::herbivore_neat::agent *agent);
+		void init_body(b2World &world, agent_base *agent);
 		void draw(const glm::mat4 &projection) const override;
 		~yell() override;
 };

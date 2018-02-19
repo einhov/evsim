@@ -1,5 +1,5 @@
-#ifndef ENVIRONMENT1_H
-#define ENVIRONMENT1_H
+#ifndef ENVIRONMENT_BASE_H
+#define ENVIRONMENT_BASE_H
 
 #include <glm/glm.hpp>
 

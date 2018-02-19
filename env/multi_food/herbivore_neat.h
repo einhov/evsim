@@ -8,7 +8,7 @@
 #include <Box2D/Box2D.h>
 #include <glm/glm.hpp>
 
-#include "../../entity.h"
+#include "../../agent_base.h"
 #include "../../species.h"
 
 namespace evsim {
@@ -34,7 +34,7 @@ class herbivore_neat : public species {
 		void draw(const glm::mat4 &projection) const;
 		friend class agent;
 
-		class agent : public entity {
+		class agent : public agent_base {
 			public:
 				void message(const std::any &msg) override;
 				void on_sensor(const msg_contact &contact);
@@ -45,7 +45,6 @@ class herbivore_neat : public species {
 				int yell_timer_max = 60;
 				int can_yell_timer = yell_timer_max;
 				bool hear_yell = false;
-				b2Body *body;
 				int score;
 				int generation_score;
 				int internal_species;
