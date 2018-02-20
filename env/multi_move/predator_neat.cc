@@ -18,7 +18,7 @@
 #include "predator_neat.h"
 
 namespace evsim {
-namespace multi_food {
+namespace multi_move {
 
 void predator_neat::clear() {
 	for(const auto &agent : agents)
@@ -95,8 +95,8 @@ void predator_neat::tick() {
 
 		if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
 		if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
-		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
-		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
+		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(99.0f * (4.0 / 3.0), pos.y), angle);
+		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(97.0f * (4.0 / 3.0), pos.y), angle);
 
 		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;

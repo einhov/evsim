@@ -79,7 +79,7 @@ bool herbivore_neat::initialise(size_t size, int seed) {
 	params.CompatTreshold = build_config::hv_compat_treshold;
 
 	NEAT::Genome genesis(
-		0, 5 + agent::vision_segments * 2, 0, 3, false,
+		0, 3 + agent::vision_segments * 2, 0, 3, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 		0, params, 0
 	);

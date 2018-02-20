@@ -80,7 +80,7 @@ bool herbivore_neat::initialise(size_t size, int seed) {
 	params.CompatTreshold = build_config::hv_compat_treshold;
 
 	NEAT::Genome genesis(
-		0, 6 + agent::vision_segments * 3, 0, 3, false,
+		0, 4 + agent::vision_segments * 3, 0, 3, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 		0, params, 0
 	);
@@ -285,7 +285,7 @@ void herbivore_neat::agent::create_yell() {
 	if(can_yell_timer == 0){
 		can_yell_timer = yell_timer_max;
 		auto yell_instance = std::make_unique<yell>();
-		yell_instance->init_body(species->world, this);
+		yell_instance->init_body(species->world, this, body->GetPosition());
 		environmental_objects.push_back(std::move(yell_instance));
 	}
 }

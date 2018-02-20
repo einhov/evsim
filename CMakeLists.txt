@@ -22,6 +22,13 @@ add_executable (evsim
 	env/multi_food/predator_neat.cc
 	env/multi_food/predator_neat_draw.cc
 
+	#Including multi_move environment
+	env/multi_move/environment.cc
+	env/multi_move/herbivore_neat.cc
+	env/multi_move/herbivore_neat_draw.cc
+	env/multi_move/predator_neat.cc
+	env/multi_move/predator_neat_draw.cc
+
 )
 
 add_definitions(-DUSE_BOOST_RANDOM -DGLM_ENABLE_EXPERIMENTAL)

@@ -13,6 +13,7 @@
 #include "fixture_type.h"
 #include "gfx_program.h"
 #include "evsim.h"
+#include "entity.h"
 
 namespace evsim {
 
@@ -24,7 +25,7 @@ static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 
 static const fixture_type yell_type = fixture_type::yell;
 
-void yell::init_body(b2World &world, agent_base *hollerer) {
+void yell::init_body(b2World &world, entity *hollerer, const b2Vec2& position) {
 	b2CircleShape shape;
 	shape.m_p.Set(0.0f, 0.0f); //position, relative to body position
 	shape.m_radius = 30.0f;
@@ -38,7 +39,7 @@ void yell::init_body(b2World &world, agent_base *hollerer) {
 
 	b2BodyDef def;
 	def.type = b2_staticBody;
-	def.position.Set(hollerer->body->GetPosition().x, hollerer->body->GetPosition().y);
+	def.position.Set(position.x, position.y);
 	body = world.CreateBody(&def);
 	body->CreateFixture(&fixture);
 	body->SetUserData(this);

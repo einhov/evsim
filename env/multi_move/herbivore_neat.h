@@ -1,5 +1,5 @@
-#ifndef HERBIVORE_NEAT_MULTI_FOOD_H
-#define HERBIVORE_NEAT_MULTI_FOOD_H
+#ifndef HERBIVORE_NEAT_MULTI_MOVE_H
+#define HERBIVORE_NEAT_MULTI_MOVE_H
 
 #include <vector>
 #include <memory>
@@ -12,7 +12,7 @@
 #include "../../species.h"
 
 namespace evsim {
-namespace multi_food {
+namespace multi_move {
 
 struct msg_kill {
 	entity *consumer;
