@@ -1,5 +1,7 @@
 #include <random>
 
+#include <QApplication>
+
 #include <Genome.h>
 #include <Parameters.h>
 #include <NeuralNetwork.h>
@@ -14,6 +16,8 @@
 #include "consumable.h"
 #include "neat_plot.h"
 #include "config.h"
+#include "ui/gui.h"
+#include "ui/predator_widget.h"
 
 namespace evsim {
 
@@ -138,7 +142,11 @@ void predator_neat::step() {
 }
 
 void predator_neat::epoch(int steps) {
+	double total = 0;
+	double killed = 0;
 	for(auto &agent : agents) {
+		total += agent.generation_score / static_cast<double>(steps);
+		killed += agent.generation_score;
 		agent.genotype->SetFitness(agent.generation_score / static_cast<double>(steps));
 		agent.genotype->m_Evaluated = true;
 		agent.generation_score = 0;
@@ -146,11 +154,20 @@ void predator_neat::epoch(int steps) {
 	if(plot) {
 		plot_best();
 	}
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new predator_widget::epoch_event(population->m_Generation, total/agents.size())
+		);
+	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 	population->Epoch();
 	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
 	fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
 	distribute_genomes();
+}
+
+QWidget *predator_neat::make_species_widget() {
+	return new predator_widget(this);
 }
 
 void predator_neat::agent::on_sensor(const msg_contact &contact) {

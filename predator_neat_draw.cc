@@ -89,7 +89,7 @@ void predator_neat::draw(const glm::mat4 &projection) const {
 	model.program->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 
 	// Draw sensors
-	if(conf.draw_sensors_predator) {
+	if(draw_vision) {
 		model.program_sensor->activate();
 		model.program_sensor->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 		glBindVertexArray(model.vertex_arrays.sensor);

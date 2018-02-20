@@ -1,14 +1,21 @@
+#include <thread>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <Box2D/Box2D.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <optional>
 
+#include <QApplication>
+#include <QPushButton>
+#include "ui/gui.h"
+
 #include "evsim.h"
 #include "consumable.h"
 #include "species_neat.h"
 #include "predator_neat.h"
 #include "entity.h"
+#include "species.h"
 #include "config.h"
 #include "fixture_type.h"
 #include "neat_plot.h"
@@ -16,15 +23,18 @@
 
 namespace evsim {
 
-configuration conf;
+gui *main_gui;
+
+simulation_state state;
 
 int evsim(int argc, char **argv) {
 	if(!glfwInit()) {
 		return -1;
 	}
 
-	conf.draw_sensors_herbivore = true;
-	conf.draw_sensors_predator = true;
+	state.draw = true;
+
+	QCoreApplication::postEvent(main_gui, new gui::refresh_event);
 
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -32,7 +42,7 @@ int evsim(int argc, char **argv) {
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow *window = glfwCreateWindow(1024, 768, "", nullptr, nullptr);
+	GLFWwindow *window = glfwCreateWindow(1024, 768, "evsim", nullptr, nullptr);
 	if(!window) {
 		glfwTerminate();
 		return -1;
@@ -62,28 +72,28 @@ int evsim(int argc, char **argv) {
 	static predator_neat predator(world);
 	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
 
+	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
+	QApplication::postEvent(main_gui, new gui::add_species_event(&predator));
+
 	std::array<consumable, build_config::food_count> foods;
 	for(auto &food : foods)
 		food.init_body(world);
 
-	static bool draw = true;
-	static bool pause = false;
 	glfwSetKeyCallback(window, [] (GLFWwindow*, int key, int, int action, int) {
+		std::scoped_lock<std::mutex> lock(evsim::state.mutex);
 		if(key == GLFW_KEY_F && action == GLFW_PRESS) {
-			draw = !draw;
+			state.draw = !state.draw;
 		}
 		if(key == GLFW_KEY_O && action == GLFW_PRESS) {
-			pause = !pause;
+			state.pause = !state.pause;
 		}
 		if(key == GLFW_KEY_P && action == GLFW_PRESS) {
 			herbivores.plot = !herbivores.plot ;
 		}
-		if(key == GLFW_KEY_S && action == GLFW_PRESS) {
-			conf.draw_sensors_herbivore = !conf.draw_sensors_herbivore;
+		if(key == GLFW_KEY_Q && action == GLFW_PRESS) {
+			state.quit = true;
 		}
-		if(key == GLFW_KEY_D && action == GLFW_PRESS) {
-			conf.draw_sensors_predator = !conf.draw_sensors_predator;
-		}
+		QCoreApplication::postEvent(main_gui, new gui::refresh_event);
 	});
 
 	glfwSetMouseButtonCallback(window, [] (GLFWwindow* window, int button, int action, int mods) {
@@ -131,30 +141,28 @@ int evsim(int argc, char **argv) {
 	});
 
 	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_DEPTH_TEST);
+	glBlendFunc(GL_ONE, GL_ZERO);
+	glEnable(GL_DEPTH_TEST);
 	double previous_frame = glfwGetTime();
-	int generation = 0;
-	int step = 0;
-	int tick = 0;
-	while(true) {
-		if(!pause){
-			const int STEPS_PER_GENERATION = 5;
+	while(!state.quit) {
+		if(!state.pause){
+			const int STEPS_PER_GENERATION = 15;
 			const int TICKS_PER_STEP = 60 * 15;
 
-			if(tick++ >= TICKS_PER_STEP) {
-				tick = 0;
-				fprintf(stderr, "Step: %d\n", step);
-				step++;
+			if(state.tick++ >= TICKS_PER_STEP) {
+				state.tick = 0;
+				fprintf(stderr, "Step: %d\n", state.step);
+				state.step++;
 				herbivores.step();
 				predator.step();
-				if(step >= STEPS_PER_GENERATION) {
-					step = 0;
-					fprintf(stderr, "Generation: %d\n", generation);
+				if(state.step >= STEPS_PER_GENERATION) {
+					state.step = 0;
+					fprintf(stderr, "Generation: %d\n", state.generation);
 					herbivores.epoch(STEPS_PER_GENERATION);
 					predator.epoch(STEPS_PER_GENERATION);
-					generation++;
+					state.generation++;
 				}
+				QApplication::postEvent(main_gui, new gui::step_event);
 			}
 
 			world.Step(simulation_timestep, 1, 1);
@@ -185,7 +193,7 @@ int evsim(int argc, char **argv) {
 		}
 
 		glfwPollEvents();
-		if(!draw) continue;
+		if(!state.draw) continue;
 
 		const double this_frame = glfwGetTime();
 		const double delta = this_frame - previous_frame;
@@ -204,11 +212,17 @@ int evsim(int argc, char **argv) {
 	}
 
 	glfwTerminate();
+	QApplication::postEvent(main_gui, new gui::quit_event);
 	return 0;
 }
 
 }
 
 int main(int argc, char **argv) {
-	return evsim::evsim(argc, argv);
+	QApplication app(argc, argv);
+	evsim::main_gui = new gui();
+	evsim::main_gui->show();
+	std::thread simulation_thread(evsim::evsim, argc, argv);
+	app.exec();
+	simulation_thread.join();
 }

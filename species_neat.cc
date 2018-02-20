@@ -4,6 +4,8 @@
 #include <utility>
 #include <optional>
 
+#include <QApplication>
+
 #include <Genome.h>
 #include <Parameters.h>
 #include <NeuralNetwork.h>
@@ -17,6 +19,8 @@
 #include "consumable.h"
 #include "neat_plot.h"
 #include "config.h"
+#include "ui/gui.h"
+#include "ui/herbivore_widget.h"
 
 namespace evsim {
 
@@ -72,6 +76,7 @@ bool species_neat::initialise(size_t size, int seed) {
 	params.MinSpecies = build_config::hv_min_species;
 	params.MaxSpecies = build_config::hv_max_species;
 	params.CompatTreshold = build_config::hv_compat_treshold;
+	params.MutateNeuronActivationTypeProb = 0.5;
 
 	NEAT::Genome genesis(
 		0, 3 + agent::vision_segments * 3, 0, 2, false,
@@ -150,13 +155,20 @@ void species_neat::step() {
 }
 
 void species_neat::epoch(int steps) {
+	double total = 0;
 	for(auto &agent : agents) {
+		total += agent.generation_score / static_cast<double>(steps);
 		agent.genotype->SetFitness(agent.generation_score / static_cast<double>(steps));
 		agent.genotype->m_Evaluated = true;
 		agent.generation_score = 0;
 	}
 	if(plot) {
 		plot_best();
+	}
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new herbivore_widget::epoch_event(population->m_Generation, total/agents.size())
+		);
 	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 	population->Epoch();
@@ -165,6 +177,9 @@ void species_neat::epoch(int steps) {
 	distribute_genomes();
 }
 
+QWidget *species_neat::make_species_widget() {
+	return new herbivore_widget(this);
+}
 
 static void relocate_agent(b2Body *body) {
 	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
@@ -241,7 +256,7 @@ void species_neat::agent::message(const std::any &msg) {
 		score++;
 	} else if(type == typeid(msg_kill)) {
 		const auto &consumer = std::any_cast<msg_kill>(msg).consumer;
-		score -= 10;
+		score -= 2;
 		relocate_agent(body);
 		consumer->message(std::make_any<msg_killed>());
 	} else if(type == typeid(msg_plot)) {

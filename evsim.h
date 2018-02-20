@@ -1,14 +1,22 @@
 #ifndef EVSIM_H
 #define EVSIM_H
 
+#include <mutex>
+
 namespace evsim {
 
-struct configuration {
-	bool draw_sensors_herbivore;
-	bool draw_sensors_predator;
+struct simulation_state {
+	int generation;
+	int step;
+	int tick;
+
+	bool quit;
+	bool pause;
+	bool draw;
+	std::mutex mutex;
 };
 
-extern configuration conf;
+extern simulation_state state;
 
 }
 

@@ -10,5 +10,5 @@ uniform mat4 model;
 
 void main() {
 	frag_uv = uv;
-	gl_Position = projection * model * vec4(position, 0.0, 1.0);
+	gl_Position = projection * model * vec4(position, -0.9, 1.0);
 }
