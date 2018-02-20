@@ -17,12 +17,6 @@
 
 namespace evsim {
 
-static std::default_random_engine generator(std::random_device{}());
-static std::uniform_real_distribution<float> velocity_distribution(-10.0f, 10.0f);
-static std::uniform_real_distribution<float> angular_distribution(-glm::radians(45.0f), glm::radians(45.0f));
-static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
-static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
-
 static const fixture_type yell_type = fixture_type::yell;
 
 void yell::init_body(b2World &world, entity *hollerer, const b2Vec2& position) {
