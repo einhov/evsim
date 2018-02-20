@@ -70,7 +70,7 @@ int evsim(int argc, char **argv) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
 	double previous_frame = glfwGetTime();
-	multi_move::environment env;
+	food::environment env;
 	env.init();
 	while(true) {
 		if(!conf.pause) {
