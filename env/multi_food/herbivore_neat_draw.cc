@@ -7,12 +7,14 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "evsim.h"
-#include "species_neat.h"
-#include "body.h"
-#include "gfx_program.h"
+#include "../../evsim.h"
+#include "../../body.h"
+#include "../../gfx_program.h"
+
+#include "herbivore_neat.h"
 
 namespace evsim {
+namespace multi_food {
 
 static const std::string load_text_file(std::string_view filename) {
 	std::ifstream file(filename.data());
@@ -82,30 +84,19 @@ static struct {
 
 } model;
 
-void species_neat::draw(const glm::mat4 &projection) const {
+void herbivore_neat::draw(const glm::mat4 &projection) const {
 	using uniform_type = gfx::program::uniform_type;
 
 	if(!model.hot) model.init(agent::vision_segments);
 
 	// Draw sensors
-	if(draw_vision) {
+	if(state.draw_sensors_herbivore) {
 		model.program_sensor->activate();
 		model.program_sensor->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 		glBindVertexArray(model.vertex_arrays.sensor);
 		glEnable(GL_TEXTURE_1D);
 		glBindTexture(GL_TEXTURE_1D, model.sensor_texture);
 		for(const auto &agent : agents) {
-			const auto &vision = [this,&agent] {
-				switch(vision_texture) {
-					default: [[fallthrough]]
-					case 0:
-					  return agent.vision_food;
-					case 1:
-					  return agent.vision_herbivore;
-					case 2:
-					  return agent.vision_predator;
-				}
-			}();
 			const auto body = agent.body;
 			const b2Vec2 pos = body->GetPosition();
 			const float angle = body->GetAngle();
@@ -113,7 +104,7 @@ void species_neat::draw(const glm::mat4 &projection) const {
 				glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) *
 				glm::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));
 			model.program_sensor->set_uniform<uniform_type::MAT4>("model", glm::value_ptr(mat_model));
-			glTexSubImage1D(GL_TEXTURE_1D, 0, 0, agent::vision_segments, GL_RED, GL_FLOAT, vision.data());
+			glTexSubImage1D(GL_TEXTURE_1D, 0, 0, agent::vision_segments, GL_RED, GL_FLOAT, agent.vision_food.data());
 			glGenerateMipmap(GL_TEXTURE_1D);
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 		}
@@ -142,10 +133,11 @@ void species_neat::draw(const glm::mat4 &projection) const {
 			{ 229,184,0 }, { 0,204,163 }, { 229,57,57 },
 			{ 97,242,0 }, { 184,230,0 }, { 0,82,204 }
 		}};
-		const auto &c = colours[agent.species % colours.size()];
+		const auto &c = colours[agent.internal_species % colours.size()];
 		model.program->set_uniform<uniform_type::FLOAT3>("box_colour", c.x / 255.0f, c.y / 255.0f, c.z / 255.0f);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}
 }
 
-};
+}
+}

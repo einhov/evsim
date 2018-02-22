@@ -8,15 +8,31 @@ add_executable (evsim
 	evsim.cc
 	gfx_program.cc
 	consumable.cc
-	species_neat.cc
-	predator_neat.cc
-	predator_neat_draw.cc
-	species_neat_draw.cc
 	body.cc
 	neat_plot.cc
+	yell.cc
+	input.cc
+
+	#Including food environment
+	env/food/environment.cc
+	env/food/herbivore_neat.cc
+	env/food/herbivore_neat_draw.cc
+
+	#Including multi_food environment
+	env/multi_food/environment.cc
+	env/multi_food/herbivore_neat.cc
+	env/multi_food/herbivore_neat_draw.cc
+	env/multi_food/predator_neat.cc
+	env/multi_food/predator_neat_draw.cc
+
+	#Including multi_move environment
+	env/multi_move/environment.cc
+	env/multi_move/herbivore_neat.cc
+	env/multi_move/herbivore_neat_draw.cc
+	env/multi_move/predator_neat.cc
+	env/multi_move/predator_neat_draw.cc
+
 	ui/gui.cc
-	ui/herbivore_widget.cc
-	ui/predator_widget.cc
 )
 
 add_definitions(-DUSE_BOOST_RANDOM -DGLM_ENABLE_EXPERIMENTAL)

@@ -1,35 +1,29 @@
-#ifndef PREDATOR_NEAT_H
-#define PREDATOR_NEAT_H
+#ifndef PREDATOR_NEAT_MULTI_MOVE_H
+#define PREDATOR_NEAT_MULTI_MOVE_H
 
 #include <vector>
 #include <memory>
-#include <atomic>
 
 #include <Population.h>
 #include <Box2D/Box2D.h>
 #include <glm/glm.hpp>
 
-#include "species.h"
-#include "entity.h"
-
-class predator_widget;
+#include "../../entity.h"
+#include "../../species.h"
 
 namespace evsim {
+namespace multi_move {
 
 class predator_neat : public species {
-	friend class ::predator_widget;
 	public:
 		predator_neat(b2World &world) :
-			world(world), population_size(0), active_genomes(0), plot(false) {}
+		world(world), population_size(0), active_genomes(0) {}
 		bool initialise(size_t size, int seed);
 		void pre_tick();
 		void tick();
 		void step();
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
-		void plot_best();
-		bool plot;
-		QWidget *make_species_widget();
 
 	private:
 		void clear();
@@ -43,10 +37,10 @@ class predator_neat : public species {
 				void message(const std::any &msg) override;
 				void on_sensor(const msg_contact &contact);
 
-				b2Body *body;
 				int score;
 				int generation_score;
 				int species;
+				b2Body *body;
 
 				static constexpr int vision_segments = 5;
 				using vision_texture = std::array<float, vision_segments>;
@@ -59,10 +53,9 @@ class predator_neat : public species {
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		b2World &world;
-		std::optional<predator_widget*> widget;
-		std::atomic_bool draw_vision;
 };
 
+}
 }
 
 #endif

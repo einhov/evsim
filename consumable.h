@@ -16,15 +16,16 @@ struct msg_consume {
 struct msg_consumed {
 };
 
-class consumable : public entity {
+class consumable : public environmental_entity {
 	public:
 		void message(const std::any &msg) override;
+		void tick() override {}
 
 		b2Body *body;
 
 		void init_body(b2World &world);
 		void update();
-		void draw(const glm::mat4 &projection) const;
+		void draw(const glm::mat4 &projection) const override;
 };
 
 };

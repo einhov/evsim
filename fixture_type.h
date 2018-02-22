@@ -5,7 +5,8 @@ enum class fixture_type {
     sensor,
     torso,
     torso_predator,
-    food
+    food,
+    yell
 };
 
 #endif
