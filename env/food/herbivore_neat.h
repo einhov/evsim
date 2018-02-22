@@ -1,5 +1,5 @@
-#ifndef PREDATOR_NEAT_FOOD_H
-#define PREDATOR_NEAT_FOOD_H
+#ifndef HERBIVORE_NEAT_FOOD_H
+#define HERBIVORE_NEAT_FOOD_H
 
 #include <vector>
 #include <memory>
@@ -34,6 +34,7 @@ class herbivore_neat : public species {
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
 
+	private:
 		friend class agent;
 		class agent : public entity {
 			public:
@@ -56,7 +57,6 @@ class herbivore_neat : public species {
 				NEAT::NeuralNetwork phenotype;
 		};
 
-	private:
 		void clear();
 		void distribute_genomes();
 

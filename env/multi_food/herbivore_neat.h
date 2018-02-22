@@ -32,8 +32,9 @@ class herbivore_neat : public species {
 		void step();
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
-		friend class agent;
 
+	private:
+		friend class agent;
 		class agent : public entity {
 			public:
 				void message(const std::any &msg) override;
@@ -61,7 +62,6 @@ class herbivore_neat : public species {
 				NEAT::NeuralNetwork phenotype;
 		};
 
-	private:
 		void clear();
 		void distribute_genomes();
 
