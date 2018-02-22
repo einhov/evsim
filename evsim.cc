@@ -21,9 +21,7 @@
 #include "yell.h"
 #include "input.h"
 
-#include "env/food/environment.h"
-#include "env/multi_food/environment.h"
-#include "env/multi_move/environment.h"
+#include "env/environments.h"
 
 namespace evsim {
 
