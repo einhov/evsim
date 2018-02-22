@@ -53,8 +53,8 @@ bool predator_neat::initialise(size_t size, int seed) {
 	agents.resize(population_size);
 
 	static std::default_random_engine generator;
-	static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), -97.0f * (4.0f / 3.0f));
-	static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
+	static std::uniform_real_distribution<float> pos_x_distribution(-40.0f * (4.0f / 3.0f), 40.0f * (4.0f / 3.0f));
+	static std::uniform_real_distribution<float> pos_y_distribution(-40.0f, 40.0f);
 	for(auto &agent : agents) {
 		agent.body = build_predator_body(world);
 		agent.body->SetTransform(
@@ -95,8 +95,8 @@ void predator_neat::tick() {
 
 		if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
 		if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
-		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(99.0f * (4.0 / 3.0), pos.y), angle);
-		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(97.0f * (4.0 / 3.0), pos.y), angle);
+		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
+		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
 
 		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;

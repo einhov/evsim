@@ -9,6 +9,7 @@ add_executable (evsim
 	neat_plot.cc
 	yell.cc
 	input.cc
+	wall.cc
 
 	#Including food environment
 	env/food/environment.cc

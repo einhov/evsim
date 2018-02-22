@@ -77,7 +77,7 @@ bool herbivore_neat::initialise(size_t size, int seed) {
 	params.PopulationSize = population_size;
 	params.MinSpecies = build_config::hv_min_species;
 	params.MaxSpecies = build_config::hv_max_species;
-	params.CompatTreshold = build_config::hv_compat_treshold;
+//	params.CompatTreshold = build_config::hv_compat_treshold;
 
 	NEAT::Genome genesis(
 		0, 4 + agent::vision_segments * 3, 0, 3, false,

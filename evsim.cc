@@ -63,6 +63,7 @@ int evsim(int argc, char **argv) {
 	conf.generation = 0;
 	conf.step = 0;
 	conf.tick = 0;
+	conf.draw_wall = 1;
 
 	input_init(window);
 
@@ -70,7 +71,7 @@ int evsim(int argc, char **argv) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_DEPTH_TEST);
 	double previous_frame = glfwGetTime();
-	food::environment env;
+	multi_move::environment env;
 	env.init();
 	while(true) {
 		if(!conf.pause) {

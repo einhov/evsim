@@ -9,7 +9,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "yell.h"
+#include "wall.h"
 #include "fixture_type.h"
 #include "gfx_program.h"
 #include "evsim.h"
@@ -20,18 +20,16 @@ namespace evsim {
 
 static const fixture_type yell_type = fixture_type::yell;
 
-void yell::init_body(b2World &world, entity *hollerer, const b2Vec2& position) {
-	b2CircleShape shape;
-	shape.m_p.Set(0.0f, 0.0f); //position, relative to body position
-	shape.m_radius = 30.0f;
-
+void wall::init_body(b2World &world, b2Vec2& position, b2Vec2& scale) {
+	b2PolygonShape shape;
+	shape.SetAsBox(scale.x, scale.y);
 	b2FixtureDef fixture;
+
+	fixture.shape = &shape;
 	fixture.shape = &shape;
 	fixture.density = 1.0f;
-	fixture.filter.groupIndex = 0;
-	fixture.isSensor = true;
-	fixture.filter.categoryBits = static_cast<uint16>(collision_types::YELL);
-	fixture.filter.maskBits = static_cast<uint16>(collision_types::HERBIVORE);
+	fixture.isSensor = false;
+	fixture.filter.categoryBits = static_cast<uint16>(collision_types::WALL);
 	fixture.userData = const_cast<void*>(static_cast<const void*>(&yell_type));
 
 	b2BodyDef def;
@@ -41,8 +39,8 @@ void yell::init_body(b2World &world, entity *hollerer, const b2Vec2& position) {
 	body->CreateFixture(&fixture);
 	body->SetUserData(this);
 
-	this->hollerer = hollerer;
 	this->world = &world;
+	this->scale = scale;
 }
 
 static const std::string load_text_file(std::string_view filename) {
@@ -50,10 +48,6 @@ static const std::string load_text_file(std::string_view filename) {
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 	return buffer.str();
-}
-
-void yell::schedule_stop_yell() {
-	to_be_destroyed.push_back(this);
 }
 
 static struct {
@@ -81,30 +75,25 @@ static struct {
 		glDeleteBuffers(1, &buffers.body);
 
 		program = std::make_unique<gfx::program>();
-		program->attach(load_text_file("../circle.vert"), gfx::program::shader_type::VERTEX);
-		program->attach(load_text_file("../circle.frag"), gfx::program::shader_type::FRAGMENT);
+		program->attach(load_text_file("../box.vert"), gfx::program::shader_type::VERTEX);
+		program->attach(load_text_file("../box.frag"), gfx::program::shader_type::FRAGMENT);
 		program->link();
 		hot = true;
 	}
 } model;
 
-void yell::tick() {
-	ticks_to_live--;
-	if(ticks_to_live == 0) {
-		schedule_stop_yell();
-	}
+void wall::tick() {
 }
 
-void yell::draw(const glm::mat4 &projection) const {
-	if(conf.draw_yell) {
+void wall::draw(const glm::mat4 &projection) const {
+	if(conf.draw_wall) {
 		using uniform_type = gfx::program::uniform_type;
 		if(!model.hot) model.init();
 		model.program->activate();
 		model.program->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
-
 		const b2Vec2 pos = body->GetPosition();
 		const glm::mat4 mat_model =
-			glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) * glm::scale(glm::vec3(30.0f));
+			glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) * glm::scale(glm::vec3(scale.x, scale.y, 1.0f));
 		glBindVertexArray(model.vertex_arrays.body);
 		model.program->set_uniform<uniform_type::MAT4>("model", glm::value_ptr(mat_model));
 		model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.5f, 0.25f);
@@ -112,7 +101,7 @@ void yell::draw(const glm::mat4 &projection) const {
 	}
 }
 
-yell::~yell() {
+wall::~wall() {
 	world->DestroyBody(this->body);
 }
 

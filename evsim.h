@@ -12,6 +12,7 @@ struct configuration {
 	bool draw_sensors_herbivore;
 	bool draw_sensors_predator;
 	bool draw_yell;
+	bool draw_wall;
 	bool draw;
 	bool pause;
 	int generation;
