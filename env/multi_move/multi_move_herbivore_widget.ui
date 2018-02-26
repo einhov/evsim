@@ -46,7 +46,7 @@
       <widget class="QComboBox" name="vision_texture">
        <item>
         <property name="text">
-         <string>Food</string>
+         <string>Wall</string>
         </property>
        </item>
        <item>
