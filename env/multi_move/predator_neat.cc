@@ -190,6 +190,7 @@ void predator_neat::agent::on_sensor(const msg_contact &contact) {
 		const auto o = contact.fixture_foreign->GetBody()->GetPosition();
 		return glm::vec2(o.x, o.y) - glm::vec2(s.x, s.y);
 	}();
+	if(diff == glm::vec2(0)) return;
 	const auto diff_angle = glm::orientedAngle(forward, glm::normalize(diff));
 	const double offset =
 		vision_segments -
