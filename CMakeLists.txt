@@ -30,9 +30,9 @@ add_executable (evsim
 	env/multi_move/environment.cc
 	env/multi_move/herbivore_neat.cc
 	env/multi_move/herbivore_neat_draw.cc
+	env/multi_move/multi_move_herbivore_widget.cc
 	env/multi_move/predator_neat.cc
 	env/multi_move/predator_neat_draw.cc
-
 	ui/gui.cc
 )
 

@@ -1,5 +1,6 @@
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
+#include <QApplication>
 
 #include "../../environment_base.h"
 #include "../../species.h"
@@ -21,6 +22,8 @@ void environment::init() {
 
 	herbivores.initialise(build_config::herbivore_count, static_cast<int>(glfwGetTime()));
 	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
+
+	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
 
 	int y = -100;
 	int x = -134;
