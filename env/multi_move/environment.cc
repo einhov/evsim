@@ -24,11 +24,12 @@ void environment::init() {
 	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
 
 	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
+	QApplication::postEvent(main_gui, new gui::add_species_event(&predator));
 
 	int y = -100;
 	int x = -134;
 	for(int i = 0; i < 2; i++) {
-		//Creating horisontal walls;
+		//Creating horisontal walls
 		for(int j = -134; j < 134; j+=2) {
 			auto wall_instance = std::make_unique<wall>();
 			b2Vec2 p (j, y);
@@ -41,7 +42,7 @@ void environment::init() {
 			environmental_objects.emplace_back(std::move(wall_instance));
 		}
 		y = 100;
-		//Creating vertical walls;
+		//Creating vertical walls
 		for(int j = -100; j < 100; j+=2) {
 			auto wall_instance = std::make_unique<wall>();
 			b2Vec2 p (x, j);

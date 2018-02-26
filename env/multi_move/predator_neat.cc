@@ -7,6 +7,8 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
+#include <QApplication>
+
 #include "../../fixture_type.h"
 #include "../../body.h"
 #include "../../consumable.h"
@@ -16,6 +18,7 @@
 
 #include "herbivore_neat.h"
 #include "predator_neat.h"
+#include "multi_move_predator_widget.h"
 
 namespace evsim {
 namespace multi_move {
@@ -148,15 +151,26 @@ void predator_neat::step() {
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
 
+QWidget *predator_neat::make_species_widget() {
+	return new multi_move_predator_widget(this);
+}
+
 static void relocate_agent(b2Body *body) {
 	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
 }
 
 void predator_neat::epoch(int steps) {
+	double total = 0;
 	for(auto &agent : agents) {
+		total += agent.generation_score / static_cast<double>(steps);
 		agent.genotype->SetFitness(agent.generation_score / static_cast<double>(steps));
 		agent.genotype->m_Evaluated = true;
 		agent.generation_score = 0;
+	}
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new multi_move_predator_widget::epoch_event(population->m_Generation, total/agents.size())
+		);
 	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 	population->Epoch();
