@@ -8,7 +8,7 @@ const int multi_move_herbivore_widget::epoch_event::event_type = QEvent::registe
 multi_move_herbivore_widget::multi_move_herbivore_widget(evsim::multi_move::herbivore_neat *herbivore, QWidget *parent) :
     QWidget(parent),
 	ui(new Ui::multi_move_herbivore_widget),
-	herbivore(herbivore)
+	species(herbivore)
 {
     ui->setupUi(this);
 
@@ -24,7 +24,7 @@ multi_move_herbivore_widget::multi_move_herbivore_widget(evsim::multi_move::herb
 }
 
 multi_move_herbivore_widget::~multi_move_herbivore_widget() {
-	herbivore->widget = {};
+	species->widget = {};
     delete ui;
 }
 
@@ -39,11 +39,11 @@ bool multi_move_herbivore_widget::event(QEvent *e) {
 }
 
 void multi_move_herbivore_widget::on_vision_toggle_clicked(bool checked) {
-	herbivore->draw_vision = checked;
+	species->draw_vision = checked;
 }
 
 void multi_move_herbivore_widget::on_vision_texture_activated(int index) {
-	herbivore->vision_texture = index;
+	species->vision_texture = index;
 }
 
 void multi_move_herbivore_widget::insert_fitness(int epoch, double fitness) {

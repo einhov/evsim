@@ -17,7 +17,7 @@ class multi_move_herbivore_widget : public QWidget {
     Q_OBJECT
 
 public:
-	explicit multi_move_herbivore_widget(evsim::multi_move::herbivore_neat *herbivore, QWidget *parent = 0);
+	explicit multi_move_herbivore_widget(evsim::multi_move::herbivore_neat *species, QWidget *parent = 0);
 	~multi_move_herbivore_widget();
 
 	struct epoch_event : public QEvent {
@@ -38,7 +38,7 @@ private slots:
 private:
 	void insert_fitness(int epoch, double fitness);
 	QtCharts::QLineSeries *series_fitness;
-	evsim::multi_move::herbivore_neat *herbivore;
+	evsim::multi_move::herbivore_neat *species;
 	Ui::multi_move_herbivore_widget *ui;
 
 	struct { double xmin, xmax, ymin, ymax; } series_range {
