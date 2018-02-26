@@ -73,7 +73,7 @@ bool predator_neat::initialise(size_t size, int seed) {
 	params.CompatTreshold = build_config::pr_compat_treshold;
 
 	NEAT::Genome genesis(
-		0, 3 + agent::vision_segments * 3, 0, 2, false,
+		0, 3 + agent::vision_segments * 2, 0, 2, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 		0, params, 0
 	);
