@@ -73,6 +73,7 @@ int evsim(int argc, char **argv) {
 	state.generation = 0;
 	state.step = 0;
 	state.tick = 0;
+	state.draw_wall = 1;
 
 	input_init(window);
 

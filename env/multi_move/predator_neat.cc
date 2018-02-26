@@ -20,6 +20,10 @@
 namespace evsim {
 namespace multi_move {
 
+static std::default_random_engine generator(std::random_device{}());
+static std::uniform_real_distribution<float> pos_x_distribution(90.0f * (4.0f / 3.0f), 90.0f * (4.0f / 3.0f));
+static std::uniform_real_distribution<float> pos_y_distribution(-90.0f, 90.0f);
+
 void predator_neat::clear() {
 	for(const auto &agent : agents)
 		world.DestroyBody(agent.body);
@@ -52,9 +56,6 @@ bool predator_neat::initialise(size_t size, int seed) {
 	population_size = size;
 	agents.resize(population_size);
 
-	static std::default_random_engine generator;
-	static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), -97.0f * (4.0f / 3.0f));
-	static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 	for(auto &agent : agents) {
 		agent.body = build_predator_body(world);
 		agent.body->SetTransform(
@@ -84,6 +85,7 @@ void predator_neat::pre_tick() {
 	for(auto &agent : agents) {
 		agent.vision_herbivore = {};
 		agent.vision_predator = {};
+		agent.vision_wall = {};
 	}
 }
 
@@ -95,8 +97,8 @@ void predator_neat::tick() {
 
 		if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
 		if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
-		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(99.0f * (4.0 / 3.0), pos.y), angle);
-		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(97.0f * (4.0 / 3.0), pos.y), angle);
+		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
+		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
 
 		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;
@@ -109,6 +111,10 @@ void predator_neat::tick() {
 		);
 		std::transform(
 			agent.vision_predator.cbegin(), agent.vision_predator.cend(),
+			std::back_inserter(inputs), vision_inserter
+		);
+		std::transform(
+			agent.vision_wall.cbegin(), agent.vision_wall.cend(),
 			std::back_inserter(inputs), vision_inserter
 		);
 		inputs.emplace_back([&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }());
@@ -137,8 +143,13 @@ void predator_neat::step() {
 		total += agent.score;
 		agent.generation_score += agent.score;
 		agent.score = 0;
+		relocate_agent(agent.body);
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
+}
+
+static void relocate_agent(b2Body *body) {
+	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
 }
 
 void predator_neat::epoch(int steps) {
@@ -164,6 +175,8 @@ void predator_neat::agent::on_sensor(const msg_contact &contact) {
 				return &vision_herbivore;
 			case fixture_type::torso_predator:
 				return &vision_predator;
+			case fixture_type::wall:
+				return &vision_wall;
 			default:
 				return {};
 		}

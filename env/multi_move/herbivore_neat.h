@@ -51,12 +51,14 @@ class herbivore_neat : public species {
 				int internal_species;
 				herbivore_neat* species;
 				b2Body *body;
+				bool active;
 
 				static constexpr int vision_segments = 3;
 				using vision_texture = std::array<float, vision_segments>;
 				vision_texture vision_food;
 				vision_texture vision_herbivore;
 				vision_texture vision_predator;
+				vision_texture vision_wall;
 
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;

@@ -23,6 +23,7 @@ struct simulation_state {
 	bool draw;
 
 	bool draw_yell;
+	bool draw_wall;
 
 	bool draw_sensors_herbivore;
 	bool draw_sensors_predator;

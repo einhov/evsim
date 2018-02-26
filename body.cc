@@ -6,6 +6,7 @@
 #include "fixture_type.h"
 #include "body.h"
 #include "config.h"
+#include "collision_data.h"
 
 namespace evsim {
 
@@ -27,6 +28,7 @@ static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 struct body_part_def {
 	b2FixtureDef fixture;
 	b2PolygonShape shape;
+	b2CircleShape circle_shape;
 };
 
 static body_part_def sensor_def;
@@ -45,19 +47,42 @@ void init_body_data() {
 	sensor_def.fixture.density = 0.0f;
 	sensor_def.fixture.shape = &sensor_def.shape;
 	sensor_def.fixture.isSensor = true;
-	sensor_def.fixture.filter.groupIndex = -1;
+	sensor_def.fixture.filter.categoryBits = static_cast<uint16>(collision_types::SENSOR);
+	sensor_def.fixture.filter.maskBits =
+		static_cast<uint16>(collision_types::HERBIVORE) |
+		static_cast<uint16>(collision_types::CONSUMABLE) |
+		static_cast<uint16>(collision_types::PREDATOR) |
+		static_cast<uint16>(collision_types::WALL)
+	;
 	sensor_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&sensor_type));
 
-	torso_def.shape.SetAsBox(1.0f, 1.0f);
-	torso_def.fixture.shape = &torso_def.shape;
+	torso_def.circle_shape.m_p.Set(0.0f, 0.0f);
+	torso_def.circle_shape.m_radius = 1.0f;
+	torso_def.fixture.shape = &torso_def.circle_shape;
 	torso_def.fixture.density = 1.0f;
-	torso_def.fixture.isSensor = true;
+	torso_def.fixture.isSensor = false;
+	torso_def.fixture.filter.categoryBits = static_cast<uint16>(collision_types::HERBIVORE);
+	torso_def.fixture.filter.maskBits =
+		static_cast<uint16>(collision_types::PREDATOR) |
+		static_cast<uint16>(collision_types::CONSUMABLE) |
+		static_cast<uint16>(collision_types::SENSOR) |
+		static_cast<uint16>(collision_types::WALL) |
+		static_cast<uint16>(collision_types::YELL)
+	;
 	torso_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&torso_type));
 
-	torso_predator_def.shape.SetAsBox(1.0f, 1.0f);
-	torso_predator_def.fixture.shape = &torso_def.shape;
+	torso_predator_def.circle_shape.m_p.Set(0.0f, 0.0f);
+	torso_predator_def.circle_shape.m_radius = 1.0f;
+	torso_predator_def.fixture.shape = &torso_predator_def.circle_shape;
 	torso_predator_def.fixture.density = 1.0f;
-	torso_predator_def.fixture.isSensor = true;
+	torso_predator_def.fixture.isSensor = false;
+	torso_predator_def.fixture.filter.categoryBits = static_cast<uint16>(collision_types::PREDATOR);
+	torso_predator_def.fixture.filter.maskBits =
+		static_cast<uint16>(collision_types::HERBIVORE) |
+		static_cast<uint16>(collision_types::SENSOR) |
+		static_cast<uint16>(collision_types::PREDATOR) |
+		static_cast<uint16>(collision_types::WALL)
+	;
 	torso_predator_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&torso_predator_type));
 
 	body_def.type = b2_dynamicBody;

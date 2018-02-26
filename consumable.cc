@@ -12,6 +12,7 @@
 #include "consumable.h"
 #include "fixture_type.h"
 #include "gfx_program.h"
+#include "collision_data.h"
 
 namespace evsim {
 
@@ -29,7 +30,10 @@ void consumable::init_body(b2World &world) {
 	b2FixtureDef fixture;
 	fixture.shape = &shape;
 	fixture.density = 1.0f;
-	fixture.filter.groupIndex = 0;
+	fixture.filter.categoryBits = static_cast<uint16>(collision_types::CONSUMABLE);
+	fixture.filter.maskBits =
+			static_cast<uint16>(collision_types::HERBIVORE) |
+			static_cast<uint16>(collision_types::SENSOR);
 	fixture.isSensor = true;
 	fixture.userData = const_cast<void*>(static_cast<const void*>(&food_type));
 

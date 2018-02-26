@@ -13,6 +13,7 @@
 
 namespace evsim {
 namespace multi_move {
+static void relocate_agent(b2Body *body);
 
 class predator_neat : public species {
 	public:
@@ -42,10 +43,11 @@ class predator_neat : public species {
 				int species;
 				b2Body *body;
 
-				static constexpr int vision_segments = 5;
+				static constexpr int vision_segments = 3;
 				using vision_texture = std::array<float, vision_segments>;
 				vision_texture vision_herbivore;
 				vision_texture vision_predator;
+				vision_texture vision_wall;
 
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;

@@ -6,6 +6,7 @@
 #include "../../evsim.h"
 #include "../../config.h"
 #include "../../consumable.h"
+#include "../../wall.h"
 
 #include "environment.h"
 #include "herbivore_neat.h"
@@ -17,15 +18,42 @@ namespace multi_move {
 environment::environment() : herbivores(*state.world), predator(*state.world) {}
 
 void environment::init() {
+
 	herbivores.initialise(build_config::herbivore_count, static_cast<int>(glfwGetTime()));
 	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
 
-	for(int i = 0; i < build_config::food_count; i++) {
-		auto consumable_instance = std::make_unique<consumable>();
-		consumable_instance->init_body((*state.world));
-		environmental_objects.emplace_back(std::move(consumable_instance));
+	int y = -100;
+	int x = -134;
+	for(int i = 0; i < 2; i++) {
+		//Creating horisontal walls;
+		for(int j = -134; j < 134; j+=2) {
+			auto wall_instance = std::make_unique<wall>();
+			b2Vec2 p (j, y);
+			b2Vec2 s (2, 2);
+			wall_instance->init_body(
+				(*state.world),
+				p,
+				s
+				);
+			environmental_objects.emplace_back(std::move(wall_instance));
+		}
+		y = 100;
+		//Creating vertical walls;
+		for(int j = -100; j < 100; j+=2) {
+			auto wall_instance = std::make_unique<wall>();
+			b2Vec2 p (x, j);
+			b2Vec2 s (2, 2);
+			wall_instance->init_body(
+				(*state.world),
+				p,
+				s
+				);
+			environmental_objects.emplace_back(std::move(wall_instance));
+		}
+		x = 134;
 	}
 }
+
 
 void environment::step() {
 	herbivores.step();

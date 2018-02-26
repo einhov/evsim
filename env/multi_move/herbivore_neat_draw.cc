@@ -97,6 +97,7 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 		glEnable(GL_TEXTURE_1D);
 		glBindTexture(GL_TEXTURE_1D, model.sensor_texture);
 		for(const auto &agent : agents) {
+			if(!agent.active) continue;
 			const auto body = agent.body;
 			const b2Vec2 pos = body->GetPosition();
 			const float angle = body->GetAngle();
@@ -104,7 +105,7 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 				glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) *
 				glm::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));
 			model.program_sensor->set_uniform<uniform_type::MAT4>("model", glm::value_ptr(mat_model));
-			glTexSubImage1D(GL_TEXTURE_1D, 0, 0, agent::vision_segments, GL_RED, GL_FLOAT, agent.vision_food.data());
+			glTexSubImage1D(GL_TEXTURE_1D, 0, 0, agent::vision_segments, GL_RED, GL_FLOAT, agent.vision_predator.data());
 			glGenerateMipmap(GL_TEXTURE_1D);
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
 		}
@@ -116,6 +117,7 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 	model.program->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 	glBindVertexArray(model.vertex_arrays.torso);
 	for(const auto &agent : agents) {
+		if(!agent.active) continue;
 		const auto box = agent.body;
 		const b2Vec2 pos = box->GetPosition();
 		const float angle = box->GetAngle();

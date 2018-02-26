@@ -25,8 +25,8 @@ namespace evsim {
 namespace multi_move {
 
 static std::default_random_engine generator(std::random_device{}());
-static std::uniform_real_distribution<float> pos_x_distribution(97.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
-static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
+static std::uniform_real_distribution<float> pos_x_distribution(-90.f * (4.0f / 3.0f), -90.f * (4.0f / 3.0f));
+static std::uniform_real_distribution<float> pos_y_distribution(-90.0f, 90.0f);
 
 void herbivore_neat::clear() {
 	for(const auto &agent : agents)
@@ -60,9 +60,6 @@ bool herbivore_neat::initialise(size_t size, int seed) {
 	population_size = size;
 	agents.resize(population_size);
 
-	static std::default_random_engine generator;
-	static std::uniform_real_distribution<float> pos_x_distribution(97.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
-	static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 	for(auto &agent : agents) {
 		agent.body = build_body(world);
 		agent.body->SetTransform(
@@ -71,6 +68,7 @@ bool herbivore_neat::initialise(size_t size, int seed) {
 		);
 		agent.body->SetUserData(reinterpret_cast<void*>(&agent));
 		agent.species = this;
+		agent.active = true;
 	}
 
 	NEAT::Parameters params;
@@ -80,28 +78,33 @@ bool herbivore_neat::initialise(size_t size, int seed) {
 	params.CompatTreshold = build_config::hv_compat_treshold;
 
 	NEAT::Genome genesis(
-		0, 4 + agent::vision_segments * 3, 0, 3, false,
+		0, 4 + agent::vision_segments * 3, 0, 2, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 		0, params, 0
 	);
-
 	population = std::make_unique<NEAT::Population>(genesis, params, true, 1.0, seed);
 	distribute_genomes();
 }
 
 void herbivore_neat::pre_tick() {
 	for(auto &agent : agents) {
-		agent.vision_food = {};
 		agent.vision_herbivore = {};
 		agent.vision_predator = {};
+		agent.vision_wall = {};
 	}
 }
 
 void herbivore_neat::tick() {
 	for(auto &agent : agents) {
+		if(!agent.active) continue;
 		auto &body = agent.body;
 		const auto angle = body->GetAngle();
 		const auto pos = body->GetPosition();
+		if(pos.x > 100) {
+			agent.score +=  100;
+			agent.body->SetActive(false);
+			agent.active = false;
+		}
 
 		if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
 		if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
@@ -113,10 +116,7 @@ void herbivore_neat::tick() {
 		};
 
 		std::vector<double> inputs;
-		std::transform(
-			agent.vision_food.cbegin(), agent.vision_food.cend(),
-			std::back_inserter(inputs), vision_inserter
-		);
+
 		std::transform(
 			agent.vision_herbivore.cbegin(), agent.vision_herbivore.cend(),
 			std::back_inserter(inputs), vision_inserter
@@ -125,8 +125,13 @@ void herbivore_neat::tick() {
 			agent.vision_predator.cbegin(), agent.vision_predator.cend(),
 			std::back_inserter(inputs), vision_inserter
 		);
+		std::transform(
+			agent.vision_wall.cbegin(), agent.vision_wall.cend(),
+			std::back_inserter(inputs), vision_inserter
+		);
 		inputs.emplace_back([&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }());
 		inputs.emplace_back(body->GetAngularVelocity());
+		/*
 		if(agent.hear_yell) {
 			inputs.emplace_back(1.0);
 			const auto vec = agent.find_yell_vector();
@@ -138,6 +143,8 @@ void herbivore_neat::tick() {
 			inputs.emplace_back(0.0);
 			inputs.emplace_back(0.0);
 		}
+		*/
+		inputs.emplace_back(pos.x);
 		agent.hear_yell = false;
 		inputs.emplace_back(1.0);
 
@@ -154,9 +161,11 @@ void herbivore_neat::tick() {
 
 		body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
 		body->ApplyTorque(output[1] * build_config::hv_torque, true);
+/*
 		if(output[2] >= 0.1) {
 			agent.create_yell();
 		}
+*/
 		if(agent.can_yell_timer > 0) {
 			agent.can_yell_timer--;
 		}
@@ -176,6 +185,10 @@ void herbivore_neat::step() {
 		total += agent.score;
 		agent.generation_score += agent.score;
 		agent.score = 0;
+		agent.body->SetActive(true);
+		agent.active = true;
+		relocate_agent(agent.body);
+
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
@@ -203,12 +216,12 @@ void herbivore_neat::agent::on_sensor(const msg_contact &contact) {
 		const auto &foreign_userdata = contact.fixture_foreign->GetUserData();
 		const auto &native_fixture_type = *static_cast<fixture_type*>(foreign_userdata);
 		switch(native_fixture_type) {
-			case fixture_type::food:
-				return &vision_food;
 			case fixture_type::torso:
 				return &vision_herbivore;
 			case fixture_type::torso_predator:
 				return &vision_predator;
+			case fixture_type::wall:
+				return &vision_wall;
 			default:
 				return {};
 		}
@@ -223,6 +236,7 @@ void herbivore_neat::agent::on_sensor(const msg_contact &contact) {
 		const auto o = contact.fixture_foreign->GetBody()->GetPosition();
 		return glm::vec2(o.x, o.y) - glm::vec2(s.x, s.y);
 	}();
+	if(diff == glm::vec2(0)) return;
 	const auto diff_angle = glm::orientedAngle(forward, glm::normalize(diff));
 	const double offset =
 		vision_segments -
@@ -259,9 +273,6 @@ void herbivore_neat::agent::message(const std::any &msg) {
 
 		if(native_fixture_type == fixture_type::sensor) {
 			on_sensor(contact);
-		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::food) {
-			const auto &food = static_cast<entity*>(contact.fixture_foreign->GetBody()->GetUserData());
-			food->message(std::make_any<msg_consume>(msg_consume { this }));
 		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::yell) {
 			const yell *yell_heard = static_cast<yell*>(contact.fixture_foreign->GetBody()->GetUserData());
 			if(yell_heard->hollerer != this) {
@@ -269,12 +280,11 @@ void herbivore_neat::agent::message(const std::any &msg) {
 				centre_of_yell = yell_heard->body->GetPosition();
 			}
 		}
-	} else if(type == typeid(msg_consumed)) {
-		score++;
 	} else if(type == typeid(msg_kill)) {
 		const auto &consumer = std::any_cast<msg_kill>(msg).consumer;
 		score -= 2;
-		relocate_agent(body);
+		body->SetActive(false);
+		active = false;
 		consumer->message(std::make_any<msg_killed>());
 	} else if(type == typeid(msg_plot)) {
 		plot_genome(*genotype, "selected_agent");
