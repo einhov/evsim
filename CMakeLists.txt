@@ -18,6 +18,7 @@ add_executable (evsim
 	env/food/environment.cc
 	env/food/herbivore_neat.cc
 	env/food/herbivore_neat_draw.cc
+	env/food/food_herbivore_widget.cc
 
 	#Including multi_food environment
 	env/multi_food/environment.cc

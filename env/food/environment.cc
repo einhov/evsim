@@ -1,5 +1,6 @@
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
+#include <QApplication>
 
 #include "../../environment_base.h"
 #include "../../evsim.h"
@@ -16,6 +17,8 @@ environment::environment() : herbivores(*state.world) {}
 
 void environment::init() {
 		herbivores.initialise(build_config::herbivore_count, static_cast<int>(glfwGetTime()));
+
+		QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
 
 		for(int i = 0; i < build_config::food_count; i++) {
 			auto consumable_instance = std::make_unique<consumable>();

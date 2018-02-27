@@ -90,7 +90,7 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 	if(!model.hot) model.init(agent::vision_segments);
 
 	// Draw sensors
-	if(state.draw_sensors_herbivore) {
+	if(draw_vision) {
 		model.program_sensor->activate();
 		model.program_sensor->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 		glBindVertexArray(model.vertex_arrays.sensor);
@@ -98,14 +98,12 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 		glBindTexture(GL_TEXTURE_1D, model.sensor_texture);
 		for(const auto &agent : agents) {
 			const auto &vision = [this,&agent] {
-				switch(0) {
+				switch(vision_texture) {
 					default: [[fallthrough]]
 					case 0:
 					  return agent.vision_food;
 					case 1:
 					  return agent.vision_herbivore;
-					case 2:
-					  return agent.vision_predator;
 				}
 			}();
 			const auto body = agent.body;

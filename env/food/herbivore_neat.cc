@@ -21,6 +21,7 @@
 #include "../../neat_plot.h"
 
 #include "herbivore_neat.h"
+#include "food_herbivore_widget.h"
 
 namespace evsim {
 namespace food {
@@ -159,11 +160,20 @@ void herbivore_neat::epoch(int steps) {
 		agent.genotype->m_Evaluated = true;
 		agent.generation_score = 0;
 	}
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new food_herbivore_widget::epoch_event(population->m_Generation, total/agents.size())
+		);
+	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 	population->Epoch();
 	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
 	fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
 	distribute_genomes();
+}
+
+QWidget *herbivore_neat::make_species_widget() {
+	return new food_herbivore_widget(this);
 }
 
 static void relocate_agent(b2Body *body) {

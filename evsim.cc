@@ -81,7 +81,7 @@ int evsim(int argc, char **argv) {
 	glBlendFunc(GL_ONE, GL_ZERO);
 	glEnable(GL_DEPTH_TEST);
 	double previous_frame = glfwGetTime();
-	multi_food::environment env;
+	food::environment env;
 	env.init();
 	while(!state.quit) {
 		if(!state.pause) {

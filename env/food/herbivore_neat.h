@@ -9,9 +9,12 @@
 #include <Population.h>
 #include <Box2D/Box2D.h>
 #include <glm/glm.hpp>
+#include <QWidget>
 
 #include "../../entity.h"
 #include "../../species.h"
+
+class food_herbivore_widget;
 
 namespace evsim {
 namespace food {
@@ -24,6 +27,7 @@ struct msg_killed {
 };
 
 class herbivore_neat : public species {
+	friend class ::food_herbivore_widget;
 	public:
 		herbivore_neat(b2World &world) :
 		        world(world), population_size(0), active_genomes(0) {}
@@ -33,6 +37,7 @@ class herbivore_neat : public species {
 		void step();
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
+		QWidget *make_species_widget();
 
 	private:
 		friend class agent;
@@ -62,10 +67,13 @@ class herbivore_neat : public species {
 
 		size_t population_size;
 		size_t active_genomes;
-
+		std::optional<food_herbivore_widget*> widget;
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		b2World &world;
+
+		std::atomic_int vision_texture;
+		std::atomic_bool draw_vision;
 };
 
 }
