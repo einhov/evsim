@@ -72,8 +72,8 @@ class herbivore_neat : public species {
 		std::vector<agent> agents;
 		b2World &world;
 
-		std::atomic_int vision_texture;
-		std::atomic_bool draw_vision;
+		std::atomic_int vision_texture {};
+		std::atomic_bool draw_vision {};
 };
 
 }

@@ -61,8 +61,8 @@ class predator_neat : public species {
 		b2World &world;
 
 		std::optional<multi_move_predator_widget*> widget;
-		std::atomic_int vision_texture;
-		std::atomic_bool draw_vision;
+		std::atomic_int vision_texture {};
+		std::atomic_bool draw_vision {};
 };
 
 }
