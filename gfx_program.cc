@@ -16,7 +16,7 @@ namespace gfx {
 			}
 		}();
 
-		if(shader == -1) return;
+		if(shader == 0) return;
 
 		const GLchar * const sources[1] = { source.data() };
 		glShaderSource(shader, 1, sources, nullptr);

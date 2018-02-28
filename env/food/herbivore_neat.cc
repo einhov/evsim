@@ -90,6 +90,7 @@ bool herbivore_neat::initialise(size_t size, int seed) {
 
 	population = std::make_unique<NEAT::Population>(genesis, params, true, 1.0, seed);
 	distribute_genomes();
+	return true;
 }
 
 void herbivore_neat::pre_tick() {

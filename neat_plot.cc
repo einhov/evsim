@@ -8,10 +8,8 @@ namespace evsim {
 void plot_genome(const NEAT::Genome &genome, const char* filename) {
 	constexpr bool group_nodes = false;
 	constexpr bool display_weights = true;
-	const double fitness = genome.GetFitness();
 	const int input_count = genome.NumInputs();
 	const int output_count = genome.NumOutputs();
-	const auto &links = genome.m_LinkGenes;
 	std::set<int> hidden_nodes;
 	FILE *plotdata = fopen(filename, "w");
 
@@ -19,8 +17,7 @@ void plot_genome(const NEAT::Genome &genome, const char* filename) {
 	fprintf(
 		plotdata,
 		"\tgraph [label=\"Showing the genotype of the selected agent\",\n"
-				"\t\tlabelloc=t, fontsize=30];\n",
-		fitness
+				"\t\tlabelloc=t, fontsize=30];\n"
 	);
 
 	for(const auto &link : genome.m_LinkGenes) {

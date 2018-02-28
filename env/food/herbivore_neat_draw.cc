@@ -128,7 +128,6 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 		const auto box = agent.body;
 		const b2Vec2 pos = box->GetPosition();
 		const float angle = box->GetAngle();
-		const b2Vec2 vel = box->GetLinearVelocity();
 		const glm::mat4 mat_model =
 			glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) *
 			glm::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));

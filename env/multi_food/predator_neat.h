@@ -18,7 +18,7 @@ namespace multi_food {
 class predator_neat : public species {
 	public:
 		predator_neat(b2World &world) :
-			world(world), population_size(0), active_genomes(0) {}
+			population_size(0), active_genomes(0), world(world) {}
 		bool initialise(size_t size, int seed);
 		void pre_tick();
 		void tick();

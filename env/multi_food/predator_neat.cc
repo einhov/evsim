@@ -80,6 +80,7 @@ bool predator_neat::initialise(size_t size, int seed) {
 
 	population = std::make_unique<NEAT::Population>(genesis, params, true, 1.0, seed);
 	distribute_genomes();
+	return true;
 }
 
 void predator_neat::pre_tick() {

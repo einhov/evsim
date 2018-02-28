@@ -20,7 +20,7 @@ void environment::init() {
 	herbivores.initialise(build_config::herbivore_count, static_cast<int>(glfwGetTime()));
 	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
 
-	for(int i = 0; i < build_config::food_count; i++) {
+	for(size_t i = 0; i < build_config::food_count; i++) {
 		auto consumable_instance = std::make_unique<consumable>();
 		consumable_instance->init_body((*state.world));
 		environmental_objects.emplace_back(std::move(consumable_instance));

@@ -118,21 +118,10 @@ void predator_neat::draw(const glm::mat4 &projection) const {
 		const auto box = agent.body;
 		const b2Vec2 pos = box->GetPosition();
 		const float angle = box->GetAngle();
-		const b2Vec2 vel = box->GetLinearVelocity();
 		const glm::mat4 mat_model =
 			glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) *
 			glm::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));
 		model.program->set_uniform<uniform_type::MAT4>("model", glm::value_ptr(mat_model));
-		static const std::array<glm::vec3, 21> colours {{
-			{ 64,255,115 }, { 204,51,92 }, { 242,129,0 },
-			{ 0,29,217 }, { 0,109,204 }, { 64,255,242 },
-			{ 204,51,133 }, { 0,162,242 }, { 217,0,202 },
-			{ 64,217,255 }, { 255,238,0 }, { 0,242,162 },
-			{ 217,145,0 }, { 172,57,230 }, { 242,65,0 },
-			{ 229,184,0 }, { 0,204,163 }, { 229,57,57 },
-			{ 97,242,0 }, { 184,230,0 }, { 0,82,204 }
-		}};
-		const auto &c = colours[agent.species % colours.size()];
 		model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}

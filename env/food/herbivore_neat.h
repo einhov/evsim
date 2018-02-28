@@ -30,7 +30,7 @@ class herbivore_neat : public species {
 	friend class ::food_herbivore_widget;
 	public:
 		herbivore_neat(b2World &world) :
-		        world(world), population_size(0), active_genomes(0) {}
+		        population_size(0), active_genomes(0), world(world) {}
 		bool initialise(size_t size, int seed);
 		void pre_tick();
 		void tick();

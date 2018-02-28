@@ -7,8 +7,8 @@ const int food_herbivore_widget::epoch_event::event_type = QEvent::registerEvent
 
 food_herbivore_widget::food_herbivore_widget(evsim::food::herbivore_neat *herbivore, QWidget *parent) :
     QWidget(parent),
-	ui(new Ui::food_herbivore_widget),
-	species(herbivore)
+	species(herbivore),
+	ui(new Ui::food_herbivore_widget)
 {
     ui->setupUi(this);
 

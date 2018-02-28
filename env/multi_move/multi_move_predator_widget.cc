@@ -7,8 +7,8 @@ const int multi_move_predator_widget::epoch_event::event_type = QEvent::register
 
 multi_move_predator_widget::multi_move_predator_widget(evsim::multi_move::predator_neat *species, QWidget *parent) :
     QWidget(parent),
-	ui(new Ui::multi_move_predator_widget),
-	species(species)
+	species(species),
+	ui(new Ui::multi_move_predator_widget)
 {
     ui->setupUi(this);
 

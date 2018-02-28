@@ -20,7 +20,7 @@ void environment::init() {
 
 		QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
 
-		for(int i = 0; i < build_config::food_count; i++) {
+		for(size_t i = 0; i < build_config::food_count; i++) {
 			auto consumable_instance = std::make_unique<consumable>();
 			consumable_instance->init_body((*state.world));
 			environmental_objects.emplace_back(std::move(consumable_instance));

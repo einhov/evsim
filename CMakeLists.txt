@@ -38,8 +38,9 @@ add_executable (evsim
 	ui/gui.cc
 )
 
-add_definitions(-DUSE_BOOST_RANDOM -DGLM_ENABLE_EXPERIMENTAL)
 set_property (TARGET evsim PROPERTY CXX_STANDARD 17)
+target_compile_options(evsim PRIVATE -Wall)
+target_compile_definitions(evsim PRIVATE -DUSE_BOOST_RANDOM -DGLM_ENABLE_EXPERIMENTAL)
 
 find_package(glfw3 REQUIRED)
 find_package(GLEW REQUIRED)
@@ -59,5 +60,5 @@ set(BOX2D_INCLUDED_INCLUDE_DIR
 
 set(BOX2D_INCLUDED_LIBRARY ${CMAKE_SOURCE_DIR}/Box2D/Box2D/Build/gmake/bin/Release/libBox2D.a)
 
-include_directories (${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${BOX2D_INCLUDED_INCLUDE_DIR} ${GLM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} lib/MultiNEAT/src)
+include_directories (SYSTEM ${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${BOX2D_INCLUDED_INCLUDE_DIR} ${GLM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} lib/MultiNEAT/src)
 target_link_libraries (evsim ${GLEW_LIBRARIES} glfw ${OPENGL_gl_LIBRARY} ${BOX2D_INCLUDED_LIBRARY} MultiNEAT Qt5::Widgets Qt5::Charts)

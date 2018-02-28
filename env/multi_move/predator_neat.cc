@@ -82,6 +82,7 @@ bool predator_neat::initialise(size_t size, int seed) {
 
 	population = std::make_unique<NEAT::Population>(genesis, params, true, 1.0, seed);
 	distribute_genomes();
+	return true;
 }
 
 void predator_neat::pre_tick() {
@@ -140,6 +141,10 @@ void predator_neat::tick() {
 	}
 }
 
+static void relocate_agent(b2Body *body) {
+	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
+}
+
 void predator_neat::step() {
 	double total = 0;
 	for(auto &agent : agents) {
@@ -153,10 +158,6 @@ void predator_neat::step() {
 
 QWidget *predator_neat::make_species_widget() {
 	return new multi_move_predator_widget(this);
-}
-
-static void relocate_agent(b2Body *body) {
-	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
 }
 
 void predator_neat::epoch(int steps) {

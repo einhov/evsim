@@ -7,8 +7,8 @@ const int multi_move_herbivore_widget::epoch_event::event_type = QEvent::registe
 
 multi_move_herbivore_widget::multi_move_herbivore_widget(evsim::multi_move::herbivore_neat *herbivore, QWidget *parent) :
     QWidget(parent),
-	ui(new Ui::multi_move_herbivore_widget),
-	species(herbivore)
+	species(herbivore),
+	ui(new Ui::multi_move_herbivore_widget)
 {
     ui->setupUi(this);
 

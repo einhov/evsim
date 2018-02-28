@@ -80,7 +80,6 @@ int evsim(int argc, char **argv) {
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glBlendFunc(GL_ONE, GL_ZERO);
 	glEnable(GL_DEPTH_TEST);
-	double previous_frame = glfwGetTime();
 	food::environment env;
 	env.init();
 	while(!state.quit) {
@@ -134,12 +133,9 @@ int evsim(int argc, char **argv) {
 		}
 		glfwPollEvents();
 		if(state.draw) {
-			const double this_frame = glfwGetTime();
-			const double delta = this_frame - previous_frame;
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			env.draw();
 			glfwSwapBuffers(window);
-			previous_frame = this_frame;
 		}
 	}
 	glfwTerminate();

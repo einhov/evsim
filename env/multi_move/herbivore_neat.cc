@@ -87,6 +87,7 @@ bool herbivore_neat::initialise(size_t size, int seed) {
 	);
 	population = std::make_unique<NEAT::Population>(genesis, params, true, 1.0, seed);
 	distribute_genomes();
+	return true;
 }
 
 void herbivore_neat::pre_tick() {
@@ -182,6 +183,10 @@ glm::vec2 herbivore_neat::agent::find_yell_vector() {
 	return glm::rotate(ca, -body->GetAngle());
 }
 
+static void relocate_agent(b2Body *body) {
+	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
+}
+
 void herbivore_neat::step() {
 	double total = 0;
 	for(auto &agent : agents) {
@@ -218,10 +223,6 @@ void herbivore_neat::epoch(int steps) {
 
 QWidget *herbivore_neat::make_species_widget() {
 	return new multi_move_herbivore_widget(this);
-}
-
-static void relocate_agent(b2Body *body) {
-	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
 }
 
 void herbivore_neat::agent::on_sensor(const msg_contact &contact) {
