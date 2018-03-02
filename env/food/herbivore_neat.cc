@@ -155,7 +155,13 @@ void herbivore_neat::step() {
 
 void herbivore_neat::epoch(int steps) {
 	double total = 0;
+	double best_score = std::numeric_limits<double>::min();
+	double worst_score = std::numeric_limits<double>::max();
 	for(auto &agent : agents) {
+		if(agent.generation_score < worst_score)
+			worst_score = agent.generation_score;
+		if(agent.generation_score > best_score)
+			best_score = agent.generation_score;
 		total += agent.generation_score / static_cast<double>(steps);
 		agent.genotype->SetFitness(agent.generation_score / static_cast<double>(steps));
 		agent.genotype->m_Evaluated = true;
@@ -163,7 +169,12 @@ void herbivore_neat::epoch(int steps) {
 	}
 	if(widget) {
 		QApplication::postEvent(
-			*widget, new food_herbivore_widget::epoch_event(population->m_Generation, total/agents.size())
+			*widget, new food_herbivore_widget::epoch_event(
+				population->m_Generation,
+				total/agents.size(),
+				best_score,
+				worst_score
+			)
 		);
 	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
