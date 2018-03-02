@@ -11,7 +11,6 @@ multi_move_herbivore_widget::multi_move_herbivore_widget(evsim::multi_move::herb
 	ui(new Ui::multi_move_herbivore_widget)
 {
     ui->setupUi(this);
-
 	auto chart_fitness = new QtCharts::QChart();
 
 	series_fitness = new QtCharts::QLineSeries();

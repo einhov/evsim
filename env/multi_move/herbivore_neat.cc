@@ -216,14 +216,15 @@ void herbivore_neat::epoch(int steps) {
 		agent.generation_score = 0;
 	}
 	if(widget) {
+		std::cout << "steps: " << steps << std::endl;
 		QApplication::postEvent(
 			*widget,
 			new multi_move_herbivore_widget::epoch_event(
 				population->m_Generation,
 				total/agents.size(),
-				best_score,
-				worst_score
-				)
+				best_score / static_cast<double>(steps),
+				worst_score / static_cast<double>(steps)
+			)
 		);
 	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());

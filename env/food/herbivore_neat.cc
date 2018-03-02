@@ -172,8 +172,8 @@ void herbivore_neat::epoch(int steps) {
 			*widget, new food_herbivore_widget::epoch_event(
 				population->m_Generation,
 				total/agents.size(),
-				best_score,
-				worst_score
+				best_score / static_cast<double>(steps),
+				worst_score / static_cast<double>(steps)
 			)
 		);
 	}
