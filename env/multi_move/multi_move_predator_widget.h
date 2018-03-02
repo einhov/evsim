@@ -19,12 +19,15 @@ public:
 	~multi_move_predator_widget();
 
 	struct epoch_event : public QEvent {
-		epoch_event(int epoch, double avg_fitness) :
+		epoch_event(int epoch, double avg_fitness, double min_fitness, double max_fitness) :
 			QEvent(static_cast<Type>(event_type)),
-			epoch(epoch), average_fitness(avg_fitness) {}
+			epoch(epoch), average_fitness(avg_fitness),
+			minimum_fitness(min_fitness), maximum_fitness(max_fitness){}
 		static const int event_type;
 		const int epoch;
 		const double average_fitness;
+		const double minimum_fitness;
+		const double maximum_fitness;
 	};
 
 	bool event(QEvent *e) override;
@@ -34,8 +37,10 @@ private slots:
 	void on_vision_texture_activated(int index);
 
 private:
-	void insert_fitness(int epoch, double fitness);
+	void insert_fitness(int epoch, double fitness, double minimum_fitness, double maximum_fitness);
 	QtCharts::QLineSeries *series_fitness;
+	QtCharts::QLineSeries *series_min_fitness;
+	QtCharts::QLineSeries *series_max_fitness;
 	evsim::multi_move::predator_neat *species;
 	Ui::multi_move_predator_widget *ui;
 
