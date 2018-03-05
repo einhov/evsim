@@ -1,13 +1,13 @@
 #include <random>
 
-#include <QApplication>
-
 #include <Genome.h>
 #include <Parameters.h>
 #include <NeuralNetwork.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
+
+#include <QApplication>
 
 #include "../../fixture_type.h"
 #include "../../body.h"
@@ -18,6 +18,7 @@
 
 #include "herbivore_neat.h"
 #include "predator_neat.h"
+#include "multi_food_predator_widget.h"
 
 namespace evsim {
 namespace multi_food {
@@ -144,6 +145,10 @@ void predator_neat::step() {
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
 
+QWidget *predator_neat::make_species_widget() {
+	return new multi_food_predator_widget(this);
+}
+
 void predator_neat::epoch(int steps) {
 	double total = 0;
 	double killed = 0;
@@ -153,6 +158,11 @@ void predator_neat::epoch(int steps) {
 		agent.genotype->SetFitness(agent.generation_score / static_cast<double>(steps));
 		agent.genotype->m_Evaluated = true;
 		agent.generation_score = 0;
+	}
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new multi_food_predator_widget::epoch_event(population->m_Generation, total/agents.size())
+		);
 	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 	population->Epoch();

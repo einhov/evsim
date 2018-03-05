@@ -4,6 +4,8 @@
 #include <utility>
 #include <optional>
 
+#include <QApplication>
+
 #include <Genome.h>
 #include <Parameters.h>
 #include <NeuralNetwork.h>
@@ -20,6 +22,7 @@
 #include "../../yell.h"
 
 #include "herbivore_neat.h"
+#include "multi_food_herbivore_widget.h"
 
 namespace evsim {
 namespace multi_food {
@@ -182,10 +185,17 @@ void herbivore_neat::step() {
 }
 
 void herbivore_neat::epoch(int steps) {
+	double total = 0;
 	for(auto &agent : agents) {
+		total += agent.generation_score / static_cast<double>(steps);
 		agent.genotype->SetFitness(agent.generation_score / static_cast<double>(steps));
 		agent.genotype->m_Evaluated = true;
 		agent.generation_score = 0;
+	}
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new multi_food_herbivore_widget::epoch_event(population->m_Generation, total/agents.size())
+		);
 	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 	population->Epoch();
@@ -196,6 +206,10 @@ void herbivore_neat::epoch(int steps) {
 
 static void relocate_agent(b2Body *body) {
 	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
+}
+
+QWidget *herbivore_neat::make_species_widget() {
+	return new multi_food_herbivore_widget(this);
 }
 
 void herbivore_neat::agent::on_sensor(const msg_contact &contact) {

@@ -24,8 +24,10 @@ add_executable (evsim
 	env/multi_food/environment.cc
 	env/multi_food/herbivore_neat.cc
 	env/multi_food/herbivore_neat_draw.cc
+	env/multi_food/multi_food_herbivore_widget.cc
 	env/multi_food/predator_neat.cc
 	env/multi_food/predator_neat_draw.cc
+	env/multi_food/multi_food_predator_widget.cc
 
 	#Including multi_move environment
 	env/multi_move/environment.cc
