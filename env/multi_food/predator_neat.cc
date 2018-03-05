@@ -152,7 +152,13 @@ QWidget *predator_neat::make_species_widget() {
 void predator_neat::epoch(int steps) {
 	double total = 0;
 	double killed = 0;
+	double best_score = std::numeric_limits<double>::min();
+	double worst_score = std::numeric_limits<double>::max();
 	for(auto &agent : agents) {
+		if(agent.generation_score < worst_score)
+			worst_score = agent.generation_score;
+		if(agent.generation_score > best_score)
+			best_score = agent.generation_score;
 		total += agent.generation_score / static_cast<double>(steps);
 		killed += agent.generation_score;
 		agent.genotype->SetFitness(agent.generation_score / static_cast<double>(steps));
@@ -161,7 +167,12 @@ void predator_neat::epoch(int steps) {
 	}
 	if(widget) {
 		QApplication::postEvent(
-			*widget, new multi_food_predator_widget::epoch_event(population->m_Generation, total/agents.size())
+			*widget, new multi_food_predator_widget::epoch_event(
+				population->m_Generation,
+				total/agents.size(),
+				best_score / static_cast<double>(steps),
+				worst_score / static_cast<double>(steps)
+			)
 		);
 	}
 	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
