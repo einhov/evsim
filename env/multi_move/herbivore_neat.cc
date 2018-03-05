@@ -216,7 +216,6 @@ void herbivore_neat::epoch(int steps) {
 		agent.generation_score = 0;
 	}
 	if(widget) {
-		std::cout << "steps: " << steps << std::endl;
 		QApplication::postEvent(
 			*widget,
 			new multi_move_herbivore_widget::epoch_event(
