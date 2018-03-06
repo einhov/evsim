@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
+#include <math.h>
 
 #include <QApplication>
 
@@ -66,6 +67,7 @@ bool predator_neat::initialise(size_t size, int seed) {
 			agent.body->GetAngle()
 		);
 		agent.body->SetUserData(reinterpret_cast<void*>(&agent));
+		agent.eat_delay = 0;
 	}
 
 	NEAT::Parameters params;
@@ -96,6 +98,13 @@ void predator_neat::pre_tick() {
 void predator_neat::tick() {
 	for(auto &agent : agents) {
 		auto &body = agent.body;
+
+		if(consume_opt == consume_options::delay && agent.eat_delay > 0) {
+			if(--agent.eat_delay <= 0) {
+				body->SetActive(true);
+			}
+		}
+
 		const auto angle = body->GetAngle();
 		const auto pos = body->GetPosition();
 
@@ -152,6 +161,8 @@ void predator_neat::step() {
 		agent.generation_score += agent.score;
 		agent.score = 0;
 		relocate_agent(agent.body);
+		agent.eat_delay = 0;
+		agent.body->SetActive(true);
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
@@ -260,6 +271,11 @@ void predator_neat::agent::message(const std::any &msg) {
 		}
 	} else if(type == typeid(msg_killed)) {
 		score++;
+		if(consume_opt != consume_options::no_delay) {
+			eat_delay = fmax(eat_delay_max, 1);
+			body->SetActive(false);
+		}
+
 	} else if(type == typeid(msg_plot)) {
 		plot_genome(*genotype, "selected_agent");
 	}

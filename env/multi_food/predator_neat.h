@@ -21,6 +21,13 @@ namespace multi_food {
 class predator_neat : public species {
 	friend class ::multi_food_predator_widget;
 	public:
+
+		enum class consume_options {
+			once,
+			delay,
+			no_delay
+		};
+
 		predator_neat(b2World &world) :
 			population_size(0), active_genomes(0), world(world) {}
 		bool initialise(size_t size, int seed);
@@ -30,6 +37,8 @@ class predator_neat : public species {
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget() override;
+		static constexpr consume_options consume_opt = consume_options::delay;
+		static const int eat_delay_max = 60;
 
 	private:
 		void clear();
@@ -43,6 +52,7 @@ class predator_neat : public species {
 				void message(const std::any &msg) override;
 				void on_sensor(const msg_contact &contact);
 
+				int eat_delay;
 				b2Body *body;
 				int score;
 				int generation_score;

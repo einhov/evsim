@@ -17,9 +17,17 @@ class multi_move_predator_widget;
 namespace evsim {
 namespace multi_move {
 
+
 class predator_neat : public species {
 	friend class ::multi_move_predator_widget;
 	public:
+
+		enum class consume_options {
+			once,
+			delay,
+			no_delay
+		};
+
 		predator_neat(b2World &world) :
 			population_size(0), active_genomes(0), world(world) {}
 		bool initialise(size_t size, int seed);
@@ -29,6 +37,8 @@ class predator_neat : public species {
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget() override;
+		static constexpr consume_options consume_opt = consume_options::delay;
+		static const int eat_delay_max = 60;
 
 	private:
 		void clear();
@@ -45,6 +55,7 @@ class predator_neat : public species {
 				int score;
 				int generation_score;
 				int species;
+				int eat_delay;
 				b2Body *body;
 
 				static constexpr int vision_segments = 3;
