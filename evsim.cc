@@ -20,6 +20,7 @@
 #include "body.h"
 #include "yell.h"
 #include "input.h"
+#include "lua_conf.h"
 
 #include "env/environments.h"
 
@@ -34,6 +35,9 @@ int evsim(int argc, char **argv) {
 	if(!glfwInit()) {
 		return -1;
 	}
+
+	lua_conf conf(argc >= 2 ? argv[1] : "", argc, argv);
+	build_config::load_config(conf);
 
 	state.draw = true;
 
@@ -75,30 +79,45 @@ int evsim(int argc, char **argv) {
 	state.tick = 0;
 	state.draw_wall = 1;
 
+	if(conf.enter_table("environment", true)) {
+		if(const auto draw_wall = conf.get_boolean("draw_wall"); draw_wall)
+			state.draw_wall = *draw_wall ? 1 : 0;
+		conf.leave_table();
+	}
+
 	input_init(window);
 
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glBlendFunc(GL_ONE, GL_ZERO);
 	glEnable(GL_DEPTH_TEST);
-	food::environment env;
-	env.init();
+
+	auto env = make_environment(conf);
+	if(!env) {
+		fprintf(stderr, "No environment loaded\n");
+		glfwTerminate();
+		QApplication::postEvent(main_gui, new gui::quit_event);
+		return 1;
+	}
+
+	const auto ticks_per_step = env->ticks_per_step();
+	const auto steps_per_generation = env->steps_per_generation();
 	while(!state.quit) {
 		if(!state.pause) {
-			if(state.tick++ >= env.TICKS_PER_STEP) {
+			if(state.tick++ >= ticks_per_step) {
 				state.tick = 0;
 				fprintf(stderr, "Step: %d\n", state.step);
 				state.step++;
-				env.step();
-				if(state.step >= env.STEPS_PER_GENERATION) {
+				env->step();
+				if(state.step >= steps_per_generation) {
 					state.step = 0;
 					fprintf(stderr, "Generation: %d\n", state.generation);
-					env.epoch();
+					env->epoch();
 					state.generation++;
 				}
 				QApplication::postEvent(main_gui, new gui::step_event);
 			}
 
-			env.pre_tick();
+			env->pre_tick();
 			state.world->Step(state.simulation_timestep, 1, 1);
 
 			// Distribute contact messages
@@ -118,7 +137,7 @@ int evsim(int argc, char **argv) {
 					);
 			}
 
-			env.tick();
+			env->tick();
 
 			for(auto remove : to_be_destroyed) {
 				const auto found = std::find_if(
@@ -134,7 +153,7 @@ int evsim(int argc, char **argv) {
 		glfwPollEvents();
 		if(state.draw) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			env.draw();
+			env->draw();
 			glfwSwapBuffers(window);
 		}
 	}

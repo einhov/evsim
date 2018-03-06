@@ -10,15 +10,6 @@
 
 namespace evsim {
 
-const float sensor_fov = build_config::sensor_fov;
-const float sensor_length = build_config::sensor_length;
-const float sensor_width = 2.0f * (sin(sensor_fov / 2.0f) * sensor_length) / cos(sensor_fov / 2.0f);
-
-const std::array<b2Vec2, 3> sensor {{
-	{ 0.0f, 0.0f }, { -sensor_width / 2.0f, sensor_length },
-	{ sensor_width / 2.0f, sensor_length }
-}};
-
 static std::default_random_engine generator;
 static std::uniform_real_distribution<float> velocity_distribution(-10.0f, 10.0f);
 static std::uniform_real_distribution<float> angular_distribution(-glm::radians(45.0f), glm::radians(45.0f));
@@ -42,7 +33,20 @@ static const fixture_type sensor_type = fixture_type::sensor;
 static const fixture_type torso_type = fixture_type::torso;
 static const fixture_type torso_predator_type = fixture_type::torso_predator;
 
+float sensor_fov = build_config::sensor_fov;
+float sensor_length = build_config::sensor_length;
+float sensor_width = 2.0f * (sin(sensor_fov / 2.0f) * sensor_length) / cos(sensor_fov / 2.0f);
+std::array<b2Vec2, 3> sensor {};
+
 void init_body_data() {
+	sensor_fov = build_config::sensor_fov;
+	sensor_length = build_config::sensor_length;
+	sensor_width = 2.0f * (sin(sensor_fov / 2.0f) * sensor_length) / cos(sensor_fov / 2.0f);
+	sensor = {{
+		{ 0.0f, 0.0f }, { -sensor_width / 2.0f, sensor_length },
+		{ sensor_width / 2.0f, sensor_length }
+	}};
+
 	sensor_def.shape.Set(sensor.data(), sensor.size());
 	sensor_def.fixture.density = 0.0f;
 	sensor_def.fixture.shape = &sensor_def.shape;
