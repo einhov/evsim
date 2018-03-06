@@ -37,7 +37,9 @@ add_executable (evsim
 	env/multi_move/predator_neat.cc
 	env/multi_move/predator_neat_draw.cc
 	env/multi_move/multi_move_predator_widget.cc
+
 	ui/gui.cc
+	ui/fitness_graph.cc
 )
 
 set_property (TARGET evsim PROPERTY CXX_STANDARD 17)

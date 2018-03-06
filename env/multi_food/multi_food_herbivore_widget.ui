@@ -72,15 +72,15 @@
     </layout>
    </item>
    <item>
-    <widget class="QtCharts::QChartView" name="fitness" native="true"/>
+    <widget class="fitness_graph" name="fitness" native="true"/>
    </item>
   </layout>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QtCharts::QChartView</class>
+   <class>fitness_graph</class>
    <extends>QWidget</extends>
-   <header location="global">QtCharts/QChartView</header>
+   <header>../../ui/fitness_graph.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

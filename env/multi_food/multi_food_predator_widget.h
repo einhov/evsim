@@ -8,6 +8,7 @@
 #include "predator_neat.h"
 
 namespace Ui {
+
 class multi_food_predator_widget;
 }
 
@@ -37,16 +38,8 @@ private slots:
 	void on_vision_texture_activated(int index);
 
 private:
-	void insert_fitness(int epoch, double fitness, double minimum_fitness, double maximum_fitness);
-	QtCharts::QLineSeries *series_fitness;
-	QtCharts::QLineSeries *series_min_fitness;
-	QtCharts::QLineSeries *series_max_fitness;
 	evsim::multi_food::predator_neat *species;
 	Ui::multi_food_predator_widget *ui;
-
-	struct { double xmin, xmax, ymin, ymax; } series_range {
-		0.0, 1.0, 0.0, 1.0
-	};
 };
 
 #endif // PREDATOR_WIDGET_H
