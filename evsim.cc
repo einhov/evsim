@@ -79,7 +79,7 @@ int evsim(int argc, char **argv) {
 
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glBlendFunc(GL_ONE, GL_ZERO);
-	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST);
 	food::environment env;
 	env.init();
 	while(!state.quit) {
