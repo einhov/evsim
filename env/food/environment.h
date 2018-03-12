@@ -18,8 +18,9 @@ class environment : environment_base {
 		void tick();
 		void draw();
 		herbivore_neat herbivores;
-		const int STEPS_PER_GENERATION = 5;
-		const int TICKS_PER_STEP = 60 * 15;
+		size_t step_count;
+		const unsigned int STEPS_PER_GENERATION = 25;
+		const unsigned int TICKS_PER_STEP = 60 * 15;
 };
 
 }

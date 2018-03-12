@@ -28,6 +28,10 @@ static std::default_random_engine generator(std::random_device{}());
 static std::uniform_real_distribution<float> pos_x_distribution(90.0f * (4.0f / 3.0f), 90.0f * (4.0f / 3.0f));
 static std::uniform_real_distribution<float> pos_y_distribution(-90.0f, 90.0f);
 
+static void relocate_agent(b2Body *body) {
+	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
+}
+
 void predator_neat::clear() {
 	for(const auto &agent : agents)
 		world.DestroyBody(agent.body);
@@ -52,13 +56,51 @@ void predator_neat::distribute_genomes() {
 	}
 }
 
+void predator_neat::distribute_genomes_shared_fitness(int step) {
+	for(auto &agent : agents) {
+		agent.genotype = genotypes[step];
+		genotypes[step]->BuildPhenotype(agent.phenotype);
+	}
+}
+
+void predator_neat::fill_genome_vector() {
+	genotypes.clear();
+	for(auto &species : population->m_Species) {
+		for(auto &individual : species.m_Individuals) {
+			genotypes.emplace_back(&individual);
+		}
+	}
+}
+
+void predator_neat::step_shared_fitness(size_t step) {
+	int current_score = 0;
+	for(auto &agent : agents) {
+		current_score += agent.score;
+		agent.score = 0;
+		agent.body->SetActive(true);
+		agent.body->SetAngularVelocity(0);
+		agent.body->SetLinearVelocity(b2Vec2(0,0));
+		relocate_agent(agent.body);
+	}
+	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
+	genotypes[step]->m_Evaluated = true;
+	if(step+1 < population_size) {
+		distribute_genomes_shared_fitness(step+1);
+	}
+	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
+}
+
 bool predator_neat::initialise(size_t size, int seed) {
 	if(population_size > 0)
 		clear();
 
 	state.draw_sensors_predator = true;
 	population_size = size;
-	agents.resize(population_size);
+	if(!shared_fitness)
+		agents.resize(population_size);
+	else {
+		agents.resize(shared_fitness_simulate_max);
+	}
 
 	for(auto &agent : agents) {
 		agent.body = build_predator_body(world);
@@ -68,6 +110,9 @@ bool predator_neat::initialise(size_t size, int seed) {
 		);
 		agent.body->SetUserData(reinterpret_cast<void*>(&agent));
 		agent.eat_delay = 0;
+		agent.body->SetAngularVelocity(0);
+		agent.body->SetLinearVelocity(b2Vec2(0,0));
+
 	}
 
 	NEAT::Parameters params;
@@ -83,7 +128,13 @@ bool predator_neat::initialise(size_t size, int seed) {
 	);
 
 	population = std::make_unique<NEAT::Population>(genesis, params, true, 1.0, seed);
-	distribute_genomes();
+	if(shared_fitness) {
+		fill_genome_vector();
+		distribute_genomes_shared_fitness(0);
+	}
+	else {
+		distribute_genomes();
+	}
 	return true;
 }
 
@@ -150,19 +201,17 @@ void predator_neat::tick() {
 	}
 }
 
-static void relocate_agent(b2Body *body) {
-	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
-}
-
 void predator_neat::step() {
 	double total = 0;
 	for(auto &agent : agents) {
 		total += agent.score;
 		agent.generation_score += agent.score;
 		agent.score = 0;
-		relocate_agent(agent.body);
 		agent.eat_delay = 0;
 		agent.body->SetActive(true);
+		agent.body->SetAngularVelocity(0);
+		agent.body->SetLinearVelocity(b2Vec2(0,0));
+		relocate_agent(agent.body);
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
@@ -170,6 +219,37 @@ void predator_neat::step() {
 QWidget *predator_neat::make_species_widget() {
 	return new multi_move_predator_widget(this);
 }
+
+void predator_neat::epoch_shared_fitness() {
+	double total = 0;
+	double best_score = std::numeric_limits<double>::min();
+	double worst_score = std::numeric_limits<double>::max();
+	for(auto genotype : genotypes) {
+		const auto fitness = genotype->GetFitness();
+		if(fitness < worst_score)
+			worst_score = fitness;
+		if(fitness > best_score)
+			best_score = fitness;
+		total += fitness;
+	}
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new multi_move_predator_widget::epoch_event(
+				population->m_Generation,
+				total / population_size,
+				best_score,
+				worst_score
+			)
+		);
+	}
+	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
+	population->Epoch();
+	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
+	fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
+	fill_genome_vector();
+	distribute_genomes_shared_fitness(0);
+}
+
 
 void predator_neat::epoch(int steps) {
 	double total = 0;

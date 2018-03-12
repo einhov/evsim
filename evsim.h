@@ -15,8 +15,8 @@ namespace evsim {
 
 struct simulation_state {
 	int generation;
-	int step;
-	int tick;
+	unsigned int step;
+	unsigned int tick;
 
 	bool quit;
 	bool pause;

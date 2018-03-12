@@ -55,13 +55,51 @@ void herbivore_neat::distribute_genomes() {
 	}
 }
 
+void herbivore_neat::distribute_genomes_shared_fitness(int step) {
+	for(auto &agent : agents) {
+		agent.genotype = genotypes[step];
+		genotypes[step]->BuildPhenotype(agent.phenotype);
+	}
+}
+
+void herbivore_neat::fill_genome_vector() {
+	genotypes.clear();
+	for(auto &species : population->m_Species) {
+		for(auto &individual : species.m_Individuals) {
+			genotypes.emplace_back(&individual);
+		}
+	}
+}
+
+void herbivore_neat::step_shared_fitness(size_t step) {
+	int current_score = 0;
+	for(auto &agent : agents) {
+		current_score += agent.score;
+		agent.score = 0;
+		agent.body->SetActive(true);
+		agent.hear_yell = false;
+		agent.body->SetAngularVelocity(0);
+		agent.body->SetLinearVelocity(b2Vec2(0,0));
+	}
+	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
+	genotypes[step]->m_Evaluated = true;
+	if(step+1 < population_size) {
+		distribute_genomes_shared_fitness(step+1);
+	}
+	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
+}
+
 bool herbivore_neat::initialise(size_t size, int seed) {
 	if(population_size > 0)
 		clear();
 
 	state.draw_sensors_herbivore = true;
 	population_size = size;
-	agents.resize(population_size);
+	if(!shared_fitness)
+		agents.resize(population_size);
+	else {
+		agents.resize(shared_fitness_simulate_max);
+	}
 
 	for(auto &agent : agents) {
 		agent.body = build_body(world);
@@ -71,6 +109,8 @@ bool herbivore_neat::initialise(size_t size, int seed) {
 		);
 		agent.body->SetUserData(reinterpret_cast<void*>(&agent));
 		agent.species = this;
+		agent.body->SetAngularVelocity(0);
+		agent.body->SetLinearVelocity(b2Vec2(0,0));
 	}
 
 	NEAT::Parameters params;
@@ -85,8 +125,15 @@ bool herbivore_neat::initialise(size_t size, int seed) {
 		0, params, 0
 	);
 
+	genesis.m_NeuronGenes[15].m_ActFunction = NEAT::UNSIGNED_SIGMOID;
 	population = std::make_unique<NEAT::Population>(genesis, params, true, 1.0, seed);
-	distribute_genomes();
+	if(shared_fitness) {
+		fill_genome_vector();
+		distribute_genomes_shared_fitness(0);
+	}
+	else {
+		distribute_genomes();
+	}
 	return true;
 }
 
@@ -155,7 +202,7 @@ void herbivore_neat::tick() {
 
 		body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
 		body->ApplyTorque(output[1] * build_config::hv_torque, true);
-		if(output[2] >= 0.1) {
+		if(output[2] < 0.05) {
 			agent.create_yell();
 		}
 		if(agent.can_yell_timer > 0) {
@@ -177,8 +224,40 @@ void herbivore_neat::step() {
 		total += agent.score;
 		agent.generation_score += agent.score;
 		agent.score = 0;
+		agent.body->SetAngularVelocity(0);
+		agent.body->SetLinearVelocity(b2Vec2(0,0));
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
+}
+
+void herbivore_neat::epoch_shared_fitness() {
+	double total = 0;
+	double best_score = std::numeric_limits<double>::min();
+	double worst_score = std::numeric_limits<double>::max();
+	for(auto genotype : genotypes) {
+		const auto fitness = genotype->GetFitness();
+		if(fitness < worst_score)
+			worst_score = fitness;
+		if(fitness > best_score)
+			best_score = fitness;
+		total += fitness;
+	}
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new multi_food_herbivore_widget::epoch_event(
+				population->m_Generation,
+				total / population_size,
+				best_score,
+				worst_score
+			)
+		);
+	}
+	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
+	population->Epoch();
+	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
+	fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
+	fill_genome_vector();
+	distribute_genomes_shared_fitness(0);
 }
 
 void herbivore_neat::epoch(int steps) {

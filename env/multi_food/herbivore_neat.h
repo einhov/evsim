@@ -33,9 +33,13 @@ class herbivore_neat : public species {
 		void pre_tick();
 		void tick();
 		void step();
+		void step_shared_fitness(size_t epoch_step);
 		void epoch(int steps);
+		void epoch_shared_fitness();
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget();
+		static constexpr bool shared_fitness = true;
+		static constexpr size_t shared_fitness_simulate_max = 5;
 
 	private:
 		friend class agent;
@@ -68,12 +72,15 @@ class herbivore_neat : public species {
 
 		void clear();
 		void distribute_genomes();
+		void fill_genome_vector();
+		void distribute_genomes_shared_fitness(int step);
 
 		size_t population_size;
 		size_t active_genomes;
 		std::optional<multi_food_herbivore_widget*> widget;
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
+		std::vector<NEAT::Genome*> genotypes;
 		b2World &world;
 
 		std::atomic_int vision_texture {};
