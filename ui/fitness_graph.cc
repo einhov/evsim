@@ -25,7 +25,7 @@ fitness_graph::fitness_graph(QWidget *parent) :
 	chart_fitness->createDefaultAxes();
 	ui->fitness->setChart(chart_fitness);
 	ui->fitness->setRenderHint(QPainter::Antialiasing);
-	ui->fitness->setRubberBand(QtCharts::QChartView::VerticalRubberBand);
+	ui->fitness->setRubberBand(QtCharts::QChartView::RectangleRubberBand);
 }
 
 fitness_graph::~fitness_graph()
