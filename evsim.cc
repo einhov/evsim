@@ -37,7 +37,7 @@ int evsim(int argc, char **argv) {
 	}
 
 	lua_conf conf(argc >= 2 ? argv[1] : "", argc, argv);
-	build_config::load_config(conf);
+	config::load_config(conf);
 
 	state.draw = true;
 

@@ -33,14 +33,14 @@ static const fixture_type sensor_type = fixture_type::sensor;
 static const fixture_type torso_type = fixture_type::torso;
 static const fixture_type torso_predator_type = fixture_type::torso_predator;
 
-float sensor_fov = build_config::sensor_fov;
-float sensor_length = build_config::sensor_length;
+float sensor_fov = config::sensor_fov;
+float sensor_length = config::sensor_length;
 float sensor_width = 2.0f * (sin(sensor_fov / 2.0f) * sensor_length) / cos(sensor_fov / 2.0f);
 std::array<b2Vec2, 3> sensor {};
 
 void init_body_data() {
-	sensor_fov = build_config::sensor_fov;
-	sensor_length = build_config::sensor_length;
+	sensor_fov = config::sensor_fov;
+	sensor_length = config::sensor_length;
 	sensor_width = 2.0f * (sin(sensor_fov / 2.0f) * sensor_length) / cos(sensor_fov / 2.0f);
 	sensor = {{
 		{ 0.0f, 0.0f }, { -sensor_width / 2.0f, sensor_length },
@@ -89,8 +89,8 @@ void init_body_data() {
 	torso_predator_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&torso_predator_type));
 
 	body_def.type = b2_dynamicBody;
-	body_def.linearDamping = build_config::linear_damping;
-	body_def.angularDamping = build_config::angular_damping;
+	body_def.linearDamping = config::linear_damping;
+	body_def.angularDamping = config::angular_damping;
 	body_def.position.Set(pos_x_distribution(generator), pos_y_distribution(generator));
 	body_def.linearVelocity = b2Vec2(velocity_distribution(generator), velocity_distribution(generator));
 	body_def.angularVelocity = angular_distribution(generator);

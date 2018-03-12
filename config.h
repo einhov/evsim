@@ -1,41 +1,33 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <glm/glm.hpp>
 #include <cstddef>
 #include "lua_conf.h"
 
-namespace evsim {
-namespace build_config {
-
-extern size_t food_count;
-extern size_t herbivore_count;
-extern size_t predator_count;
+namespace evsim::config {
 
 // Physics
-extern float linear_damping;
-extern float angular_damping;
-
-// Hervivores
-extern size_t hv_min_species;
-extern size_t hv_max_species;
-extern double hv_compat_treshold;
-extern float hv_force;
-extern float hv_torque;
-
-// Predator
-extern size_t pr_min_species;
-extern size_t pr_max_species;
-extern double pr_compat_treshold;
-extern float pr_force;
-extern float pr_torque;
+inline float linear_damping = 10.0f;
+inline float angular_damping = 10.0f;
 
 // Sensors
-extern float sensor_length;
-extern float sensor_fov;
+inline float sensor_length = 45.0f;
+inline float sensor_fov = glm::radians(60.0f);
 
-void load_config(lua_conf &conf);
+inline void load_config(lua_conf &conf) {
+	if(conf.enter_table("physics", true)) {
+		linear_damping = conf.get_number_default("linear_damping", 10.0);
+		angular_damping = conf.get_number_default("angular_damping", 10.0);
+	}
 
+	if(conf.enter_table("sensors", true)) {
+		sensor_length = conf.get_number_default("length", 45.0);
+		sensor_fov = glm::radians(conf.get_number_default("fov", 60.0));
+		conf.leave_table();
+	}
 }
+
 }
 
 #endif

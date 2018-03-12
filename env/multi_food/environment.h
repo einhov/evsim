@@ -13,7 +13,7 @@ class environment : public environment_base {
 	public:
 		environment();
 		~environment() {}
-		void init() override;
+		void init(lua_conf &conf) override;
 		void step() override;
 		void epoch() override;
 		void pre_tick() override;
@@ -23,6 +23,8 @@ class environment : public environment_base {
 		int ticks_per_step() override { return TICKS_PER_STEP; }
 		herbivore_neat herbivores;
 		predator_neat predator;
+
+		int food_count;
 		const int STEPS_PER_GENERATION = 5;
 		const int TICKS_PER_STEP = 60 * 15;
 };

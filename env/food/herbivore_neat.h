@@ -13,6 +13,7 @@
 
 #include "../../entity.h"
 #include "../../species.h"
+#include "../../lua_conf.h"
 
 class food_herbivore_widget;
 
@@ -30,8 +31,8 @@ class herbivore_neat : public species {
 	friend class ::food_herbivore_widget;
 	public:
 		herbivore_neat(b2World &world) :
-		        population_size(0), active_genomes(0), world(world) {}
-		bool initialise(size_t size, int seed);
+			params{}, active_genomes(0), world(world) {}
+		bool initialise(lua_conf &conf, int seed);
 		void pre_tick();
 		void tick();
 		void step();
@@ -65,13 +66,18 @@ class herbivore_neat : public species {
 		void clear();
 		void distribute_genomes();
 
-		size_t population_size;
+		struct {
+			size_t population_size;
+			float thrust;
+			float torque;
+		} params;
+
 		size_t active_genomes;
-		std::optional<food_herbivore_widget*> widget;
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		b2World &world;
 
+		std::optional<food_herbivore_widget*> widget;
 		std::atomic_int vision_texture {};
 		std::atomic_bool draw_vision {};
 };

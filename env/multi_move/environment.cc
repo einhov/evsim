@@ -18,10 +18,13 @@ namespace multi_move {
 
 environment::environment() : herbivores(*state.world), predator(*state.world) {}
 
-void environment::init() {
-
-	herbivores.initialise(build_config::herbivore_count, static_cast<int>(glfwGetTime()));
-	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
+void environment::init(lua_conf &conf) {
+	conf.enter_table_or_empty("herbivores");
+	herbivores.initialise(conf, static_cast<int>(glfwGetTime()));
+	conf.leave_table();
+	conf.enter_table_or_empty("predators");
+	predator.initialise(conf, static_cast<int>(glfwGetTime()+1));
+	conf.leave_table();
 
 	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
 	QApplication::postEvent(main_gui, new gui::add_species_event(&predator));

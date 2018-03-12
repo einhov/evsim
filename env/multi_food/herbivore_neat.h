@@ -11,6 +11,7 @@
 
 #include "../../entity.h"
 #include "../../species.h"
+#include "../../lua_conf.h"
 
 class multi_food_herbivore_widget;
 
@@ -28,8 +29,8 @@ class herbivore_neat : public species {
 	friend class ::multi_food_herbivore_widget;
 	public:
 		herbivore_neat(b2World &world) :
-		        population_size(0), active_genomes(0), world(world) {}
-		bool initialise(size_t size, int seed);
+			params{}, active_genomes(0), world(world) {}
+		bool initialise(lua_conf &conf, int seed);
 		void pre_tick();
 		void tick();
 		void step();
@@ -46,10 +47,6 @@ class herbivore_neat : public species {
 				void create_yell();
 				glm::vec2 find_yell_vector();
 
-				b2Vec2 centre_of_yell;
-				int yell_timer_max = 60;
-				int can_yell_timer = yell_timer_max;
-				bool hear_yell = false;
 				int score;
 				int generation_score;
 				int internal_species;
@@ -62,6 +59,10 @@ class herbivore_neat : public species {
 				vision_texture vision_herbivore;
 				vision_texture vision_predator;
 
+				bool yell_detected = false;
+				b2Vec2 yell_vector;
+				int yell_cooldown = 0;
+
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;
 		};
@@ -69,13 +70,19 @@ class herbivore_neat : public species {
 		void clear();
 		void distribute_genomes();
 
-		size_t population_size;
+		struct {
+			size_t population_size;
+			float thrust;
+			float torque;
+			int yell_delay;
+		} params;
+
 		size_t active_genomes;
-		std::optional<multi_food_herbivore_widget*> widget;
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		b2World &world;
 
+		std::optional<multi_food_herbivore_widget*> widget;
 		std::atomic_int vision_texture {};
 		std::atomic_bool draw_vision {};
 };

@@ -12,6 +12,7 @@
 
 #include "../../entity.h"
 #include "../../species.h"
+#include "../../lua_conf.h"
 
 class multi_food_predator_widget;
 
@@ -22,8 +23,8 @@ class predator_neat : public species {
 	friend class ::multi_food_predator_widget;
 	public:
 		predator_neat(b2World &world) :
-			population_size(0), active_genomes(0), world(world) {}
-		bool initialise(size_t size, int seed);
+			params{}, active_genomes(0), world(world) {}
+		bool initialise(lua_conf &conf, int seed);
 		void pre_tick();
 		void tick();
 		void step();
@@ -32,12 +33,6 @@ class predator_neat : public species {
 		QWidget *make_species_widget() override;
 
 	private:
-		void clear();
-		void distribute_genomes();
-
-		size_t population_size;
-		size_t active_genomes;
-
 		class agent : public entity {
 			public:
 				void message(const std::any &msg) override;
@@ -56,10 +51,22 @@ class predator_neat : public species {
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;
 		};
-		std::optional<multi_food_predator_widget*> widget;
+
+		void clear();
+		void distribute_genomes();
+
+		struct {
+			size_t population_size;
+			float thrust;
+			float torque;
+		} params;
+
+		size_t active_genomes;
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		b2World &world;
+
+		std::optional<multi_food_predator_widget*> widget;
 		std::atomic_int vision_texture {};
 		std::atomic_bool draw_vision {};
 };

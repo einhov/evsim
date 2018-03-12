@@ -9,19 +9,19 @@ namespace evsim {
 
 static std::unique_ptr<environment_base> make_food_env(lua_conf &conf) {
 	auto result = std::make_unique<food::environment>();
-	result->init();
+	result->init(conf);
 	return result;
 }
 
 static std::unique_ptr<environment_base> make_multi_food_env(lua_conf &conf) {
 	auto result = std::make_unique<multi_food::environment>();
-	result->init();
+	result->init(conf);
 	return result;
 }
 
 static std::unique_ptr<environment_base> make_multi_move_env(lua_conf &conf) {
 	auto result = std::make_unique<multi_move::environment>();
-	result->init();
+	result->init(conf);
 	return result;
 }
 
@@ -43,6 +43,9 @@ std::unique_ptr<environment_base> make_environment(lua_conf &conf) {
 			result = factory->second(conf);
 		}
 		conf.leave_table();
+	} else {
+		conf.enter_empty_table();
+		result = make_food_env(conf);
 	}
 
 	return result;

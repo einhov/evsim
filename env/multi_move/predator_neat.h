@@ -11,6 +11,7 @@
 
 #include "../../entity.h"
 #include "../../species.h"
+#include "../../lua_conf.h"
 
 class multi_move_predator_widget;
 
@@ -21,8 +22,8 @@ class predator_neat : public species {
 	friend class ::multi_move_predator_widget;
 	public:
 		predator_neat(b2World &world) :
-			population_size(0), active_genomes(0), world(world) {}
-		bool initialise(size_t size, int seed);
+			params{}, active_genomes(0), world(world) {}
+		bool initialise(lua_conf &conf, int seed);
 		void pre_tick();
 		void tick();
 		void step();
@@ -33,9 +34,6 @@ class predator_neat : public species {
 	private:
 		void clear();
 		void distribute_genomes();
-
-		size_t population_size;
-		size_t active_genomes;
 
 		class agent : public entity {
 			public:
@@ -56,6 +54,14 @@ class predator_neat : public species {
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;
 		};
+
+		struct {
+			size_t population_size;
+			float thrust;
+			float torque;
+		} params;
+
+		size_t active_genomes;
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		b2World &world;

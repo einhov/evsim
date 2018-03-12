@@ -14,6 +14,8 @@ class lua_conf {
 		~lua_conf();
 
 		bool enter_table(const std::string_view &name, bool global = false);
+		void enter_table_or_empty(const std::string_view &name, bool global = false);
+		void enter_empty_table();
 		void leave_table();
 
 		std::optional<lua_Integer> get_integer(const std::string_view &name, bool global = false);

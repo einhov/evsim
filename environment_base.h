@@ -3,10 +3,12 @@
 
 namespace evsim {
 
+class lua_conf;
+
 class environment_base {
 	public:
 		virtual ~environment_base() {}
-		virtual void init() = 0;
+		virtual void init(lua_conf &conf) = 0;
 		virtual void draw() = 0;
 		virtual void step() = 0;
 		virtual void epoch() = 0;

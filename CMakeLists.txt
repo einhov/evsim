@@ -13,7 +13,6 @@ add_executable (evsim
 	yell.cc
 	input.cc
 	wall.cc
-	config.cc
 	lua_conf.cc
 	env/environments.cc
 

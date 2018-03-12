@@ -50,6 +50,15 @@ bool lua_conf::enter_table(const std::string_view &name, bool global) {
 	}
 }
 
+void lua_conf::enter_table_or_empty(const std::string_view &name, bool global) {
+	if(!enter_table(name, global))
+		enter_empty_table();
+}
+
+void lua_conf::enter_empty_table() {
+	lua_newtable(L);
+}
+
 void lua_conf::leave_table() {
 	lua_pop(L, 1);
 }

@@ -15,6 +15,8 @@
 #include "../../neat_plot.h"
 #include "../../config.h"
 #include "../../evsim.h"
+#include "../../lua_conf.h"
+#include "../../neat.h"
 
 #include "herbivore_neat.h"
 #include "predator_neat.h"
@@ -32,7 +34,7 @@ void predator_neat::clear() {
 		world.DestroyBody(agent.body);
 	agents.clear();
 	population.release();
-	population_size = 0;
+	params.population_size = 0;
 	active_genomes = 0;
 }
 
@@ -45,19 +47,26 @@ void predator_neat::distribute_genomes() {
 			agents[n].genotype = &individual;
 			agents[n].species = s;
 			individual.BuildPhenotype(agents[n].phenotype);
-			if(++n >= population_size) return;
+			if(++n >= params.population_size) return;
 		}
 		s++;
 	}
 }
 
-bool predator_neat::initialise(size_t size, int seed) {
-	if(population_size > 0)
+bool predator_neat::initialise(lua_conf &conf, int seed) {
+	if(params.population_size > 0)
 		clear();
 
-	state.draw_sensors_predator = true;
-	population_size = size;
-	agents.resize(population_size);
+	params.population_size = conf.get_integer_default("population_size", 100);
+	params.thrust = conf.get_number_default("thrust", 1000.0);
+	params.torque = conf.get_number_default("torque", 45.0);
+
+	conf.enter_table_or_empty("neat_params");
+	auto neat_params = make_neat_params(conf);
+	conf.leave_table();
+	neat_params.PopulationSize = params.population_size;
+
+	agents.resize(params.population_size);
 
 	for(auto &agent : agents) {
 		agent.body = build_predator_body(world);
@@ -68,19 +77,13 @@ bool predator_neat::initialise(size_t size, int seed) {
 		agent.body->SetUserData(reinterpret_cast<void*>(&agent));
 	}
 
-	NEAT::Parameters params;
-	params.PopulationSize = population_size;
-	params.MinSpecies = build_config::pr_min_species;
-	params.MaxSpecies = build_config::pr_max_species;
-	params.CompatTreshold = build_config::pr_compat_treshold;
-
 	NEAT::Genome genesis(
 		0, 3 + agent::vision_segments * 3, 0, 2, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
-		0, params, 0
+		0, neat_params, 0
 	);
 
-	population = std::make_unique<NEAT::Population>(genesis, params, true, 1.0, seed);
+	population = std::make_unique<NEAT::Population>(genesis, neat_params, true, 1.0, seed);
 	distribute_genomes();
 	return true;
 }
@@ -133,11 +136,11 @@ void predator_neat::tick() {
 		const auto forward =
 			glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) *
 			static_cast<float>(output[0]) *
-			build_config::pr_force
+			params.thrust
 		;
 
 		body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
-		body->ApplyTorque(output[1] * build_config::pr_torque, true);
+		body->ApplyTorque(output[1] * params.torque, true);
 	}
 }
 

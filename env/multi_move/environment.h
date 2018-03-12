@@ -13,7 +13,7 @@ class environment : public environment_base {
 	public:
 		environment();
 		~environment() {}
-		void init() override;
+		void init(lua_conf &conf) override;
 		void step() override;
 		void epoch() override;
 		void pre_tick() override;
