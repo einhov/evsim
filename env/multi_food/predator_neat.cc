@@ -46,7 +46,7 @@ void predator_neat::distribute_genomes() {
 	for(auto &species : population->m_Species) {
 		for(auto &individual : species.m_Individuals) {
 			agents[n].genotype = &individual;
-			agents[n].species = s;
+			agents[n].internal_species = s;
 			individual.BuildPhenotype(agents[n].phenotype);
 			if(++n >= params.population_size) return;
 		}
@@ -61,6 +61,15 @@ bool predator_neat::initialise(lua_conf &conf, int seed) {
 	params.population_size = conf.get_integer_default("population_size", 100);
 	params.thrust = conf.get_number_default("thrust", 1000.0);
 	params.torque = conf.get_number_default("torque", 45.0);
+	params.eat_delay_max = conf.get_integer_default("eat_delay", 0);
+	params.consume_opt = [this] {
+		if(params.eat_delay_max < 0)
+			return consume_options::once;
+		else if(params.eat_delay_max > 0)
+			return consume_options::delay;
+		else
+			return consume_options::no_delay;
+	}();
 
 	conf.enter_table_or_empty("neat_params");
 	auto neat_params = make_neat_params(conf);
@@ -77,6 +86,7 @@ bool predator_neat::initialise(lua_conf &conf, int seed) {
 		);
 		agent.body->SetUserData(reinterpret_cast<void*>(&agent));
 		agent.eat_delay = 0;
+		agent.species = this;
 	}
 
 	NEAT::Genome genesis(
@@ -101,7 +111,7 @@ void predator_neat::tick() {
 	for(auto &agent : agents) {
 		auto &body = agent.body;
 
-		if(consume_opt == consume_options::delay && agent.eat_delay > 0) {
+		if(params.consume_opt == consume_options::delay && agent.eat_delay > 0) {
 			if(--agent.eat_delay <= 0) {
 				body->SetActive(true);
 			}
@@ -264,8 +274,8 @@ void predator_neat::agent::message(const std::any &msg) {
 		}
 	} else if(type == typeid(msg_killed)) {
 		score++;
-		if(consume_opt != consume_options::no_delay) {
-			eat_delay = fmax(eat_delay_max, 1);
+		if(species->params.consume_opt != consume_options::no_delay) {
+			eat_delay = fmax(species->params.eat_delay_max, 1);
 			body->SetActive(false);
 		}
 	} else if(type == typeid(msg_plot)) {

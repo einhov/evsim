@@ -38,8 +38,6 @@ class predator_neat : public species {
 		void epoch(int steps);
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget() override;
-		static constexpr consume_options consume_opt = consume_options::delay;
-		static const int eat_delay_max = 60;
 
 	private:
 		class agent : public entity {
@@ -47,11 +45,12 @@ class predator_neat : public species {
 				void message(const std::any &msg) override;
 				void on_sensor(const msg_contact &contact);
 
-				int eat_delay;
-				b2Body *body;
 				int score;
 				int generation_score;
-				int species;
+				int internal_species;
+				int eat_delay;
+				b2Body *body;
+				predator_neat *species;
 
 				static constexpr int vision_segments = 5;
 				using vision_texture = std::array<float, vision_segments>;
@@ -69,6 +68,8 @@ class predator_neat : public species {
 			size_t population_size;
 			float thrust;
 			float torque;
+			consume_options consume_opt = consume_options::delay;
+			int eat_delay_max = 60;
 		} params;
 
 		size_t active_genomes;

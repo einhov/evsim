@@ -38,6 +38,7 @@ multi_food = {
 		population_size = 100,
 		thrust = 1000.0,
 		torque = 45.0,
+		eat_delay = 60, -- < 0: once, == 0: no_delay, > 0: delay
 
 		neat_params = neat_params
 	}
@@ -58,6 +59,7 @@ multi_move = {
 		population_size = 50,
 		thrust = 1000.0,
 		torque = 45.0,
+		eat_delay = 60, -- < 0: once, == 0: no_delay, > 0: delay
 
 		neat_params = neat_params
 	}
