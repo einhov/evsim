@@ -73,9 +73,6 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 
 	agents.resize(params.population_size);
 
-	static std::default_random_engine generator;
-	static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
-	static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 	for(auto &agent : agents) {
 		agent.body = build_body(world);
 		agent.body->SetTransform(

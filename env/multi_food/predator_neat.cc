@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
+#include <math.h>
 
 #include <QApplication>
 
@@ -24,6 +25,10 @@
 
 namespace evsim {
 namespace multi_food {
+
+static std::default_random_engine generator(std::random_device{}());
+static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
+static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 
 void predator_neat::clear() {
 	for(const auto &agent : agents)
@@ -64,9 +69,6 @@ bool predator_neat::initialise(lua_conf &conf, int seed) {
 
 	agents.resize(params.population_size);
 
-	static std::default_random_engine generator;
-	static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), -97.0f * (4.0f / 3.0f));
-	static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
 	for(auto &agent : agents) {
 		agent.body = build_predator_body(world);
 		agent.body->SetTransform(
@@ -74,6 +76,7 @@ bool predator_neat::initialise(lua_conf &conf, int seed) {
 			agent.body->GetAngle()
 		);
 		agent.body->SetUserData(reinterpret_cast<void*>(&agent));
+		agent.eat_delay = 0;
 	}
 
 	NEAT::Genome genesis(
@@ -97,6 +100,13 @@ void predator_neat::pre_tick() {
 void predator_neat::tick() {
 	for(auto &agent : agents) {
 		auto &body = agent.body;
+
+		if(consume_opt == consume_options::delay && agent.eat_delay > 0) {
+			if(--agent.eat_delay <= 0) {
+				body->SetActive(true);
+			}
+		}
+
 		const auto angle = body->GetAngle();
 		const auto pos = body->GetPosition();
 
@@ -144,6 +154,8 @@ void predator_neat::step() {
 		total += agent.score;
 		agent.generation_score += agent.score;
 		agent.score = 0;
+		agent.eat_delay = 0;
+		agent.body->SetActive(true);
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
@@ -252,6 +264,10 @@ void predator_neat::agent::message(const std::any &msg) {
 		}
 	} else if(type == typeid(msg_killed)) {
 		score++;
+		if(consume_opt != consume_options::no_delay) {
+			eat_delay = fmax(eat_delay_max, 1);
+			body->SetActive(false);
+		}
 	} else if(type == typeid(msg_plot)) {
 		plot_genome(*genotype, "selected_agent");
 	}

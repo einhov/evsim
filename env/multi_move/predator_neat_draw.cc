@@ -132,7 +132,10 @@ void predator_neat::draw(const glm::mat4 &projection) const {
 			glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) *
 			glm::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));
 		model.program->set_uniform<uniform_type::MAT4>("model", glm::value_ptr(mat_model));
-		model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
+		if(agent.eat_delay > 0)
+			model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 0.5f, 0.1f, 0.1f);
+		else
+			model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}
 }
