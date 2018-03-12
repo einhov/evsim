@@ -1,4 +1,3 @@
-PROJECT(lua)
 cmake_minimum_required(VERSION 2.8)
 
 set(lua_SOURCE_DIR "${PROJECT_SOURCE_DIR}/lib/lua-5.3.4")
