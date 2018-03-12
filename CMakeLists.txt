@@ -13,6 +13,8 @@ add_executable (evsim
 	yell.cc
 	input.cc
 	wall.cc
+	lua_conf.cc
+	env/environments.cc
 
 	#Including food environment
 	env/food/environment.cc
@@ -55,6 +57,7 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Charts REQUIRED)
 
 add_subdirectory(lib/MultiNEAT)
+include(lib/lua.cmake)
 
 #git submodule Box2d has to be build first with "premake ifndef config=release"
 
@@ -65,4 +68,4 @@ set(BOX2D_INCLUDED_INCLUDE_DIR
 set(BOX2D_INCLUDED_LIBRARY ${CMAKE_SOURCE_DIR}/Box2D/Box2D/Build/gmake/bin/Release/libBox2D.a)
 
 include_directories (SYSTEM ${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${BOX2D_INCLUDED_INCLUDE_DIR} ${GLM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} lib/MultiNEAT/src)
-target_link_libraries (evsim ${GLEW_LIBRARIES} glfw ${OPENGL_gl_LIBRARY} ${BOX2D_INCLUDED_LIBRARY} MultiNEAT Qt5::Widgets Qt5::Charts)
+target_link_libraries (evsim ${GLEW_LIBRARIES} glfw ${OPENGL_gl_LIBRARY} ${BOX2D_INCLUDED_LIBRARY} MultiNEAT Qt5::Widgets Qt5::Charts lua)

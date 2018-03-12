@@ -16,6 +16,8 @@
 #include "../../neat_plot.h"
 #include "../../config.h"
 #include "../../evsim.h"
+#include "../../lua_conf.h"
+#include "../../neat.h"
 
 #include "herbivore_neat.h"
 #include "predator_neat.h"
@@ -33,7 +35,7 @@ void predator_neat::clear() {
 		world.DestroyBody(agent.body);
 	agents.clear();
 	population.release();
-	population_size = 0;
+	params.population_size = 0;
 	active_genomes = 0;
 }
 
@@ -44,9 +46,9 @@ void predator_neat::distribute_genomes() {
 	for(auto &species : population->m_Species) {
 		for(auto &individual : species.m_Individuals) {
 			agents[n].genotype = &individual;
-			agents[n].species = s;
+			agents[n].internal_species = s;
 			individual.BuildPhenotype(agents[n].phenotype);
-			if(++n >= population_size) return;
+			if(++n >= params.population_size) return;
 		}
 		s++;
 	}
@@ -79,20 +81,37 @@ void predator_neat::step_shared_fitness(size_t step) {
 	}
 	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
 	genotypes[step]->m_Evaluated = true;
-	if(step+1 < population_size) {
+	if(step+1 < params.population_size) {
 		distribute_genomes_shared_fitness(step+1);
 	}
 	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
 }
 
-bool predator_neat::initialise(size_t size, int seed) {
-	if(population_size > 0)
+bool predator_neat::initialise(lua_conf &conf, int seed) {
+	if(params.population_size > 0)
 		clear();
 
 	state.draw_sensors_predator = true;
-	population_size = size;
+	params.population_size = conf.get_integer_default("population_size", 100);
+	params.thrust = conf.get_number_default("thrust", 1000.0);
+	params.torque = conf.get_number_default("torque", 45.0);
+	params.eat_delay_max = conf.get_integer_default("eat_delay", 0);
+	params.consume_opt = [this] {
+		if(params.eat_delay_max < 0)
+			return consume_options::once;
+		else if(params.eat_delay_max > 0)
+			return consume_options::delay;
+		else
+			return consume_options::no_delay;
+	}();
+
+	conf.enter_table_or_empty("neat_params");
+	auto neat_params = make_neat_params(conf);
+	conf.leave_table();
+	neat_params.PopulationSize = params.population_size;
+
 	if(!shared_fitness)
-		agents.resize(population_size);
+		agents.resize(params.population_size);
 	else {
 		agents.resize(shared_fitness_simulate_max);
 	}
@@ -107,21 +126,16 @@ bool predator_neat::initialise(size_t size, int seed) {
 		agent.eat_delay = 0;
 		agent.body->SetAngularVelocity(0);
 		agent.body->SetLinearVelocity(b2Vec2(0,0));
+		agent.species = this;
 	}
-
-	NEAT::Parameters params;
-	params.PopulationSize = population_size;
-	params.MinSpecies = build_config::pr_min_species;
-	params.MaxSpecies = build_config::pr_max_species;
-	params.CompatTreshold = build_config::pr_compat_treshold;
 
 	NEAT::Genome genesis(
 		0, 3 + agent::vision_segments * 2, 0, 2, false,
 		NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
-		0, params, 0
+		0, neat_params, 0
 	);
 
-	population = std::make_unique<NEAT::Population>(genesis, params, true, 1.0, seed);
+	population = std::make_unique<NEAT::Population>(genesis, neat_params, true, 1.0, seed);
 	if(shared_fitness) {
 		fill_genome_vector();
 		distribute_genomes_shared_fitness(0);
@@ -143,7 +157,7 @@ void predator_neat::tick() {
 	for(auto &agent : agents) {
 		auto &body = agent.body;
 
-		if(consume_opt == consume_options::delay && agent.eat_delay > 0) {
+		if(params.consume_opt == consume_options::delay && agent.eat_delay > 0) {
 			if(--agent.eat_delay <= 0) {
 				body->SetActive(true);
 			}
@@ -182,11 +196,11 @@ void predator_neat::tick() {
 		const auto forward =
 			glm::rotate(glm::vec2 { 0.0f, 1.0f }, angle) *
 			static_cast<float>(output[0]) *
-			build_config::pr_force
+			params.thrust
 		;
 
 		body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
-		body->ApplyTorque(output[1] * build_config::pr_torque, true);
+		body->ApplyTorque(output[1] * params.torque, true);
 	}
 }
 
@@ -224,7 +238,7 @@ void predator_neat::epoch_shared_fitness() {
 		QApplication::postEvent(
 			*widget, new multi_food_predator_widget::epoch_event(
 				population->m_Generation,
-				total / population_size,
+				total / params.population_size,
 				best_score,
 				worst_score
 			)
@@ -338,13 +352,17 @@ void predator_neat::agent::message(const std::any &msg) {
 		}
 	} else if(type == typeid(msg_killed)) {
 		score++;
-		if(consume_opt != consume_options::no_delay) {
-			eat_delay = fmax(eat_delay_max, 1);
+		if(species->params.consume_opt != consume_options::no_delay) {
+			eat_delay = fmax(species->params.eat_delay_max, 1);
 			body->SetActive(false);
 		}
 	} else if(type == typeid(msg_plot)) {
 		plot_genome(*genotype, "selected_agent");
 	}
+}
+
+unsigned int predator_neat::population_size() const {
+	return params.population_size;
 }
 
 }

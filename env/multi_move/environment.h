@@ -9,15 +9,18 @@
 namespace evsim {
 namespace multi_move {
 
-class environment : environment_base {
+class environment : public environment_base {
 	public:
 		environment();
-		void init();
-		void step();
-		void epoch();
-		void pre_tick();
-		void tick();
-		void draw();
+		~environment() {}
+		void init(lua_conf &conf) override;
+		void step() override;
+		void epoch() override;
+		void pre_tick() override;
+		void tick() override;
+		void draw() override;
+		int steps_per_generation() override { return STEPS_PER_GENERATION; }
+		int ticks_per_step() override { return TICKS_PER_STEP; }
 		herbivore_neat herbivores;
 		predator_neat predator;
 		size_t step_count;

@@ -9,7 +9,6 @@ namespace evsim {
 
 class species {
 	public:
-		virtual bool initialise(size_t size, int seed) = 0;
 		virtual ~species() {}
 		virtual void pre_tick() = 0;
 		virtual void tick() = 0;

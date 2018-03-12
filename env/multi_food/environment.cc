@@ -18,24 +18,29 @@ namespace multi_food {
 
 environment::environment() : herbivores(*state.world), predator(*state.world) {}
 
-void environment::init() {
-	herbivores.initialise(build_config::herbivore_count, static_cast<int>(glfwGetTime()));
-	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
+void environment::init(lua_conf &conf) {	
+	conf.enter_table_or_empty("herbivores");
+	herbivores.initialise(conf, static_cast<int>(glfwGetTime()));
+	conf.leave_table();
+	conf.enter_table_or_empty("predators");
+	predator.initialise(conf, static_cast<int>(glfwGetTime()+1));
+	conf.leave_table();
+	const auto food_count = conf.get_integer_default("food_count", 150);
 
 	if(herbivores.shared_fitness && predator.shared_fitness) {
 		throw std::runtime_error("Both herbivore and predator have shared fitness, this is not allowed!");
 	}
-	if((herbivores.shared_fitness && STEPS_PER_GENERATION != build_config::herbivore_count) ||
-	   (predator.shared_fitness && STEPS_PER_GENERATION != build_config::predator_count)) {
+	if((herbivores.shared_fitness && STEPS_PER_GENERATION != herbivores.population_size()) ||
+	   (predator.shared_fitness && STEPS_PER_GENERATION != predator.population_size())) {
 		throw std::runtime_error(
-			"The STEPS_PER_GENERATION must be equal to the population_size of the agent that is trained with shared_fitness!"
+			"The STEPS_PER_GENERATION must be equal to the population_size of the agent that is trained with shared_fitness"
 		);
 	}
 
 	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
 	QApplication::postEvent(main_gui, new gui::add_species_event(&predator));
 
-	for(size_t i = 0; i < build_config::food_count; i++) {
+	for(int i = 0; i < food_count; i++) {
 		auto consumable_instance = std::make_unique<consumable>();
 		consumable_instance->init_body((*state.world));
 		environmental_objects.emplace_back(std::move(consumable_instance));

@@ -12,6 +12,7 @@
 
 #include "../../entity.h"
 #include "../../species.h"
+#include "../../lua_conf.h"
 
 class multi_food_predator_widget;
 
@@ -29,8 +30,8 @@ class predator_neat : public species {
 		};
 
 		predator_neat(b2World &world) :
-			population_size(0), active_genomes(0), world(world) {}
-		bool initialise(size_t size, int seed);
+			params{}, active_genomes(0), world(world) {}
+		bool initialise(lua_conf &conf, int seed);
 		void pre_tick();
 		void tick();
 		void step();
@@ -39,30 +40,22 @@ class predator_neat : public species {
 		void epoch_shared_fitness();
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget() override;
-		static constexpr consume_options consume_opt = consume_options::delay;
-		static const int eat_delay_max = 60;
+		unsigned int population_size() const;
 		static constexpr bool shared_fitness = false;
 		static constexpr size_t shared_fitness_simulate_max = 5;
 
 	private:
-		void clear();
-		void distribute_genomes();
-		void fill_genome_vector();
-		void distribute_genomes_shared_fitness(int step);
-
-		size_t population_size;
-		size_t active_genomes;
-
 		class agent : public entity {
 			public:
 				void message(const std::any &msg) override;
 				void on_sensor(const msg_contact &contact);
 
-				int eat_delay;
-				b2Body *body;
 				int score;
 				int generation_score;
-				int species;
+				int internal_species;
+				int eat_delay;
+				b2Body *body;
+				predator_neat *species;
 
 				static constexpr int vision_segments = 5;
 				using vision_texture = std::array<float, vision_segments>;
@@ -72,11 +65,27 @@ class predator_neat : public species {
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;
 		};
-		std::optional<multi_food_predator_widget*> widget;
+
+		void clear();
+		void distribute_genomes();
+		void fill_genome_vector();
+		void distribute_genomes_shared_fitness(int step);
+
+		struct {
+			size_t population_size;
+			float thrust;
+			float torque;
+			consume_options consume_opt = consume_options::delay;
+			int eat_delay_max = 60;
+		} params;
+
+		size_t active_genomes;
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		std::vector<NEAT::Genome*> genotypes;
 		b2World &world;
+
+		std::optional<multi_food_predator_widget*> widget;
 		std::atomic_int vision_texture {};
 		std::atomic_bool draw_vision {};
 };

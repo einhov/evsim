@@ -1,6 +1,7 @@
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 #include <QApplication>
+#include <boost/range/adaptor/reversed.hpp>
 
 #include "../../environment_base.h"
 #include "../../species.h"
@@ -18,18 +19,21 @@ namespace multi_move {
 
 environment::environment() : herbivores(*state.world), predator(*state.world) {}
 
-void environment::init() {
-
-	herbivores.initialise(build_config::herbivore_count, static_cast<int>(glfwGetTime()));
-	predator.initialise(build_config::predator_count, static_cast<int>(glfwGetTime()+1));
+void environment::init(lua_conf &conf) {
+	conf.enter_table_or_empty("herbivores");
+	herbivores.initialise(conf, static_cast<int>(glfwGetTime()));
+	conf.leave_table();
+	conf.enter_table_or_empty("predators");
+	predator.initialise(conf, static_cast<int>(glfwGetTime()+1));
+	conf.leave_table();
 
 	if(herbivores.shared_fitness && predator.shared_fitness) {
 		throw std::runtime_error("Both herbivore and predator have shared fitness, this is not allowed!");
 	}
-	if((herbivores.shared_fitness && STEPS_PER_GENERATION != build_config::herbivore_count) ||
-	   (predator.shared_fitness && STEPS_PER_GENERATION != build_config::predator_count)) {
+	if((herbivores.shared_fitness && STEPS_PER_GENERATION != herbivores.population_size()) ||
+	   (predator.shared_fitness && STEPS_PER_GENERATION != predator.population_size())) {
 		throw std::runtime_error(
-			"The STEPS_PER_GENERATION must be equal to the population_size of the agent that is trained with shared_fitness!"
+			"The STEPS_PER_GENERATION must be equal to the population_size of the agent that is trained with shared_fitness"
 		);
 	}
 
