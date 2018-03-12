@@ -61,7 +61,7 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 	if(params.population_size > 0)
 		clear();
 
-	params.population_size = conf.get_integer_default("population_size", 100);
+	params.population_size = conf.get_integer_default("population_size", 50);
 	params.thrust = conf.get_number_default("thrust", 1000.0);
 	params.torque = conf.get_number_default("torque", 45.0);
 
