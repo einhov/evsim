@@ -18,22 +18,32 @@ namespace multi_food {
 
 environment::environment() : herbivores(*state.world), predator(*state.world) {}
 
-void environment::init(lua_conf &conf) {	
+void environment::init(lua_conf &conf) {
+	const auto food_count = conf.get_integer_default("food_count", 150);
+	params.ticks_per_step = conf.get_integer_default("ticks_per_step", 60 * 15);
+	params.steps_per_generation = conf.get_integer_default("steps_per_generation", 50);
+
 	conf.enter_table_or_empty("herbivores");
 	herbivores.initialise(conf, static_cast<int>(glfwGetTime()));
 	conf.leave_table();
 	conf.enter_table_or_empty("predators");
 	predator.initialise(conf, static_cast<int>(glfwGetTime()+1));
 	conf.leave_table();
-	const auto food_count = conf.get_integer_default("food_count", 150);
 
-	if(herbivores.shared_fitness && predator.shared_fitness) {
+	if(
+		herbivores.training_model() == herbivore_neat::training_model_type::shared &&
+		predator.training_model() == predator_neat::training_model_type::shared
+	) {
 		throw std::runtime_error("Both herbivore and predator have shared fitness, this is not allowed!");
 	}
-	if((herbivores.shared_fitness && STEPS_PER_GENERATION != herbivores.population_size()) ||
-	   (predator.shared_fitness && STEPS_PER_GENERATION != predator.population_size())) {
+	if(
+		(herbivores.training_model() == herbivore_neat::training_model_type::shared &&
+		 params.steps_per_generation != herbivores.population_size()) ||
+		(predator.training_model() == predator_neat::training_model_type::shared &&
+		 params.steps_per_generation != predator.population_size())
+	) {
 		throw std::runtime_error(
-			"The STEPS_PER_GENERATION must be equal to the population_size of the agent that is trained with shared_fitness"
+			"The steps_per_generation must be equal to the population_size of the agent that is trained with shared_fitness"
 		);
 	}
 
@@ -49,13 +59,13 @@ void environment::init(lua_conf &conf) {
 }
 
 void environment::step() {
-	if(herbivores.shared_fitness) {
+	if(herbivores.training_model() == herbivore_neat::training_model_type::shared) {
 		herbivores.step_shared_fitness(step_count);
 	}
 	else {
 		herbivores.step();
 	}
-	if(predator.shared_fitness) {
+	if(predator.training_model() == predator_neat::training_model_type::shared) {
 		predator.step_shared_fitness(step_count);
 	}
 	else {
@@ -65,17 +75,17 @@ void environment::step() {
 }
 
 void environment::epoch() {
-	if(herbivores.shared_fitness) {
+	if(herbivores.training_model() == herbivore_neat::training_model_type::shared) {
 		herbivores.epoch_shared_fitness();
 	}
 	else {
-		herbivores.epoch(STEPS_PER_GENERATION);
+		herbivores.epoch(params.steps_per_generation);
 	}
-	if(predator.shared_fitness) {
+	if(predator.training_model() == predator_neat::training_model_type::shared) {
 		predator.epoch_shared_fitness();
 	}
 	else {
-		predator.epoch(STEPS_PER_GENERATION);
+		predator.epoch(params.steps_per_generation);
 	}
 	step_count = 0;
 }
