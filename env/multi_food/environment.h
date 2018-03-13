@@ -19,8 +19,8 @@ class environment : public environment_base {
 		void pre_tick() override;
 		void tick() override;
 		void draw() override;
-		int steps_per_generation() override { return STEPS_PER_GENERATION; }
-		int ticks_per_step() override { return TICKS_PER_STEP; }
+		unsigned int steps_per_generation() override { return STEPS_PER_GENERATION; }
+		unsigned int ticks_per_step() override { return TICKS_PER_STEP; }
 		herbivore_neat herbivores;
 		predator_neat predator;
 

@@ -15,8 +15,8 @@ class environment_base {
 		virtual void pre_tick() = 0;
 		virtual void tick() = 0;
 
-		virtual int steps_per_generation() = 0;
-		virtual int ticks_per_step() = 0;
+		virtual unsigned int steps_per_generation() = 0;
+		virtual unsigned int ticks_per_step() = 0;
 };
 
 }

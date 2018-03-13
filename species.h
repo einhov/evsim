@@ -17,6 +17,12 @@ class species {
 		virtual QWidget *make_species_widget() {
 			return nullptr;
 		}
+
+		enum class training_model_type {
+			none,
+			normal,
+			shared
+		};
 };
 
 }

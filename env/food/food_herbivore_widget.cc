@@ -16,7 +16,7 @@ food_herbivore_widget::food_herbivore_widget(evsim::food::herbivore_neat *herbiv
 
 food_herbivore_widget::~food_herbivore_widget() {
 	species->widget = {};
-    delete ui;
+	delete ui;
 }
 
 bool food_herbivore_widget::event(QEvent *e) {

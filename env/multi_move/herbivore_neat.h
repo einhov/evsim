@@ -43,8 +43,7 @@ class herbivore_neat : public species {
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget();
 		unsigned int population_size() const;
-		static constexpr bool shared_fitness = false;
-		static constexpr size_t shared_fitness_simulate_max = 5;
+		training_model_type training_model() const;
 
 	private:
 		friend class agent;
@@ -83,6 +82,8 @@ class herbivore_neat : public species {
 
 		struct {
 			size_t population_size;
+			size_t shared_fitness_simulate_count;
+			training_model_type training_model;
 			float thrust;
 			float torque;
 		} params;

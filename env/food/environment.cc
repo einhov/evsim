@@ -17,15 +17,17 @@ namespace food {
 environment::environment() : herbivores(*state.world) {}
 
 void environment::init(lua_conf &conf) {
-
 	const auto food_count = conf.get_integer_default("food_count", 150);
+	params.ticks_per_step = conf.get_integer_default("ticks_per_step", 60 * 15);
+	params.steps_per_generation = conf.get_integer_default("steps_per_generation", 50);
+
 	conf.enter_table_or_empty("herbivores");
 	herbivores.initialise(conf, static_cast<int>(glfwGetTime()));
 	conf.leave_table();
 
-	if((herbivores.shared_fitness && STEPS_PER_GENERATION != herbivores.population_size())) {
+	if((herbivores.training_model() == herbivore_neat::training_model_type::shared && params.steps_per_generation != herbivores.population_size())) {
 		throw std::runtime_error(
-			"The STEPS_PER_GENERATION must be equal to the population_size of the agent that is trained with shared_fitness"
+			"The steps_per_generation must be equal to the population_size of the agent that is trained with shared_fitness"
 		);
 	}
 
@@ -36,27 +38,24 @@ void environment::init(lua_conf &conf) {
 		consumable_instance->init_body((*state.world));
 		environmental_objects.emplace_back(std::move(consumable_instance));
 	}
-
 	step_count = 0;
 }
 
 void environment::step() {
-	if(herbivores.shared_fitness) {
+	if(herbivores.training_model() == herbivore_neat::training_model_type::shared) {
 		herbivores.step_shared_fitness(step_count);
 		step_count++;
-	}
-	else {
+	} else {
 		herbivores.step();
 	}
 }
 
 void environment::epoch() {
-	if(herbivores.shared_fitness) {
+	if(herbivores.training_model() == herbivore_neat::training_model_type::shared) {
 		step_count = 0;
 		herbivores.epoch_shared_fitness();
-	}
-	else {
-		herbivores.epoch(STEPS_PER_GENERATION);
+	} else {
+		herbivores.epoch(steps_per_generation());
 	}
 }
 

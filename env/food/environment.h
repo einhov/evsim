@@ -18,13 +18,15 @@ class environment : public environment_base {
 		void pre_tick() override;
 		void tick() override;
 		void draw() override;
-		int steps_per_generation() override { return STEPS_PER_GENERATION; }
-		int ticks_per_step() override { return TICKS_PER_STEP; }
+		unsigned int steps_per_generation() override { return params.steps_per_generation; }
+		unsigned int ticks_per_step() override { return params.ticks_per_step; }
 		herbivore_neat herbivores;
-
 		size_t step_count;
-		static constexpr unsigned int STEPS_PER_GENERATION = 100;
-		static constexpr unsigned int TICKS_PER_STEP = 60 * 15;
+
+		struct {
+			unsigned int steps_per_generation;
+			unsigned int ticks_per_step;
+		} params;
 };
 
 }

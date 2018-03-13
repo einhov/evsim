@@ -106,16 +106,26 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 	params.population_size = conf.get_integer_default("population_size", 50);
 	params.thrust = conf.get_number_default("thrust", 1000.0);
 	params.torque = conf.get_number_default("torque", 45.0);
+	params.shared_fitness_simulate_count = conf.get_number_default("shared_fitness_simulate_count", 5.0);
+
+	const auto training_model = conf.get_string_default("training_model", "normal");
+	if(training_model == "normal") {
+		params.training_model = training_model_type::normal;
+	} else if(training_model == "shared") {
+		params.training_model = training_model_type::shared;
+	} else {
+		throw std::runtime_error("Invalid training_model");
+	}
 
 	conf.enter_table_or_empty("neat_params");
 	auto neat_params = make_neat_params(conf);
 	conf.leave_table();
 	neat_params.PopulationSize = params.population_size;
 
-	if(!shared_fitness)
+	if(params.training_model == training_model_type::normal) {
 		agents.resize(params.population_size);
-	else {
-		agents.resize(shared_fitness_simulate_max);
+	} else {
+		agents.resize(params.shared_fitness_simulate_count);
 	}
 
 	for(auto &agent : agents) {
@@ -129,11 +139,8 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		agent.active = true;
 		agent.body->SetAngularVelocity(0);
 		agent.body->SetLinearVelocity(b2Vec2(0,0));
-		if(!shared_fitness)
-			agents.resize(params.population_size);
-		else {
-			agents.resize(fmin(shared_fitness_simulate_max, params.population_size));
-		}
+		if(params.training_model == training_model_type::shared)
+			agent.internal_species = 0;
 	}
 
 	NEAT::Genome genesis(
@@ -142,11 +149,10 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		0, neat_params, 0
 	);
 	population = std::make_unique<NEAT::Population>(genesis, neat_params, true, 1.0, seed);
-	if(shared_fitness) {
+	if(params.training_model == training_model_type::shared) {
 		fill_genome_vector();
 		distribute_genomes_shared_fitness(0);
-	}
-	else {
+	} else {
 		distribute_genomes();
 	}
 	return true;
@@ -421,6 +427,10 @@ void herbivore_neat::agent::create_yell() {
 
 unsigned int herbivore_neat::population_size() const {
 	return params.population_size;
+}
+
+species::training_model_type herbivore_neat::training_model() const {
+	return params.training_model;
 }
 
 }
