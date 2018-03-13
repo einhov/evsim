@@ -29,6 +29,14 @@ namespace multi_food {
 static std::default_random_engine generator(std::random_device{}());
 static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
 static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
+static std::uniform_real_distribution<float> rotation_distribution(0.0f, glm::radians(360.0f));
+
+static void relocate_agent(b2Body *body) {
+	body->SetTransform(
+		b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)),
+		rotation_distribution(generator)
+	);
+}
 
 void predator_neat::clear() {
 	for(const auto &agent : agents)
@@ -68,23 +76,6 @@ void predator_neat::fill_genome_vector() {
 			genotypes.emplace_back(&individual);
 		}
 	}
-}
-
-void predator_neat::step_shared_fitness(size_t step) {
-	int current_score = 0;
-	for(auto &agent : agents) {
-		current_score += agent.score;
-		agent.score = 0;
-		agent.body->SetActive(true);
-		agent.body->SetAngularVelocity(0);
-		agent.body->SetLinearVelocity(b2Vec2(0,0));
-	}
-	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
-	genotypes[step]->m_Evaluated = true;
-	if(step+1 < params.population_size) {
-		distribute_genomes_shared_fitness(step+1);
-	}
-	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
 }
 
 bool predator_neat::initialise(lua_conf &conf, int seed) {
@@ -216,18 +207,40 @@ void predator_neat::tick() {
 	}
 }
 
+void predator_neat::pre_step() {
+	for(auto &agent : agents) {
+		agent.body->SetAngularVelocity(0);
+		agent.body->SetLinearVelocity(b2Vec2(0,0));
+		agent.eat_delay = 0;
+		agent.body->SetActive(true);
+		relocate_agent(agent.body);
+	}
+}
+
 void predator_neat::step() {
+	pre_step();
 	double total = 0;
 	for(auto &agent : agents) {
 		total += agent.score;
 		agent.generation_score += agent.score;
 		agent.score = 0;
-		agent.eat_delay = 0;
-		agent.body->SetActive(true);
-		agent.body->SetAngularVelocity(0);
-		agent.body->SetLinearVelocity(b2Vec2(0,0));
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
+}
+
+void predator_neat::step_shared_fitness(size_t step) {
+	pre_step();
+	int current_score = 0;
+	for(auto &agent : agents) {
+		current_score += agent.score;
+		agent.score = 0;
+	}
+	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
+	genotypes[step]->m_Evaluated = true;
+	if(step+1 < params.population_size) {
+		distribute_genomes_shared_fitness(step+1);
+	}
+	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
 }
 
 QWidget *predator_neat::make_species_widget() {

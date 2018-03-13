@@ -75,6 +75,7 @@ class herbivore_neat : public species {
 		void distribute_genomes();
 		void fill_genome_vector();
 		void distribute_genomes_shared_fitness(int step);
+		void pre_step();
 
 		struct {
 			size_t population_size;

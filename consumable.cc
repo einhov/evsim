@@ -18,9 +18,9 @@ namespace evsim {
 
 static std::default_random_engine generator(std::random_device{}());
 static std::uniform_real_distribution<float> velocity_distribution(-10.0f, 10.0f);
-static std::uniform_real_distribution<float> angular_distribution(-glm::radians(45.0f), glm::radians(45.0f));
 static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
 static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
+static std::uniform_real_distribution<float> rotation_distribution(0.0f, glm::radians(360.0f));
 
 static const fixture_type food_type = fixture_type::food;
 
@@ -52,6 +52,10 @@ void consumable::update() {
 	if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
 	if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
 	if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
+}
+
+void consumable::step() {
+	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), rotation_distribution(generator));
 }
 
 static void relocate_consumable(b2Body *body) {

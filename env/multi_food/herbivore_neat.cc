@@ -32,6 +32,14 @@ namespace multi_food {
 static std::default_random_engine generator(std::random_device{}());
 static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
 static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
+static std::uniform_real_distribution<float> rotation_distribution(0.0f, glm::radians(360.0f));
+
+static void relocate_agent(b2Body *body) {
+	body->SetTransform(
+		b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)),
+		rotation_distribution(generator)
+	);
+}
 
 void herbivore_neat::clear() {
 	for(const auto &agent : agents)
@@ -71,24 +79,6 @@ void herbivore_neat::fill_genome_vector() {
 			genotypes.emplace_back(&individual);
 		}
 	}
-}
-
-void herbivore_neat::step_shared_fitness(size_t step) {
-	int current_score = 0;
-	for(auto &agent : agents) {
-		current_score += agent.score;
-		agent.score = 0;
-		agent.body->SetActive(true);
-		agent.yell_detected = false;
-		agent.body->SetAngularVelocity(0);
-		agent.body->SetLinearVelocity(b2Vec2(0,0));
-	}
-	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
-	genotypes[step]->m_Evaluated = true;
-	if(step+1 < params.population_size) {
-		distribute_genomes_shared_fitness(step+1);
-	}
-	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
 }
 
 bool herbivore_neat::initialise(lua_conf &conf, int seed) {
@@ -237,16 +227,41 @@ glm::vec2 herbivore_neat::agent::find_yell_vector() {
 	return glm::rotate(ca, -body->GetAngle());
 }
 
+void herbivore_neat::pre_step() {
+	for(auto &agent : agents) {
+		agent.body->SetAngularVelocity(0);
+		agent.body->SetLinearVelocity(b2Vec2(0,0));
+		agent.body->SetActive(true);
+		agent.yell_detected = false;
+		agent.yell_cooldown = 0;
+		relocate_agent(agent.body);
+	}
+}
+
 void herbivore_neat::step() {
+	pre_step();
 	double total = 0;
 	for(auto &agent : agents) {
 		total += agent.score;
 		agent.generation_score += agent.score;
 		agent.score = 0;
-		agent.body->SetAngularVelocity(0);
-		agent.body->SetLinearVelocity(b2Vec2(0,0));
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
+}
+
+void herbivore_neat::step_shared_fitness(size_t step) {
+	pre_step();
+	int current_score = 0;
+	for(auto &agent : agents) {
+		current_score += agent.score;
+		agent.score = 0;
+	}
+	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
+	genotypes[step]->m_Evaluated = true;
+	if(step+1 < params.population_size) {
+		distribute_genomes_shared_fitness(step+1);
+	}
+	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
 }
 
 void herbivore_neat::epoch_shared_fitness() {
@@ -309,10 +324,6 @@ void herbivore_neat::epoch(int steps) {
 	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
 	fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
 	distribute_genomes();
-}
-
-static void relocate_agent(b2Body *body) {
-	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
 }
 
 QWidget *herbivore_neat::make_species_widget() {

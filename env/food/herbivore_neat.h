@@ -21,13 +21,6 @@ class food_herbivore_widget;
 namespace evsim {
 namespace food {
 
-struct msg_kill {
-	entity *consumer;
-};
-
-struct msg_killed {
-};
-
 class herbivore_neat : public species {
 	friend class ::food_herbivore_widget;
 	public:
@@ -72,6 +65,7 @@ class herbivore_neat : public species {
 		void distribute_genomes();
 		void fill_genome_vector();
 		void distribute_genomes_shared_fitness(int step);
+		void pre_step();
 
 		struct {
 			size_t population_size;
