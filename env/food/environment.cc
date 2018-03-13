@@ -42,6 +42,9 @@ void environment::init(lua_conf &conf) {
 }
 
 void environment::step() {
+	for(auto &env_obj : environmental_objects) {
+		env_obj->step();
+	}
 	if(herbivores.training_model() == herbivore_neat::training_model_type::shared) {
 		herbivores.step_shared_fitness(step_count);
 		step_count++;

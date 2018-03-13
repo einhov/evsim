@@ -20,6 +20,7 @@ class consumable : public environmental_entity {
 	public:
 		void message(const std::any &msg) override;
 		void tick() override {}
+		void step() override;
 
 		b2Body *body;
 
