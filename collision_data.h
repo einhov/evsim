@@ -7,7 +7,8 @@ enum class collision_types {
 	CONSUMABLE	=	0x0004,
 	WALL		=	0x0008,
 	SENSOR		=	0x0010,
-	YELL		=	0x0020
+	YELL		=	0x0020,
+	WALL_RIGHT	=	0x0030
 };
 
 #endif

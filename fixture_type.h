@@ -7,7 +7,8 @@ enum class fixture_type {
 	torso_predator,
 	food,
 	yell,
-	wall
+	wall,
+	wall_right
 };
 
 #endif

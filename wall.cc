@@ -18,9 +18,9 @@
 
 namespace evsim {
 
-static const fixture_type fixture_type = fixture_type::wall;
+static const fixture_type wall_type = fixture_type::wall;
 
-void wall::init_body(b2World &world, b2Vec2& position, b2Vec2& scale) {
+void wall::init_body(b2World &world, b2Vec2& position, b2Vec2& scale, bool right_wall) {
 	b2PolygonShape shape;
 	shape.SetAsBox(scale.x, scale.y);
 	b2FixtureDef fixture;
@@ -29,8 +29,12 @@ void wall::init_body(b2World &world, b2Vec2& position, b2Vec2& scale) {
 	fixture.shape = &shape;
 	fixture.density = 1.0f;
 	fixture.isSensor = false;
-	fixture.filter.categoryBits = static_cast<uint16>(collision_types::WALL);
-	fixture.userData = const_cast<void*>(static_cast<const void*>(&fixture_type));
+	if(right_wall) {
+		fixture.filter.categoryBits = static_cast<uint16>(collision_types::WALL_RIGHT);
+	} else {
+		fixture.filter.categoryBits = static_cast<uint16>(collision_types::WALL);
+	}
+	fixture.userData = const_cast<void*>(static_cast<const void*>(&wall_type));
 
 	b2BodyDef def;
 	def.type = b2_staticBody;

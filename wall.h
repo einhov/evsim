@@ -16,7 +16,7 @@ class wall : public environmental_entity {
 		void draw(const glm::mat4 &projection) const override;
 		~wall() override;
 
-		void init_body(b2World &world, b2Vec2& position, b2Vec2& scale);
+		void init_body(b2World &world, b2Vec2& position, b2Vec2& scale, bool right_wall);
 
 		b2Body* body;
 		b2World* world;
