@@ -4,8 +4,7 @@
 #include <vector>
 #include <memory>
 #include <optional>
-#include <atomic>
-#include <Genome.h>
+#include <boost/filesystem.hpp>
 
 #include <Population.h>
 #include <Box2D/Box2D.h>
@@ -39,11 +38,13 @@ class herbivore_neat : public species {
 		void step();
 		void step_shared_fitness(size_t epoch_step);
 		void epoch(int steps);
+		void epoch_normal_none(int epoch, int steps);
 		void epoch_shared_fitness();
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget();
 		unsigned int population_size() const;
 		training_model_type training_model() const;
+		void save() const;
 
 	private:
 		friend class agent;
@@ -86,6 +87,8 @@ class herbivore_neat : public species {
 			training_model_type training_model;
 			float thrust;
 			float torque;
+			std::string initial_population;
+			std::optional<boost::filesystem::path> save_path;
 		} params;
 
 		size_t active_genomes;

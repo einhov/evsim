@@ -25,9 +25,6 @@ struct simulation_state {
 	bool draw_yell;
 	bool draw_wall;
 
-	bool draw_sensors_herbivore;
-	bool draw_sensors_predator;
-
 	float simulation_timestep;
 	glm::mat4 projection;
 	b2World *world;

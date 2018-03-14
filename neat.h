@@ -1,3 +1,10 @@
+#ifndef NEAT_H
+#define NEAT_H
+
+#include <memory>
+#include <boost/filesystem.hpp>
+
+#include <Population.h>
 #include <Parameters.h>
 #include "lua_conf.h"
 
@@ -12,4 +19,17 @@ inline NEAT::Parameters make_neat_params(lua_conf &conf) {
 	return params;
 }
 
+inline std::unique_ptr<NEAT::Population> load_neat_population(const boost::filesystem::path &file) {
+	namespace fs = boost::filesystem;
+	if(!fs::exists(file) || !fs::is_regular_file(file))
+		throw std::runtime_error("Attempted to load invalid file");
+	return std::make_unique<NEAT::Population>(file.c_str());
 }
+
+inline void save_neat_population(const boost::filesystem::path &file, NEAT::Population &population) {
+	population.Save(file.c_str());
+}
+
+}
+
+#endif

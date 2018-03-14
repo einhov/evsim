@@ -24,12 +24,6 @@ void input_init(GLFWwindow *window) {
 		if(key == GLFW_KEY_O && action == GLFW_PRESS) {
 			state.pause = !state.pause;
 		}
-		if(key == GLFW_KEY_S && action == GLFW_PRESS) {
-			state.draw_sensors_herbivore = !state.draw_sensors_herbivore;
-		}
-		if(key == GLFW_KEY_D && action == GLFW_PRESS) {
-			state.draw_sensors_predator = !state.draw_sensors_predator;
-		}
 		if(key == GLFW_KEY_A && action == GLFW_PRESS) {
 			state.draw_yell = !state.draw_yell;
 		}

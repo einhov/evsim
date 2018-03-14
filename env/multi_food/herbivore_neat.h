@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <memory>
+#include <optional>
+#include <boost/filesystem.hpp>
 
 #include <Population.h>
 #include <Box2D/Box2D.h>

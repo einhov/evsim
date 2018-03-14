@@ -1,6 +1,7 @@
 #ifndef SPECIES_H
 #define SPECIES_H
 
+#include <string_view>
 #include <Box2D/Box2D.h>
 #include <glm/glm.hpp>
 #include <QWidget>
@@ -19,9 +20,18 @@ class species {
 		}
 
 		enum class training_model_type {
-			none,
 			normal,
-			shared
+			normal_none,
+			shared,
+			shared_none,
+		};
+
+		static const inline std::unordered_map<std::string_view, training_model_type>
+		training_model_by_string {
+			{ "normal",      training_model_type::normal      },
+			{ "normal_none", training_model_type::normal_none },
+			{ "shared",      training_model_type::shared      },
+			{ "shared_none", training_model_type::shared_none },
 		};
 };
 

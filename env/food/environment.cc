@@ -14,6 +14,8 @@
 namespace evsim {
 namespace food {
 
+using training_model_type = evsim::species::training_model_type;
+
 environment::environment() : herbivores(*state.world) {}
 
 void environment::init(lua_conf &conf) {
@@ -25,7 +27,7 @@ void environment::init(lua_conf &conf) {
 	herbivores.initialise(conf, static_cast<int>(glfwGetTime()));
 	conf.leave_table();
 
-	if((herbivores.training_model() == herbivore_neat::training_model_type::shared && params.steps_per_generation != herbivores.population_size())) {
+	if((herbivores.training_model() == training_model_type::shared && params.steps_per_generation != herbivores.population_size())) {
 		throw std::runtime_error(
 			"The steps_per_generation must be equal to the population_size of the agent that is trained with shared_fitness"
 		);
@@ -42,20 +44,33 @@ void environment::init(lua_conf &conf) {
 }
 
 void environment::step() {
-	if(herbivores.training_model() == herbivore_neat::training_model_type::shared) {
-		herbivores.step_shared_fitness(step_count);
-		step_count++;
-	} else {
-		herbivores.step();
+	switch(herbivores.training_model()) {
+		case training_model_type::normal_none: [[fallthrough]]
+		case training_model_type::normal:
+			herbivores.step();
+			return;
+		case training_model_type::shared:
+			herbivores.step_shared_fitness(step_count++);
+			return;
+		case training_model_type::shared_none:
+			throw std::runtime_error("shared_none training model unimplemented for environment");
 	}
 }
 
 void environment::epoch() {
-	if(herbivores.training_model() == herbivore_neat::training_model_type::shared) {
-		step_count = 0;
-		herbivores.epoch_shared_fitness();
-	} else {
-		herbivores.epoch(steps_per_generation());
+	switch(herbivores.training_model()) {
+		case training_model_type::normal:
+			herbivores.epoch(steps_per_generation());
+			return;
+		case training_model_type::shared:
+			step_count = 0;
+			herbivores.epoch_shared_fitness();
+			return;
+		case training_model_type::normal_none:
+			herbivores.epoch_normal_none(state.generation, steps_per_generation());
+			return;
+		case training_model_type::shared_none:
+			throw std::runtime_error("shared_none training model unimplemented for environment");
 	}
 }
 
