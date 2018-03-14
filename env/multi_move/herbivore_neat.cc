@@ -36,9 +36,13 @@ namespace multi_move {
 static std::default_random_engine generator(std::random_device{}());
 static std::uniform_real_distribution<float> pos_x_distribution(-90.f * (4.0f / 3.0f), -90.f * (4.0f / 3.0f));
 static std::uniform_real_distribution<float> pos_y_distribution(-90.0f, 90.0f);
+static std::uniform_real_distribution<float> rotation_distribution(0.0f, glm::radians(360.0f));
 
 static void relocate_agent(b2Body *body) {
-	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), pos_y_distribution(generator));
+	body->SetTransform(
+		b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)),
+		rotation_distribution(generator)
+	);
 }
 
 void herbivore_neat::clear() {
@@ -81,32 +85,13 @@ void herbivore_neat::fill_genome_vector() {
 	}
 }
 
-void herbivore_neat::step_shared_fitness(size_t step) {
-	int current_score = 0;
-	for(auto &agent : agents) {
-		current_score += agent.score;
-		agent.score = 0;
-		agent.body->SetActive(true);
-		agent.active = true;
-		agent.hear_yell = false;
-		agent.body->SetAngularVelocity(0);
-		agent.body->SetLinearVelocity(b2Vec2(0,0));
-		relocate_agent(agent.body);
-	}
-	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
-	genotypes[step]->m_Evaluated = true;
-	if(step+1 < params.population_size) {
-		distribute_genomes_shared_fitness(step+1);
-	}
-	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
-}
-
 bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 	if(params.population_size > 0)
 		clear();
 
 	params.thrust = conf.get_number_default("thrust", 1000.0);
 	params.torque = conf.get_number_default("torque", 45.0);
+	//params.yell_delay = conf.get_number_default("yell_delay", 30);
 	params.shared_fitness_simulate_count = conf.get_number_default("shared_fitness_simulate_count", 5.0);
 
 	const auto training_model = training_model_by_string.find(
@@ -238,7 +223,7 @@ void herbivore_neat::tick() {
 		}
 		*/
 		inputs.emplace_back(pos.x);
-		agent.hear_yell = false;
+		agent.yell_detected = false;
 		inputs.emplace_back(1.0);
 
 		agent.phenotype.Flush();
@@ -259,33 +244,55 @@ void herbivore_neat::tick() {
 			agent.create_yell();
 		}
 */
-		if(agent.can_yell_timer > 0) {
-			agent.can_yell_timer--;
+		if(agent.yell_cooldown > 0) {
+			agent.yell_cooldown--;
 		}
 	}
 }
 
 glm::vec2 herbivore_neat::agent::find_yell_vector() {
-	const auto c = centre_of_yell;
+	const auto c = yell_vector;
 	const auto a = body->GetPosition();
 	const auto ca = glm::vec2(c.x, c.y) - glm::vec2(a.x, a.y);
 	return glm::rotate(ca, -body->GetAngle());
 }
 
+void herbivore_neat::pre_step() {
+	for(auto &agent : agents) {
+		agent.body->SetActive(true);
+		agent.active = true;
+		agent.yell_detected = false;
+		agent.yell_cooldown = 0;
+		agent.body->SetAngularVelocity(0);
+		agent.body->SetLinearVelocity(b2Vec2(0,0));
+		relocate_agent(agent.body);
+	}
+}
+
 void herbivore_neat::step() {
+	pre_step();
 	double total = 0;
 	for(auto &agent : agents) {
 		total += agent.score;
 		agent.generation_score += agent.score;
 		agent.score = 0;
-		agent.body->SetActive(true);
-		agent.active = true;
-		agent.body->SetAngularVelocity(0);
-		agent.body->SetLinearVelocity(b2Vec2(0,0));
-		relocate_agent(agent.body);
-
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
+}
+
+void herbivore_neat::step_shared_fitness(size_t step) {
+	pre_step();
+	int current_score = 0;
+	for(auto &agent : agents) {
+		current_score += agent.score;
+		agent.score = 0;
+	}
+	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
+	genotypes[step]->m_Evaluated = true;
+	if(step+1 < params.population_size) {
+		distribute_genomes_shared_fitness(step+1);
+	}
+	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
 }
 
 void herbivore_neat::epoch_shared_fitness() {
@@ -464,8 +471,8 @@ void herbivore_neat::agent::message(const std::any &msg) {
 		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::yell) {
 			const yell *yell_heard = static_cast<yell*>(contact.fixture_foreign->GetBody()->GetUserData());
 			if(yell_heard->hollerer != this) {
-				hear_yell = true;
-				centre_of_yell = yell_heard->body->GetPosition();
+				yell_detected = true;
+				yell_vector = yell_heard->body->GetPosition();
 			}
 		}
 	} else if(type == typeid(msg_kill)) {
@@ -480,8 +487,8 @@ void herbivore_neat::agent::message(const std::any &msg) {
 }
 
 void herbivore_neat::agent::create_yell() {
-	if(can_yell_timer == 0){
-		can_yell_timer = yell_timer_max;
+	if(yell_cooldown == 0){
+		yell_cooldown = species->params.yell_delay;
 		auto yell_instance = std::make_unique<yell>();
 		yell_instance->init_body(species->world, this, body->GetPosition());
 		environmental_objects.push_back(std::move(yell_instance));

@@ -44,6 +44,10 @@ void environment::init(lua_conf &conf) {
 }
 
 void environment::step() {
+	for(auto &env_obj : environmental_objects) {
+		env_obj->step();
+	}
+
 	switch(herbivores.training_model()) {
 		case training_model_type::normal_none: [[fallthrough]]
 		case training_model_type::normal:

@@ -55,10 +55,6 @@ class herbivore_neat : public species {
 				void create_yell();
 				glm::vec2 find_yell_vector();
 
-				b2Vec2 centre_of_yell;
-				int yell_timer_max = 60;
-				int can_yell_timer = yell_timer_max;
-				bool hear_yell = false;
 				int score;
 				int generation_score;
 				int internal_species;
@@ -72,6 +68,10 @@ class herbivore_neat : public species {
 				vision_texture vision_predator;
 				vision_texture vision_wall;
 
+				bool yell_detected = false;
+				b2Vec2 yell_vector;
+				int yell_cooldown = 0;
+
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;
 		};
@@ -80,6 +80,7 @@ class herbivore_neat : public species {
 		void distribute_genomes();
 		void fill_genome_vector();
 		void distribute_genomes_shared_fitness(int step);
+		void pre_step();
 
 		struct {
 			size_t population_size;
@@ -87,6 +88,7 @@ class herbivore_neat : public species {
 			training_model_type training_model;
 			float thrust;
 			float torque;
+			int yell_delay;
 			std::string initial_population;
 			std::optional<boost::filesystem::path> save_path;
 		} params;

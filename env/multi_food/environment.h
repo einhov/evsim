@@ -19,15 +19,16 @@ class environment : public environment_base {
 		void pre_tick() override;
 		void tick() override;
 		void draw() override;
-		unsigned int steps_per_generation() override { return STEPS_PER_GENERATION; }
-		unsigned int ticks_per_step() override { return TICKS_PER_STEP; }
+		unsigned int steps_per_generation() override { return params.steps_per_generation; }
+		unsigned int ticks_per_step() override { return params.ticks_per_step; }
 		herbivore_neat herbivores;
 		predator_neat predator;
-
 		size_t step_count;
-		const unsigned int STEPS_PER_GENERATION = 25;
-		const unsigned int TICKS_PER_STEP = 60 * 15;
 
+		struct {
+			unsigned int steps_per_generation;
+			unsigned int ticks_per_step;
+		} params;
 };
 
 }

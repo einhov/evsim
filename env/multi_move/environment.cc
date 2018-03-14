@@ -63,7 +63,8 @@ void environment::init(lua_conf &conf) {
 			wall_instance->init_body(
 				(*state.world),
 				p,
-				s
+				s,
+				false
 				);
 			environmental_objects.emplace_back(std::move(wall_instance));
 		}
@@ -73,11 +74,23 @@ void environment::init(lua_conf &conf) {
 			auto wall_instance = std::make_unique<wall>();
 			b2Vec2 p (x, j);
 			b2Vec2 s (2, 2);
-			wall_instance->init_body(
-				(*state.world),
-				p,
-				s
-				);
+			if(i == 0) {
+				wall_instance->init_body(
+					(*state.world),
+					p,
+					s,
+					false
+					);
+			}
+			else {
+				wall_instance->init_body(
+					(*state.world),
+					p,
+					s,
+					true
+					);
+			}
+
 			environmental_objects.emplace_back(std::move(wall_instance));
 		}
 		x = 134;
@@ -87,6 +100,10 @@ void environment::init(lua_conf &conf) {
 
 
 void environment::step() {
+	for(auto &env_obj : environmental_objects) {
+		env_obj->step();
+	}
+
 	switch(herbivores.training_model()) {
 		case training_model_type::normal_none: [[fallthrough]]
 		case training_model_type::normal:
