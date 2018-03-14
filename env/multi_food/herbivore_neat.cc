@@ -229,7 +229,6 @@ glm::vec2 herbivore_neat::agent::find_yell_vector() {
 
 void herbivore_neat::pre_step() {
 	for(auto &agent : agents) {
-		agent.score = 0;
 		agent.body->SetAngularVelocity(0);
 		agent.body->SetLinearVelocity(b2Vec2(0,0));
 		agent.body->SetActive(true);
@@ -245,6 +244,7 @@ void herbivore_neat::step() {
 	for(auto &agent : agents) {
 		total += agent.score;
 		agent.generation_score += agent.score;
+		agent.score = 0;
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
@@ -254,6 +254,7 @@ void herbivore_neat::step_shared_fitness(size_t step) {
 	int current_score = 0;
 	for(auto &agent : agents) {
 		current_score += agent.score;
+		agent.score = 0;
 	}
 	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
 	genotypes[step]->m_Evaluated = true;

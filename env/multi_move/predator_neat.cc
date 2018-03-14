@@ -213,7 +213,6 @@ void predator_neat::tick() {
 
 void predator_neat::pre_step() {
 	for(auto &agent : agents) {
-		agent.score = 0;
 		agent.body->SetAngularVelocity(0);
 		agent.body->SetLinearVelocity(b2Vec2(0,0));
 		agent.eat_delay = 0;
@@ -223,11 +222,13 @@ void predator_neat::pre_step() {
 }
 
 void predator_neat::step() {
+	pre_step();
 	double total = 0;
 	for(auto &agent : agents) {
 		total += agent.score;
 		agent.generation_score += agent.score;
 		relocate_agent(agent.body);
+		agent.score = 0;
 	}
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
@@ -237,6 +238,7 @@ void predator_neat::step_shared_fitness(size_t step) {
 	for(auto &agent : agents) {
 		current_score += agent.score;
 		relocate_agent(agent.body);
+		agent.score = 0;
 	}
 	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
 	genotypes[step]->m_Evaluated = true;
