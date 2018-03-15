@@ -52,10 +52,10 @@ void environment::step() {
 		case training_model_type::normal_none: [[fallthrough]]
 		case training_model_type::normal:
 			herbivores.step();
-			return;
+			break;
 		case training_model_type::shared:
 			herbivores.step_shared_fitness(step_count++);
-			return;
+			break;
 		case training_model_type::shared_none:
 			throw std::runtime_error("shared_none training model unimplemented for environment");
 	}
@@ -65,14 +65,14 @@ void environment::epoch() {
 	switch(herbivores.training_model()) {
 		case training_model_type::normal:
 			herbivores.epoch(steps_per_generation());
-			return;
+			break;
 		case training_model_type::shared:
 			step_count = 0;
 			herbivores.epoch_shared_fitness();
-			return;
+			break;
 		case training_model_type::normal_none:
 			herbivores.epoch_normal_none(state.generation, steps_per_generation());
-			return;
+			break;
 		case training_model_type::shared_none:
 			throw std::runtime_error("shared_none training model unimplemented for environment");
 	}
