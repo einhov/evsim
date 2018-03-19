@@ -4,6 +4,9 @@
 #include <vector>
 #include <memory>
 #include <atomic>
+#include <optional>
+
+#include <boost/filesystem.hpp>
 
 #include <Population.h>
 #include <Box2D/Box2D.h>
@@ -38,10 +41,12 @@ class predator_neat : public species {
 		void step_shared_fitness(size_t epoch_step);
 		void epoch(int steps);
 		void epoch_shared_fitness();
+		void epoch_normal_none(int epoch, int steps);
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget() override;
 		unsigned int population_size() const;
 		training_model_type training_model() const;
+		void save() const;
 
 	private:
 		class agent : public entity {
@@ -79,6 +84,8 @@ class predator_neat : public species {
 			float torque;
 			consume_options consume_opt = consume_options::delay;
 			int eat_delay_max = 60;
+			std::string initial_population;
+			std::optional<boost::filesystem::path> save_path;
 		} params;
 
 		size_t active_genomes;

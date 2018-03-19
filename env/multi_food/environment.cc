@@ -16,6 +16,8 @@
 namespace evsim {
 namespace multi_food {
 
+using training_model_type = evsim::species::training_model_type;
+
 environment::environment() : herbivores(*state.world), predator(*state.world) {}
 
 void environment::init(lua_conf &conf) {
@@ -62,34 +64,65 @@ void environment::step() {
 	for(auto &env_obj : environmental_objects) {
 		env_obj->step();
 	}
-	if(herbivores.training_model() == herbivore_neat::training_model_type::shared) {
-		herbivores.step_shared_fitness(step_count);
+
+	switch(herbivores.training_model()) {
+		case training_model_type::normal_none: [[fallthrough]]
+		case training_model_type::normal:
+			herbivores.step();
+			break;
+		case training_model_type::shared:
+			herbivores.step_shared_fitness(step_count++);
+			break;
+		case training_model_type::shared_none:
+			throw std::runtime_error("shared_none training model unimplemented for herbivores in environment");
 	}
-	else {
-		herbivores.step();
+
+	switch(predator.training_model()) {
+		case training_model_type::normal_none: [[fallthrough]]
+		case training_model_type::normal:
+			predator.step();
+			break;
+		case training_model_type::shared:
+			predator.step_shared_fitness(step_count++);
+			break;
+		case training_model_type::shared_none:
+			throw std::runtime_error("shared_none training model unimplemented for predator in environment");
 	}
-	if(predator.training_model() == predator_neat::training_model_type::shared) {
-		predator.step_shared_fitness(step_count);
-	}
-	else {
-		predator.step();
-	}
+
 	step_count++;
 }
 
 void environment::epoch() {
-	if(herbivores.training_model() == herbivore_neat::training_model_type::shared) {
-		herbivores.epoch_shared_fitness();
+	switch(herbivores.training_model()) {
+		case training_model_type::normal:
+			herbivores.epoch(steps_per_generation());
+			break;
+		case training_model_type::shared:
+			step_count = 0;
+			herbivores.epoch_shared_fitness();
+			break;
+		case training_model_type::normal_none:
+			herbivores.epoch_normal_none(state.generation, steps_per_generation());
+			break;
+		case training_model_type::shared_none:
+			throw std::runtime_error("shared_none training model unimplemented for herbivores in environment");
 	}
-	else {
-		herbivores.epoch(params.steps_per_generation);
+
+	switch(predator.training_model()) {
+		case training_model_type::normal:
+			predator.epoch(steps_per_generation());
+			break;
+		case training_model_type::shared:
+			step_count = 0;
+			predator.epoch_shared_fitness();
+			break;
+		case training_model_type::normal_none:
+			predator.epoch_normal_none(state.generation, steps_per_generation());
+			break;
+		case training_model_type::shared_none:
+			throw std::runtime_error("shared_none training model unimplemented for predator in environment");
 	}
-	if(predator.training_model() == predator_neat::training_model_type::shared) {
-		predator.epoch_shared_fitness();
-	}
-	else {
-		predator.epoch(params.steps_per_generation);
-	}
+
 	step_count = 0;
 }
 
