@@ -18,9 +18,9 @@
 
 namespace evsim {
 
-static const fixture_type wall_type = fixture_type::wall;
+static const fixture_type fixture_type = fixture_type::wall;
 
-void wall::init_body(b2World &world, b2Vec2& position, b2Vec2& scale, bool right_wall) {
+void wall::init_body(b2World &world, b2Vec2& position, b2Vec2& scale, wall_type type) {
 	b2PolygonShape shape;
 	shape.SetAsBox(scale.x, scale.y);
 	b2FixtureDef fixture;
@@ -29,12 +29,19 @@ void wall::init_body(b2World &world, b2Vec2& position, b2Vec2& scale, bool right
 	fixture.shape = &shape;
 	fixture.density = 1.0f;
 	fixture.isSensor = false;
-	if(right_wall) {
+	this->type = type;
+	if(type == wall_type::right) {
 		fixture.filter.categoryBits = static_cast<uint16>(collision_types::WALL_RIGHT);
-	} else {
+	} else if(type == wall_type::goal){
+		fixture.filter.categoryBits = static_cast<uint16>(collision_types::WALL_GOAL);
+	} else if(type == wall_type::standard){
 		fixture.filter.categoryBits = static_cast<uint16>(collision_types::WALL);
+	} else {
+		throw std::runtime_error(
+			"Unknown wall_type sent to init_body (wall)"
+		);
 	}
-	fixture.userData = const_cast<void*>(static_cast<const void*>(&wall_type));
+	fixture.userData = const_cast<void*>(static_cast<const void*>(&fixture_type));
 
 	b2BodyDef def;
 	def.type = b2_staticBody;
@@ -100,7 +107,12 @@ void wall::draw(const glm::mat4 &projection) const {
 			glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) * glm::scale(glm::vec3(scale.x, scale.y, 1.0f));
 		glBindVertexArray(model.vertex_arrays.body);
 		model.program->set_uniform<uniform_type::MAT4>("model", glm::value_ptr(mat_model));
-		model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.5f, 0.25f);
+		if(type == wall_type::goal) {
+			model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 0.0f, 0.8f, 0.0f);
+		}
+		else {
+			model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.5f, 0.25f);
+		}
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}
 }

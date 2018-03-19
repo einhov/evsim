@@ -8,7 +8,8 @@ enum class collision_types {
 	WALL		=	0x0008,
 	SENSOR		=	0x0010,
 	YELL		=	0x0020,
-	WALL_RIGHT	=	0x0030
+	WALL_RIGHT	=	0x0030,
+	WALL_GOAL	=	0x0040
 };
 
 #endif
