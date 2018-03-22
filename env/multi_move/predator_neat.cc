@@ -65,7 +65,7 @@ void predator_neat::distribute_genomes() {
 	}
 }
 
-void predator_neat::distribute_genomes_shared_fitness(int step) {
+void predator_neat::distribute_genomes_shared(int step) {
 	for(auto &agent : agents) {
 		agent.genotype = genotypes[step];
 		genotypes[step]->BuildPhenotype(agent.phenotype);
@@ -107,6 +107,8 @@ bool predator_neat::initialise(lua_conf &conf, int seed) {
 	else
 		throw std::runtime_error("Invalid training_model");
 
+	params.train = conf.get_boolean_default("train", true);
+
 	if(const auto save = conf.get_string("save"); save) {
 		params.save_path = fs::path(*save);
 		boost::system::error_code ec;
@@ -134,11 +136,9 @@ bool predator_neat::initialise(lua_conf &conf, int seed) {
 
 	agents.resize([this]() -> size_t{
 		switch(params.training_model) {
-			case training_model_type::normal: [[fallthrough]]
-			case training_model_type::normal_none:
+			case training_model_type::normal:
 				return params.population_size;
-			case training_model_type::shared: [[fallthrough]]
-			case training_model_type::shared_none:
+			case training_model_type::shared:
 				return params.shared_fitness_simulate_count;
 			default: return 0;
 		}
@@ -159,12 +159,9 @@ bool predator_neat::initialise(lua_conf &conf, int seed) {
 			agent.internal_species = 0;
 	}
 
-	if(
-		params.training_model == training_model_type::shared ||
-		params.training_model == training_model_type::shared_none
-	) {
+	if(params.training_model == training_model_type::shared) {
 		fill_genome_vector();
-		distribute_genomes_shared_fitness(0);
+		distribute_genomes_shared(0);
 	} else {
 		distribute_genomes();
 	}
@@ -244,7 +241,7 @@ void predator_neat::pre_step() {
 	}
 }
 
-void predator_neat::step() {
+void predator_neat::step_normal() {
 	pre_step();
 	double total = 0;
 	for(auto &agent : agents) {
@@ -256,7 +253,7 @@ void predator_neat::step() {
 	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
 
-void predator_neat::step_shared_fitness(size_t step) {
+void predator_neat::step_shared(size_t step) {
 	pre_step();
 	int current_score = 0;
 	for(auto &agent : agents) {
@@ -267,7 +264,7 @@ void predator_neat::step_shared_fitness(size_t step) {
 	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
 	genotypes[step]->m_Evaluated = true;
 	if(step+1 < params.population_size) {
-		distribute_genomes_shared_fitness(step+1);
+		distribute_genomes_shared(step+1);
 	}
 	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
 }
@@ -276,7 +273,7 @@ QWidget *predator_neat::make_species_widget() {
 	return new multi_move_predator_widget(this);
 }
 
-void predator_neat::epoch_shared_fitness(int epoch, bool train) {
+void predator_neat::epoch_shared(int epoch) {
 	double total = 0;
 	double best_score = std::numeric_limits<double>::min();
 	double worst_score = std::numeric_limits<double>::max();
@@ -299,21 +296,21 @@ void predator_neat::epoch_shared_fitness(int epoch, bool train) {
 		);
 	}
 
-	if(train && params.save_path)
+	if(params.train && params.save_path)
 		save();
 
-	if(train) {
+	if(params.train) {
 		fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 		population->Epoch();
 		fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
 		fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
 		fill_genome_vector();
 	}
-	distribute_genomes_shared_fitness(0);
+	distribute_genomes_shared(0);
 }
 
 
-void predator_neat::epoch(int steps) {
+void predator_neat::epoch_normal(int epoch, int steps) {
 	double total = 0;
 	double best_score = std::numeric_limits<double>::min();
 	double worst_score = std::numeric_limits<double>::max();
@@ -330,47 +327,23 @@ void predator_neat::epoch(int steps) {
 	if(widget) {
 		QApplication::postEvent(
 			*widget, new multi_move_predator_widget::epoch_event(
-				population->m_Generation,
-				total/agents.size(),
-				best_score / static_cast<double>(steps),
-				worst_score / static_cast<double>(steps)
-			)
-		);
-	}
-
-	if(params.save_path)
-		save();
-
-	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
-	population->Epoch();
-	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
-	fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
-	distribute_genomes();
-}
-
-void predator_neat::epoch_normal_none(int epoch, int steps) {
-	double total = 0;
-	double best_score = std::numeric_limits<double>::min();
-	double worst_score = std::numeric_limits<double>::max();
-	for(auto &agent : agents) {
-		if(agent.generation_score < worst_score)
-			worst_score = agent.generation_score;
-		if(agent.generation_score > best_score)
-			best_score = agent.generation_score;
-		total += agent.generation_score / static_cast<double>(steps);
-		agent.generation_score = 0;
-	}
-
-	if(widget) {
-		QApplication::postEvent(
-			*widget,
-			new multi_move_predator_widget::epoch_event(
 				epoch,
 				total/agents.size(),
 				best_score / static_cast<double>(steps),
 				worst_score / static_cast<double>(steps)
 			)
 		);
+	}
+
+	if(params.train && params.save_path)
+		save();
+
+	if(params.train) {
+		fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
+		population->Epoch();
+		fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
+		fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
+		distribute_genomes();
 	}
 }
 

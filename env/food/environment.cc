@@ -34,11 +34,7 @@ void environment::init(lua_conf &conf) {
 	}
 
 	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
-	if(
-		const auto model = herbivores.training_model();
-		model == training_model_type::normal_none ||
-		model == training_model_type::shared_none
-	) {
+	if(!herbivores.train()) {
 		QApplication::postEvent(main_gui, new gui::no_training_mode_event());
 	}
 
@@ -55,13 +51,11 @@ void environment::step() {
 	}
 
 	switch(herbivores.training_model()) {
-		case training_model_type::normal_none: [[fallthrough]]
 		case training_model_type::normal:
-			herbivores.step();
+			herbivores.step_normal();
 			break;
-		case training_model_type::shared_none: [[fallthrough]]
 		case training_model_type::shared:
-			herbivores.step_shared_fitness(state.step);
+			herbivores.step_shared(state.step);
 			break;
 	}
 }
@@ -69,16 +63,10 @@ void environment::step() {
 void environment::epoch() {
 	switch(herbivores.training_model()) {
 		case training_model_type::normal:
-			herbivores.epoch(steps_per_generation());
+			herbivores.epoch_normal(state.generation, steps_per_generation());
 			break;
 		case training_model_type::shared:
-			herbivores.epoch_shared_fitness();
-			break;
-		case training_model_type::normal_none:
-			herbivores.epoch_normal_none(state.generation, steps_per_generation());
-			break;
-		case training_model_type::shared_none:
-			herbivores.epoch_shared_fitness_none(state.generation);
+			herbivores.epoch_shared(state.generation);
 			break;
 	}
 }

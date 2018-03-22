@@ -37,16 +37,17 @@ class predator_neat : public species {
 		bool initialise(lua_conf &conf, int seed);
 		void pre_tick();
 		void tick();
-		void step();
-		void step_shared_fitness(size_t epoch_step);
-		void epoch(int steps);
-		void epoch_shared_fitness(int epoch, bool train);
-		void epoch_normal_none(int epoch, int steps);
+		void step_normal();
+		void step_shared(size_t epoch_step);
+		void epoch_normal(int epoch, int steps);
+		void epoch_shared(int epoch);
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget() override;
 		unsigned int population_size() const;
 		training_model_type training_model() const;
 		void save() const;
+
+		inline bool train() const { return params.train; }
 
 	private:
 		class agent : public entity {
@@ -73,13 +74,14 @@ class predator_neat : public species {
 		void clear();
 		void distribute_genomes();
 		void fill_genome_vector();
-		void distribute_genomes_shared_fitness(int step);
+		void distribute_genomes_shared(int step);
 		void pre_step();
 
 		struct {
 			size_t population_size;
 			size_t shared_fitness_simulate_count;
 			training_model_type training_model;
+			bool train;
 			float thrust;
 			float torque;
 			consume_options consume_opt = consume_options::delay;

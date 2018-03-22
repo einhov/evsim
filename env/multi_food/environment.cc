@@ -52,12 +52,7 @@ void environment::init(lua_conf &conf) {
 	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
 	QApplication::postEvent(main_gui, new gui::add_species_event(&predator));
 
-	static constexpr auto is_training = [](const auto &species) {
-		const auto training_model = species.training_model();
-		return training_model == training_model_type::normal || training_model == training_model_type::shared;
-	};
-
-	if(!is_training(herbivores) && !is_training(predator))
+	if(!herbivores.train() && !predator.train())
 		QApplication::postEvent(main_gui, new gui::no_training_mode_event());
 
 	for(int i = 0; i < food_count; i++) {
@@ -73,24 +68,20 @@ void environment::step() {
 	}
 
 	switch(herbivores.training_model()) {
-		case training_model_type::normal_none: [[fallthrough]]
 		case training_model_type::normal:
-			herbivores.step();
+			herbivores.step_normal();
 			break;
-		case training_model_type::shared_none: [[fallthrough]]
 		case training_model_type::shared:
-			herbivores.step_shared_fitness(state.step);
+			herbivores.step_shared(state.step);
 			break;
 	}
 
 	switch(predator.training_model()) {
-		case training_model_type::normal_none: [[fallthrough]]
 		case training_model_type::normal:
-			predator.step();
+			predator.step_normal();
 			break;
-		case training_model_type::shared_none: [[fallthrough]]
 		case training_model_type::shared:
-			predator.step_shared_fitness(state.step);
+			predator.step_shared(state.step);
 			break;
 	}
 }
@@ -98,30 +89,20 @@ void environment::step() {
 void environment::epoch() {
 	switch(herbivores.training_model()) {
 		case training_model_type::normal:
-			herbivores.epoch(steps_per_generation());
+			herbivores.epoch_normal(state.generation, steps_per_generation());
 			break;
 		case training_model_type::shared:
-			herbivores.epoch_shared_fitness(state.generation, true);
+			herbivores.epoch_shared(state.generation);
 			break;
-		case training_model_type::normal_none:
-			herbivores.epoch_normal_none(state.generation, steps_per_generation());
-			break;
-		case training_model_type::shared_none:
-			herbivores.epoch_shared_fitness(state.generation, false);
 	}
 
 	switch(predator.training_model()) {
 		case training_model_type::normal:
-			predator.epoch(steps_per_generation());
+			predator.epoch_normal(state.generation, steps_per_generation());
 			break;
 		case training_model_type::shared:
-			predator.epoch_shared_fitness(state.generation, true);
+			predator.epoch_shared(state.generation);
 			break;
-		case training_model_type::normal_none:
-			predator.epoch_normal_none(state.generation, steps_per_generation());
-			break;
-		case training_model_type::shared_none:
-			predator.epoch_shared_fitness(state.generation, false);
 	}
 }
 
