@@ -40,7 +40,7 @@ class predator_neat : public species {
 		void step_shared_fitness(size_t epoch_step);
 		void epoch(int steps);
 		void epoch_normal_none(int epoch, int steps);
-		void epoch_shared_fitness();
+		void epoch_shared_fitness(int epoch, bool train);
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget() override;
 		unsigned int population_size() const;

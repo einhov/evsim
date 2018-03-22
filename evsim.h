@@ -21,6 +21,8 @@ struct simulation_state {
 	bool quit;
 	bool pause;
 	bool draw;
+	bool fast_forward;
+	bool previous_step;
 
 	bool draw_yell;
 	bool draw_wall;

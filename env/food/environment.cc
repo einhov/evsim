@@ -34,13 +34,19 @@ void environment::init(lua_conf &conf) {
 	}
 
 	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
+	if(
+		const auto model = herbivores.training_model();
+		model == training_model_type::normal_none ||
+		model == training_model_type::shared_none
+	) {
+		QApplication::postEvent(main_gui, new gui::no_training_mode_event());
+	}
 
 	for(int i = 0; i < food_count; i++) {
 		auto consumable_instance = std::make_unique<consumable>();
 		consumable_instance->init_body((*state.world));
 		environmental_objects.emplace_back(std::move(consumable_instance));
 	}
-	step_count = 0;
 }
 
 void environment::step() {
@@ -53,11 +59,10 @@ void environment::step() {
 		case training_model_type::normal:
 			herbivores.step();
 			break;
+		case training_model_type::shared_none: [[fallthrough]]
 		case training_model_type::shared:
-			herbivores.step_shared_fitness(step_count++);
+			herbivores.step_shared_fitness(state.step);
 			break;
-		case training_model_type::shared_none:
-			throw std::runtime_error("shared_none training model unimplemented for environment");
 	}
 }
 
@@ -67,14 +72,14 @@ void environment::epoch() {
 			herbivores.epoch(steps_per_generation());
 			break;
 		case training_model_type::shared:
-			step_count = 0;
 			herbivores.epoch_shared_fitness();
 			break;
 		case training_model_type::normal_none:
 			herbivores.epoch_normal_none(state.generation, steps_per_generation());
 			break;
 		case training_model_type::shared_none:
-			throw std::runtime_error("shared_none training model unimplemented for environment");
+			herbivores.epoch_shared_fitness_none(state.generation);
+			break;
 	}
 }
 

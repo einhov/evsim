@@ -21,7 +21,6 @@ class environment : public environment_base {
 		unsigned int steps_per_generation() override { return params.steps_per_generation; }
 		unsigned int ticks_per_step() override { return params.ticks_per_step; }
 		herbivore_neat herbivores;
-		size_t step_count;
 
 		struct {
 			unsigned int steps_per_generation;

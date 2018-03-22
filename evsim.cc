@@ -39,8 +39,6 @@ int evsim(int argc, char **argv) {
 	lua_conf conf(argc >= 2 ? argv[1] : "", argc, argv);
 	config::load_config(conf);
 
-	state.draw = true;
-
 	QCoreApplication::postEvent(main_gui, new gui::refresh_event);
 
 	glfwWindowHint(GLFW_SAMPLES, 4);
@@ -73,6 +71,7 @@ int evsim(int argc, char **argv) {
 	state.world = new b2World(b2Vec2(0.0f, 0.0f));
 	state.world->SetContinuousPhysics(true);
 	state.pause = false;
+	state.draw = true;
 	state.generation = 0;
 	state.step = 0;
 	state.tick = 0;
@@ -104,10 +103,20 @@ int evsim(int argc, char **argv) {
 	while(!state.quit) {
 		if(!state.pause) {
 			if(state.tick++ >= ticks_per_step) {
-				state.tick = 0;
 				fprintf(stderr, "Step: %d\n", state.step);
-				state.step++;
 				env->step();
+
+				if(state.fast_forward)
+					state.fast_forward = false;
+				if(state.previous_step) {
+					if(state.step != 0)
+						state.step--;
+					state.previous_step = false;
+				} else {
+					state.step++;
+				}
+				state.tick = 0;
+
 				if(state.step >= steps_per_generation) {
 					state.step = 0;
 					fprintf(stderr, "Generation: %d\n", state.generation);
@@ -151,7 +160,7 @@ int evsim(int argc, char **argv) {
 			to_be_destroyed.clear();
 		}
 		glfwPollEvents();
-		if(state.draw) {
+		if(state.draw && !state.fast_forward) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			env->draw();
 			glfwSwapBuffers(window);

@@ -23,25 +23,30 @@ public:
 
 	struct refresh_event : public QEvent {
 		refresh_event() : QEvent(static_cast<Type>(event_type)) {}
-		static const int event_type;
+		static const inline int event_type = QEvent::registerEventType();
 	};
 
 	struct quit_event : public QEvent {
 		quit_event() : QEvent(static_cast<Type>(event_type)) {}
-		static const int event_type;
+		static const inline int event_type = QEvent::registerEventType();
 	};
 
 	struct step_event : public QEvent {
 		step_event() : QEvent(static_cast<Type>(event_type)) {}
-		static const int event_type;
+		static const inline int event_type = QEvent::registerEventType();
 	};
 
 	struct add_species_event : public QEvent {
 		add_species_event(evsim::species * const species) :
 			QEvent(static_cast<Type>(event_type)),
 			species(species) { }
-		static const int event_type;
+		static const inline int event_type = QEvent::registerEventType();
 		evsim::species * const species;
+	};
+
+	struct no_training_mode_event : public QEvent {
+		no_training_mode_event(): QEvent(static_cast<Type>(event_type)) {}
+		static const inline int event_type = QEvent::registerEventType();
 	};
 
 	struct data_point {
@@ -55,6 +60,8 @@ public:
 private slots:
 	void on_pause_clicked(bool clicked);
 	void on_draw_clicked(bool clicked);
+	void on_previous_step_clicked(bool);
+	void on_next_step_clicked(bool);
 
 private:
 	void refresh_state();

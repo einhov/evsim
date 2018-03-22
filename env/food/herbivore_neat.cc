@@ -150,15 +150,19 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		agent.species = this;
 		agent.body->SetAngularVelocity(0);
 		agent.body->SetLinearVelocity(b2Vec2(0,0));
-		if(params.training_model == training_model_type::shared)
-			agent.internal_species = 0;
+		agent.internal_species = 0;
 	}
 
-	if(params.training_model == training_model_type::shared) {
-		fill_genome_vector();
-		distribute_genomes_shared_fitness(0);
-	} else {
-		distribute_genomes();
+	switch(params.training_model) {
+		case training_model_type::shared: [[fallthrough]]
+		case training_model_type::shared_none:
+			fill_genome_vector();
+			distribute_genomes_shared_fitness(0);
+			break;
+		case training_model_type::normal: [[fallthrough]]
+		case training_model_type::normal_none:
+			distribute_genomes();
+			break;
 	}
 	return true;
 }
@@ -279,6 +283,32 @@ void herbivore_neat::epoch_shared_fitness() {
 	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
 	fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
 	fill_genome_vector();
+	distribute_genomes_shared_fitness(0);
+}
+
+void herbivore_neat::epoch_shared_fitness_none(int epoch) {
+	double total = 0;
+	double best_score = std::numeric_limits<double>::min();
+	double worst_score = std::numeric_limits<double>::max();
+	for(auto genotype : genotypes) {
+		const auto fitness = genotype->GetFitness();
+		if(fitness < worst_score)
+			worst_score = fitness;
+		if(fitness > best_score)
+			best_score = fitness;
+		total += fitness;
+	}
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new food_herbivore_widget::epoch_event(
+				epoch,
+				total / params.population_size,
+				best_score,
+				worst_score
+			)
+		);
+	}
+
 	distribute_genomes_shared_fitness(0);
 }
 

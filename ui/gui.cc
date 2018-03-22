@@ -11,13 +11,9 @@
 #include "../evsim.h"
 #include "../species.h"
 
-const int gui::refresh_event::event_type = QEvent::registerEventType();
-const int gui::step_event::event_type = QEvent::registerEventType();
-const int gui::quit_event::event_type = QEvent::registerEventType();
-const int gui::add_species_event::event_type = QEvent::registerEventType();
-
 gui::gui(QWidget *parent) : QMainWindow(parent), ui(new Ui::gui) {
     ui->setupUi(this);
+	ui->previous_step->setHidden(true);
 }
 
 gui::~gui() {
@@ -38,6 +34,8 @@ bool gui::event(QEvent *e) {
 	} else if(type == add_species_event::event_type) {
 		const auto ev = static_cast<add_species_event*>(e);
 		append_species(ev->species);
+	} else if(type == no_training_mode_event::event_type) {
+		ui->previous_step->setHidden(false);
 	}
 
 	return QMainWindow::event(e);
@@ -74,4 +72,15 @@ void gui::on_pause_clicked(bool checked) {
 void gui::on_draw_clicked(bool checked) {
 	std::scoped_lock<std::mutex> lock(evsim::state.mutex);
 	evsim::state.draw = checked;
+}
+
+void gui::on_previous_step_clicked(bool) {
+	std::scoped_lock<std::mutex> lock(evsim::state.mutex);
+	evsim::state.fast_forward = true;
+	evsim::state.previous_step = true;
+}
+
+void gui::on_next_step_clicked(bool) {
+	std::scoped_lock<std::mutex> lock(evsim::state.mutex);
+	evsim::state.fast_forward = true;
 }

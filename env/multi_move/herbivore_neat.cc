@@ -155,7 +155,10 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 			agent.internal_species = 0;
 	}
 
-	if(params.training_model == training_model_type::shared) {
+	if(
+		params.training_model == training_model_type::shared ||
+		params.training_model == training_model_type::shared_none
+	) {
 		fill_genome_vector();
 		distribute_genomes_shared_fitness(0);
 	} else {
@@ -295,7 +298,7 @@ void herbivore_neat::step_shared_fitness(size_t step) {
 	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
 }
 
-void herbivore_neat::epoch_shared_fitness() {
+void herbivore_neat::epoch_shared_fitness(int epoch, bool train) {
 	double total = 0;
 	double best_score = std::numeric_limits<double>::min();
 	double worst_score = std::numeric_limits<double>::max();
@@ -310,7 +313,7 @@ void herbivore_neat::epoch_shared_fitness() {
 	if(widget) {
 		QApplication::postEvent(
 			*widget, new multi_move_herbivore_widget::epoch_event(
-				population->m_Generation,
+				epoch,
 				total / params.population_size,
 				best_score,
 				worst_score
@@ -318,14 +321,16 @@ void herbivore_neat::epoch_shared_fitness() {
 		);
 	}
 
-	if(params.save_path)
+	if(train && params.save_path)
 		save();
 
-	fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
-	population->Epoch();
-	fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
-	fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
-	fill_genome_vector();
+	if(train) {
+		fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
+		population->Epoch();
+		fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
+		fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
+		fill_genome_vector();
+	}
 	distribute_genomes_shared_fitness(0);
 }
 
