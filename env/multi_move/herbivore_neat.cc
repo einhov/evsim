@@ -287,8 +287,24 @@ void herbivore_neat::step_shared(size_t step) {
 		current_score += agent.score;
 		agent.score = 0;
 	}
-	genotypes[step]->SetFitness(current_score / static_cast<double>(agents.size()));
+	const auto fitness = current_score / static_cast<double>(agents.size());
+	genotypes[step]->SetFitness(fitness);
 	genotypes[step]->m_Evaluated = true;
+
+	if(params.train && params.save_path) {
+		const auto file =
+			*params.save_path /
+			fs::path("scores." + std::to_string(population->m_Generation))
+		;
+
+		std::ofstream scores(
+			file.c_str(), std::ofstream::app | std::ofstream::out
+		);
+		if(scores.good()) {
+			scores << step << " " << fitness << "\n";
+		}
+	}
+
 	if(step+1 < params.population_size) {
 		distribute_genomes_shared(step+1);
 	}
@@ -319,7 +335,7 @@ void herbivore_neat::epoch_shared(int epoch) {
 	}
 
 	if(params.train && params.save_path)
-		save();
+		save(total / params.population_size, best_score, worst_score);
 
 	if(params.train) {
 		fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
@@ -358,7 +374,7 @@ void herbivore_neat::epoch_normal(int epoch, int steps) {
 	}
 
 	if(params.train && params.save_path)
-		save();
+		save(total / params.population_size, best_score, worst_score);
 
 	if(params.train) {
 		fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
@@ -373,12 +389,24 @@ QWidget *herbivore_neat::make_species_widget() {
 	return new multi_move_herbivore_widget(this);
 }
 
-void herbivore_neat::save() const {
+void herbivore_neat::save(double avg, double high, double low) const {
 	if(!params.save_path) return;
 	save_neat_population(
 		*params.save_path / fs::path(std::to_string(population->m_Generation)),
 		*population
 	);
+
+	std::ofstream scores(
+		(*params.save_path / fs::path("scores")).c_str(),
+		std::ofstream::app | std::ofstream::out
+	);
+
+	if(scores) {
+		scores <<
+			population->m_Generation << " " <<
+			high << " " << low  << " " << avg  << "\n"
+		;
+	}
 }
 
 void herbivore_neat::agent::on_sensor(const msg_contact &contact) {

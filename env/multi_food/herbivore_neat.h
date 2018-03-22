@@ -44,7 +44,7 @@ class herbivore_neat : public species {
 		QWidget *make_species_widget();
 		unsigned int population_size() const;
 		training_model_type training_model() const;
-		void save() const;
+		void save(double avg, double high, double low) const;
 
 		inline bool train() const { return params.train; }
 
