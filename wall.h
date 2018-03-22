@@ -9,6 +9,12 @@
 
 namespace evsim {
 
+enum class wall_type {
+	standard,
+	right,
+	goal
+};
+
 class wall : public environmental_entity {
 	public:
 		void tick() override;
@@ -16,13 +22,12 @@ class wall : public environmental_entity {
 		void draw(const glm::mat4 &projection) const override;
 		~wall() override;
 
-		void init_body(b2World &world, b2Vec2& position, b2Vec2& scale, bool right_wall);
-
+		void init_body(b2World &world, b2Vec2& position, b2Vec2& scale, wall_type right_wall);
+		wall_type type;
 		b2Body* body;
 		b2World* world;
 		b2Vec2 scale;
-
 };
 
-};
+}
 #endif

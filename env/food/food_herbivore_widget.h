@@ -20,7 +20,7 @@ public:
 	~food_herbivore_widget();
 
 	struct epoch_event : public QEvent {
-		epoch_event(int epoch, double avg_fitness, double min_fitness, double max_fitness) :
+		epoch_event(int epoch, double avg_fitness, double max_fitness, double min_fitness) :
 			QEvent(static_cast<Type>(event_type)),
 			epoch(epoch), average_fitness(avg_fitness),
 			minimum_fitness(min_fitness), maximum_fitness(max_fitness){}

@@ -67,7 +67,7 @@ void environment::init(lua_conf &conf) {
 				(*state.world),
 				p,
 				s,
-				false
+				wall_type::standard
 				);
 			environmental_objects.emplace_back(std::move(wall_instance));
 		}
@@ -82,7 +82,7 @@ void environment::init(lua_conf &conf) {
 					(*state.world),
 					p,
 					s,
-					false
+					wall_type::standard
 					);
 			}
 			else {
@@ -90,7 +90,7 @@ void environment::init(lua_conf &conf) {
 					(*state.world),
 					p,
 					s,
-					true
+					wall_type::right
 					);
 			}
 
@@ -98,8 +98,19 @@ void environment::init(lua_conf &conf) {
 		}
 		x = 134;
 	}
-}
 
+	//Create goal
+	auto wall_instance = std::make_unique<wall>();
+	b2Vec2 p (101, 0);
+	b2Vec2 s (1, 100);
+	wall_instance->init_body(
+		(*state.world),
+		p,
+		s,
+		wall_type::goal
+		);
+	environmental_objects.emplace_back(std::move(wall_instance));
+}
 
 void environment::step() {
 	for(auto &env_obj : environmental_objects) {

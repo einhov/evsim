@@ -122,8 +122,9 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		conf.leave_table();
 		neat_params.PopulationSize = params.population_size;
 
+		//6: 1 angular vel, 1 linear vel, 1 x pos, 1 y pos, 1 direction, 1 bias
 		NEAT::Genome genesis(
-			0, 4 + agent::vision_segments * 3, 0, 2, false,
+			0, 6 + agent::vision_segments * 3, 0, 2, false,
 			NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 			0, neat_params, 0
 		);
@@ -223,6 +224,9 @@ void herbivore_neat::tick() {
 		}
 		*/
 		inputs.emplace_back(pos.x);
+		inputs.emplace_back(pos.y);
+		inputs.emplace_back(agent.body->GetAngle());
+
 		agent.yell_detected = false;
 		inputs.emplace_back(1.0);
 
