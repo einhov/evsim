@@ -16,7 +16,7 @@ class multi_move_herbivore_widget : public QWidget {
     Q_OBJECT
 
 public:
-	explicit multi_move_herbivore_widget(evsim::multi_move::herbivore_neat *species, QWidget *parent = 0);
+	explicit multi_move_herbivore_widget(evsim::multi_move::herbivore_neat *species, size_t avg_window, QWidget *parent = 0);
 	~multi_move_herbivore_widget();
 
 	struct epoch_event : public QEvent {

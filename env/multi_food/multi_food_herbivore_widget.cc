@@ -5,12 +5,13 @@
 
 const int multi_food_herbivore_widget::epoch_event::event_type = QEvent::registerEventType();
 
-multi_food_herbivore_widget::multi_food_herbivore_widget(evsim::multi_food::herbivore_neat *herbivore, QWidget *parent) :
+multi_food_herbivore_widget::multi_food_herbivore_widget(evsim::multi_food::herbivore_neat *herbivore, size_t avg_window, QWidget *parent) :
     QWidget(parent),
 	species(herbivore),
 	ui(new Ui::multi_food_herbivore_widget)
 {
 	ui->setupUi(this);
+	ui->fitness->resize_avg_window(avg_window);
 	herbivore->widget = this;
 }
 

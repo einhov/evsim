@@ -18,6 +18,7 @@ class fitness_graph : public QWidget
 
 public:
 	explicit fitness_graph(QWidget *parent = 0);
+	void resize_avg_window(size_t size);
 	void insert_fitness(int epoch, double fitness, double minimum_fitness, double maximum_fitness);
 	~fitness_graph();
 
@@ -31,9 +32,11 @@ private:
 	double score_total_avg;
 	double score_total_min;
 	double score_total_max;
-	boost::circular_buffer<double> scores_avg;
-	boost::circular_buffer<double> scores_min;
-	boost::circular_buffer<double> scores_max;
+
+	struct score_window_elem {
+		double avg, min, max;
+	};
+	boost::circular_buffer<score_window_elem> score_window;
 
 	Ui::fitness_graph *ui;
 	QtCharts::QLineSeries *series_fitness;

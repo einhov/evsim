@@ -19,15 +19,15 @@ fitness_graph::fitness_graph(QWidget *parent) :
 	series_min_fitness = new QtCharts::QLineSeries();
 	series_max_fitness = new QtCharts::QLineSeries();
 
-
 	series_fitness_avg = new QtCharts::QLineSeries();
+	series_min_fitness_avg = new QtCharts::QLineSeries();
+	series_max_fitness_avg = new QtCharts::QLineSeries();
+
 	QPen pen;
 	pen.setStyle(Qt::DashLine);
 	pen.setColor("white");
 	series_fitness_avg->setPen(pen);
-	series_min_fitness_avg = new QtCharts::QLineSeries();
 	series_min_fitness_avg->setPen(pen);
-	series_max_fitness_avg = new QtCharts::QLineSeries();
 	series_max_fitness_avg->setPen(pen);
 
 	chart_fitness->addSeries(series_fitness);
@@ -37,7 +37,6 @@ fitness_graph::fitness_graph(QWidget *parent) :
 	chart_fitness->addSeries(series_min_fitness_avg);
 	chart_fitness->addSeries(series_max_fitness_avg);
 
-
 	chart_fitness->createDefaultAxes();
 	chart_fitness->legend()->hide();
 	ui->fitness->setChart(chart_fitness);
@@ -46,16 +45,7 @@ fitness_graph::fitness_graph(QWidget *parent) :
 
 	auto_range = true;
 
-	score_window_max = 10;
-
-	score_count = 0;
-	score_total_avg = 0;
-	score_total_min = 0;
-	score_total_max = 0;
-
-	scores_avg.set_capacity(score_window_max*2+1);
-	scores_min.set_capacity(score_window_max*2+1);
-	scores_max.set_capacity(score_window_max*2+1);
+	resize_avg_window(21);
 }
 
 fitness_graph::~fitness_graph()
@@ -68,6 +58,7 @@ void fitness_graph::insert_fitness(int epoch, double fitness, double minimum_fit
 	series_min_fitness->append(epoch, minimum_fitness);
 	series_max_fitness->append(epoch, maximum_fitness);
 	append_avg(epoch, fitness, minimum_fitness, maximum_fitness);
+
 	const auto [min, max] = std::minmax({ fitness, minimum_fitness, maximum_fitness });
 	if(epoch < series_range.xmin) series_range.xmin = epoch;
 	if(min < series_range.ymin) series_range.ymin = min;
@@ -85,28 +76,39 @@ void fitness_graph::on_auto_range_clicked(bool checked) {
 	auto_range = checked;
 }
 
-void fitness_graph::append_avg(double epoch, double fitness, double minimum_fitness, double maximum_fitness) {
-	score_count++;
-	//Remove oldest element from total scores if circular_list is full
-	if(score_count >= score_window_max*2+1) {
-		score_total_avg -= scores_avg[0];
-		score_total_min -= scores_min[0];
-		score_total_max -= scores_max[0];
-	}
-	//Add new elements to circular buffer
-	scores_avg.push_back(fitness);
-	scores_min.push_back(minimum_fitness);
-	scores_max.push_back(maximum_fitness);
+void fitness_graph::resize_avg_window(size_t size) {
+	score_total_avg = 0;
+	score_total_min = 0;
+	score_total_max = 0;
 
-	//Add the new fitness to the totals
+	// Set window size to highest odd number not larger than size
+	score_window.set_capacity((size % 2 == 1) ? size : size - 1);
+	score_window.clear();
+}
+
+void fitness_graph::append_avg(double epoch, double fitness, double minimum_fitness, double maximum_fitness) {
+
+	// Remove oldest value from total scores if window is full
+	if(score_window.full()) {
+		const auto [avg, min, max] = score_window.front();
+		score_total_avg -= avg;
+		score_total_min -= min;
+		score_total_max -= max;
+	}
+
+	// Add new values to window
+	score_window.push_back({fitness, minimum_fitness, maximum_fitness});
+
+	// Add the new values to the totals
 	score_total_avg += fitness;
 	score_total_min += minimum_fitness;
 	score_total_max += maximum_fitness;
 
-	if(score_count >= score_window_max*2+1) {
-		//Set the new values
-		series_fitness_avg->append(epoch-score_window_max, score_total_avg / (score_window_max*2+1));
-		series_max_fitness_avg->append(epoch-score_window_max, score_total_min / (score_window_max*2+1));
-		series_min_fitness_avg->append(epoch-score_window_max, score_total_max / (score_window_max*2+1));
+	// Plot the average if we have enough data
+	const auto centre = epoch - (score_window.capacity() - 1) / 2;
+	if(centre >= 0) {
+		series_fitness_avg->append(centre, score_total_avg / score_window.size());
+		series_max_fitness_avg->append(centre, score_total_min / score_window.size());
+		series_min_fitness_avg->append(centre, score_total_max / score_window.size());
 	}
 }

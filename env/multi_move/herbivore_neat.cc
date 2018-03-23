@@ -91,6 +91,7 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 
 	params.thrust = conf.get_number_default("thrust", 1000.0);
 	params.torque = conf.get_number_default("torque", 45.0);
+	params.avg_window = conf.get_integer_default("avg_window", 21);
 	//params.yell_delay = conf.get_number_default("yell_delay", 30);
 	params.shared_fitness_simulate_count = conf.get_number_default("shared_fitness_simulate_count", 5.0);
 
@@ -390,7 +391,7 @@ void herbivore_neat::epoch_normal(int epoch, int steps) {
 }
 
 QWidget *herbivore_neat::make_species_widget() {
-	return new multi_move_herbivore_widget(this);
+	return new multi_move_herbivore_widget(this, params.avg_window);
 }
 
 void herbivore_neat::save(double avg, double high, double low) const {

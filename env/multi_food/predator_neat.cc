@@ -87,6 +87,7 @@ bool predator_neat::initialise(lua_conf &conf, int seed) {
 	params.population_size = conf.get_integer_default("population_size", 100);
 	params.thrust = conf.get_number_default("thrust", 1000.0);
 	params.torque = conf.get_number_default("torque", 45.0);
+	params.avg_window = conf.get_integer_default("avg_window", 21);
 	params.eat_delay_max = conf.get_integer_default("eat_delay", 0);
 	params.shared_fitness_simulate_count = conf.get_number_default("shared_fitness_simulate_count", 5.0);
 	params.consume_opt = [this] {
@@ -281,7 +282,7 @@ void predator_neat::step_shared(size_t step) {
 }
 
 QWidget *predator_neat::make_species_widget() {
-	return new multi_food_predator_widget(this);
+	return new multi_food_predator_widget(this, params.avg_window);
 }
 
 void predator_neat::save(double avg, double high, double low) const {

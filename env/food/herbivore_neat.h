@@ -81,6 +81,7 @@ class herbivore_neat : public species {
 			float torque;
 			std::string initial_population;
 			std::optional<boost::filesystem::path> save_path;
+			size_t avg_window;
 		} params;
 
 		size_t active_genomes;

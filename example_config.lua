@@ -22,6 +22,7 @@ food = {
 		shared_fitness_simulate_count = 5,
 		save = nil, -- path to directory for storing the population every generation
 		initial_population = nil, -- path to file with initial population
+		avg_window = 21, -- size of window used for moving average in plot
 
 		neat_params = neat_params
 	}
@@ -42,6 +43,7 @@ multi_food = {
 		shared_fitness_simulate_count = 5,
 		save = nil, -- path to directory for storing the population every generation
 		initial_population = nil, -- path to file with initial population
+		avg_window = 21, -- size of window used for moving average in plot
 
 		neat_params = neat_params
 	},
@@ -55,6 +57,7 @@ multi_food = {
 		shared_fitness_simulate_count = 5,
 		save = nil, -- path to directory for storing the population every generation
 		initial_population = nil, -- path to file with initial population
+		avg_window = 21, -- size of window used for moving average in plot
 
 		neat_params = neat_params
 	}
@@ -73,6 +76,7 @@ multi_move = {
 		shared_fitness_simulate_count = 5,
 		save = nil, -- path to directory for storing the population every generation
 		initial_population = nil, -- path to file with initial population
+		avg_window = 21, -- size of window used for moving average in plot
 
 		neat_params = neat_params
 	},
@@ -86,6 +90,7 @@ multi_move = {
 		shared_fitness_simulate_count = 5,
 		save = nil, -- path to directory for storing the population every generation
 		initial_population = nil, -- path to file with initial population
+		avg_window = 21, -- size of window used for moving average in plot
 
 		neat_params = neat_params
 	}

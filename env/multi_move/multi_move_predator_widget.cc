@@ -5,12 +5,13 @@
 
 const int multi_move_predator_widget::epoch_event::event_type = QEvent::registerEventType();
 
-multi_move_predator_widget::multi_move_predator_widget(evsim::multi_move::predator_neat *species, QWidget *parent) :
+multi_move_predator_widget::multi_move_predator_widget(evsim::multi_move::predator_neat *species, size_t avg_window, QWidget *parent) :
     QWidget(parent),
 	species(species),
 	ui(new Ui::multi_move_predator_widget)
 {
     ui->setupUi(this);
+	ui->fitness->resize_avg_window(avg_window);
 	species->widget = this;
 }
 

@@ -16,7 +16,7 @@ class multi_food_herbivore_widget : public QWidget {
     Q_OBJECT
 
 public:
-	explicit multi_food_herbivore_widget(evsim::multi_food::herbivore_neat *species, QWidget *parent = 0);
+	explicit multi_food_herbivore_widget(evsim::multi_food::herbivore_neat *species, size_t avg_window, QWidget *parent = 0);
 	~multi_food_herbivore_widget();
 
 	struct epoch_event : public QEvent {
