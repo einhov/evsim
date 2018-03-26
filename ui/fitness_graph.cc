@@ -71,8 +71,10 @@ void fitness_graph::insert_fitness(int epoch, double fitness, double minimum_fit
 }
 
 void fitness_graph::on_auto_range_clicked(bool checked) {
-	ui->fitness->chart()->axisX()->setRange(series_range.xmin, series_range.xmax);
-	ui->fitness->chart()->axisY()->setRange(series_range.ymin, series_range.ymax);
+	if(checked) {
+		ui->fitness->chart()->axisX()->setRange(series_range.xmin, series_range.xmax);
+		ui->fitness->chart()->axisY()->setRange(series_range.ymin, series_range.ymax);
+	}
 	auto_range = checked;
 }
 
