@@ -19,15 +19,14 @@ struct msg_consumed {
 class consumable : public environmental_entity {
 	public:
 		void message(const std::any &msg) override;
-		void tick() override {}
-		void step() override;
+		void pre_step() override;
 
 		b2Body *body;
 
 		void init_body(b2World &world);
-		void update();
 		void draw(const glm::mat4 &projection) const override;
 };
 
-};
+}
+
 #endif

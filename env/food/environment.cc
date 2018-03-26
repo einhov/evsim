@@ -45,11 +45,14 @@ void environment::init(lua_conf &conf) {
 	}
 }
 
-void environment::step() {
-	for(auto &env_obj : environmental_objects) {
-		env_obj->step();
-	}
+void environment::pre_step() {
+	for(auto &obj : environmental_objects)
+		obj->pre_step();
+	herbivores.pre_step();
 
+}
+
+void environment::step() {
 	switch(herbivores.training_model()) {
 		case training_model_type::normal:
 			herbivores.step_normal();

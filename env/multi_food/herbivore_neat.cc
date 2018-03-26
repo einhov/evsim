@@ -252,12 +252,12 @@ void herbivore_neat::pre_step() {
 		agent.body->SetActive(true);
 		agent.yell_detected = false;
 		agent.yell_cooldown = 0;
+		agent.score = 0;
 		relocate_agent(agent.body);
 	}
 }
 
 void herbivore_neat::step_normal() {
-	pre_step();
 	double total = 0;
 	for(auto &agent : agents) {
 		total += agent.score;
@@ -268,7 +268,6 @@ void herbivore_neat::step_normal() {
 }
 
 void herbivore_neat::step_shared(size_t step) {
-	pre_step();
 	int current_score = 0;
 	for(auto &agent : agents) {
 		current_score += agent.score;

@@ -235,12 +235,12 @@ void predator_neat::pre_step() {
 		agent.body->SetLinearVelocity(b2Vec2(0,0));
 		agent.eat_delay = 0;
 		agent.body->SetActive(true);
+		agent.score = 0;
 		relocate_agent(agent.body);
 	}
 }
 
 void predator_neat::step_normal() {
-	pre_step();
 	double total = 0;
 	for(auto &agent : agents) {
 		total += agent.score;
@@ -251,7 +251,6 @@ void predator_neat::step_normal() {
 }
 
 void predator_neat::step_shared(size_t step) {
-	pre_step();
 	int current_score = 0;
 	for(auto &agent : agents) {
 		current_score += agent.score;

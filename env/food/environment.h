@@ -14,6 +14,7 @@ class environment : public environment_base {
 		~environment() {}
 		void init(lua_conf &conf) override;
 		void step() override;
+		void pre_step() override;
 		void epoch() override;
 		void pre_tick() override;
 		void tick() override;

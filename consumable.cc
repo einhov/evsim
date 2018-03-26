@@ -45,21 +45,12 @@ void consumable::init_body(b2World &world) {
 	body->SetUserData(this);
 }
 
-void consumable::update() {
-	const auto pos = body->GetPosition();
-	const auto angle = body->GetAngle();
-	if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
-	if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
-	if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
-	if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
-}
-
-void consumable::step() {
-	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), rotation_distribution(generator));
-}
-
 static void relocate_consumable(b2Body *body) {
 	body->SetTransform(b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)), 0.0f);
+}
+
+void consumable::pre_step() {
+	relocate_consumable(body);
 }
 
 void consumable::message(const std::any &msg) {
@@ -127,4 +118,4 @@ void consumable::draw(const glm::mat4 &projection) const {
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
-};
+}

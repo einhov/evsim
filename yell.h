@@ -13,6 +13,7 @@ class yell : public environmental_entity {
 	public:
 		int ticks_to_live = 60;
 		void tick() override;
+		void pre_step() override;
 		void schedule_stop_yell();
 		void message(const std::any &msg) override {}
 		b2Body* body;
@@ -24,5 +25,6 @@ class yell : public environmental_entity {
 		~yell() override;
 };
 
-};
+}
+
 #endif

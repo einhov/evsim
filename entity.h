@@ -14,8 +14,8 @@ class entity {
 
 class environmental_entity : public entity {
 	public:
-		virtual void tick() = 0;
-		virtual void step() {}
+		virtual void tick() {}
+		virtual void pre_step() {}
 		virtual void draw(const glm::mat4 &projection) const = 0;
 		virtual ~environmental_entity() {}
 };

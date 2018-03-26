@@ -79,19 +79,13 @@ void environment::init(lua_conf &conf) {
 			b2Vec2 s (2, 2);
 			if(i == 0) {
 				wall_instance->init_body(
-					(*state.world),
-					p,
-					s,
-					wall_type::standard
-					);
+					(*state.world), p, s, wall_type::standard
+				);
 			}
 			else {
 				wall_instance->init_body(
-					(*state.world),
-					p,
-					s,
-					wall_type::right
-					);
+					(*state.world), p, s, wall_type::right
+				);
 			}
 
 			environmental_objects.emplace_back(std::move(wall_instance));
@@ -104,19 +98,20 @@ void environment::init(lua_conf &conf) {
 	b2Vec2 p (101, 0);
 	b2Vec2 s (1, 100);
 	wall_instance->init_body(
-		(*state.world),
-		p,
-		s,
-		wall_type::goal
-		);
+		(*state.world), p, s, wall_type::goal
+	);
 	environmental_objects.emplace_back(std::move(wall_instance));
 }
 
-void environment::step() {
-	for(auto &env_obj : environmental_objects) {
-		env_obj->step();
-	}
+void environment::pre_step() {
+	herbivores.pre_step();
+	predator.pre_step();
 
+	for(auto &env_obj : environmental_objects)
+		env_obj->pre_step();
+}
+
+void environment::step() {
 	switch(herbivores.training_model()) {
 		case training_model_type::normal:
 			herbivores.step_normal();

@@ -35,6 +35,7 @@ class herbivore_neat : public species {
 		bool initialise(lua_conf &conf, int seed);
 		void pre_tick();
 		void tick();
+		void pre_step();
 		void step_normal();
 		void step_shared(size_t epoch_step);
 		void epoch_normal(int epoch, int steps);
@@ -81,7 +82,6 @@ class herbivore_neat : public species {
 		void distribute_genomes();
 		void fill_genome_vector();
 		void distribute_genomes_shared(int step);
-		void pre_step();
 
 		struct {
 			size_t population_size;

@@ -102,6 +102,21 @@ int evsim(int argc, char **argv) {
 
 	while(!state.quit) {
 		if(!state.pause) {
+			if(state.tick == 0)
+				env->pre_step();
+
+			// Remove environmental objects flagged for deletion
+			for(auto remove : to_be_destroyed) {
+				const auto found = std::find_if(
+					environmental_objects.begin(), environmental_objects.end(),
+					[&remove](const auto &a) { return a.get() == remove; }
+				);
+				if(found != environmental_objects.end()) {
+					environmental_objects.erase(found);
+				}
+			}
+			to_be_destroyed.clear();
+
 			if(state.tick++ >= ticks_per_step) {
 				fprintf(stderr, "Step: %d\n", state.step);
 				env->step();
@@ -147,17 +162,6 @@ int evsim(int argc, char **argv) {
 			}
 
 			env->tick();
-
-			for(auto remove : to_be_destroyed) {
-				const auto found = std::find_if(
-					environmental_objects.begin(), environmental_objects.end(),
-					[&remove](const auto &a) { return a.get() == remove; }
-				);
-				if(found != environmental_objects.end()) {
-					environmental_objects.erase(found);
-				}
-			}
-			to_be_destroyed.clear();
 		}
 		glfwPollEvents();
 		if(state.draw && !state.fast_forward) {

@@ -10,6 +10,7 @@ class environment_base {
 		virtual ~environment_base() {}
 		virtual void init(lua_conf &conf) = 0;
 		virtual void draw() = 0;
+		virtual void pre_step() = 0;
 		virtual void step() = 0;
 		virtual void epoch() = 0;
 		virtual void pre_tick() = 0;

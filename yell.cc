@@ -95,6 +95,10 @@ void yell::tick() {
 	}
 }
 
+void yell::pre_step() {
+	schedule_stop_yell();
+}
+
 void yell::draw(const glm::mat4 &projection) const {
 	if(state.draw_yell) {
 		using uniform_type = gfx::program::uniform_type;
