@@ -39,8 +39,6 @@ int evsim(int argc, char **argv) {
 	lua_conf conf(argc >= 2 ? argv[1] : "", argc, argv);
 	config::load_config(conf);
 
-	QCoreApplication::postEvent(main_gui, new gui::refresh_event);
-
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -76,6 +74,8 @@ int evsim(int argc, char **argv) {
 	state.step = 0;
 	state.tick = 0;
 	state.draw_wall = 1;
+
+	QCoreApplication::postEvent(main_gui, new gui::refresh_event);
 
 	if(conf.enter_table("environment", true)) {
 		if(const auto draw_wall = conf.get_boolean("draw_wall"); draw_wall)
