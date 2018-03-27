@@ -184,7 +184,7 @@ void herbivore_neat::tick() {
 		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
 		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
 
-		static const auto vision_inserter = [](const auto &elem) {
+		static constexpr auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;
 		};
 

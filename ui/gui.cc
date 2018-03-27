@@ -1,4 +1,3 @@
-#include <mutex>
 #include <queue>
 
 #include <QtCharts/QChart>
@@ -14,6 +13,7 @@
 gui::gui(QWidget *parent) : QMainWindow(parent), ui(new Ui::gui) {
     ui->setupUi(this);
 	ui->previous_step->setHidden(true);
+	ui->input_step->setHidden(true);
 }
 
 gui::~gui() {
@@ -36,21 +36,21 @@ bool gui::event(QEvent *e) {
 		append_species(ev->species);
 	} else if(type == no_training_mode_event::event_type) {
 		ui->previous_step->setHidden(false);
+		ui->input_step->setHidden(false);
 	}
 
 	return QMainWindow::event(e);
 }
 
 void gui::refresh_state() {
-	std::scoped_lock<std::mutex> lock(evsim::state.mutex);
 	ui->pause->setCheckState(evsim::state.pause ? Qt::Checked : Qt::Unchecked);
 	ui->draw->setCheckState(evsim::state.draw ? Qt::Checked : Qt::Unchecked);
 }
 
 void gui::step() {
-	std::scoped_lock<std::mutex> lock(evsim::state.mutex);
 	ui->generation->setText(QString("Generation: %1").arg(evsim::state.generation, -4));
 	ui->step->setText(QString("Step: %1").arg(evsim::state.step));
+	ui->input_step->setText(QString::number(evsim::state.step));
 }
 
 void gui::shutdown() {
@@ -65,22 +65,23 @@ void gui::append_species(evsim::species *species) {
 }
 
 void gui::on_pause_clicked(bool checked) {
-	std::scoped_lock<std::mutex> lock(evsim::state.mutex);
 	evsim::state.pause = checked;
 }
 
 void gui::on_draw_clicked(bool checked) {
-	std::scoped_lock<std::mutex> lock(evsim::state.mutex);
 	evsim::state.draw = checked;
 }
 
 void gui::on_previous_step_clicked(bool) {
-	std::scoped_lock<std::mutex> lock(evsim::state.mutex);
-	evsim::state.fast_forward = true;
+	evsim::state.skip = true;
 	evsim::state.previous_step = true;
 }
 
 void gui::on_next_step_clicked(bool) {
-	std::scoped_lock<std::mutex> lock(evsim::state.mutex);
-	evsim::state.fast_forward = true;
+	evsim::state.skip = true;
+}
+
+void gui::on_input_step_returnPressed() {
+	evsim::state.skip = true;
+	evsim::state.next_step = { ui->input_step->text().toUInt() };
 }

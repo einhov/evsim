@@ -7,6 +7,7 @@
 #include "../../evsim.h"
 #include "../../config.h"
 #include "../../consumable.h"
+#include "../../ui/gui.h"
 
 #include "environment.h"
 #include "herbivore_neat.h"

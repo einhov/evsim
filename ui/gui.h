@@ -1,9 +1,6 @@
 #ifndef GUI_H
 #define GUI_H
 
-#include <mutex>
-#include <queue>
-
 #include <QMainWindow>
 #include <QEvent>
 #include <QtCharts/QLineSeries>
@@ -62,6 +59,7 @@ private slots:
 	void on_draw_clicked(bool clicked);
 	void on_previous_step_clicked(bool);
 	void on_next_step_clicked(bool);
+	void on_input_step_returnPressed();
 
 private:
 	void refresh_state();
@@ -71,8 +69,6 @@ private:
 
     Ui::gui *ui;
 	QtCharts::QLineSeries *series_fitness[2];
-	std::mutex point_queue_mutex;
-	std::queue<data_point> point_queue;
 	struct { double xmin, xmax, ymin, ymax; } series_range {
 		0.0, 1.0, 0.0, 1.0
 	};

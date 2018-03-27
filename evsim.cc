@@ -121,15 +121,22 @@ int evsim(int argc, char **argv) {
 				fprintf(stderr, "Step: %d\n", state.step);
 				env->step();
 
-				if(state.fast_forward)
-					state.fast_forward = false;
-				if(state.previous_step) {
-					if(state.step != 0)
-						state.step--;
-					state.previous_step = false;
+				if(state.skip) {
+					state.skip = false;
+					if(state.next_step) {
+						state.step = state.next_step.value();
+						state.next_step.reset();
+					} else if(state.previous_step) {
+						if(state.step != 0)
+							state.step--;
+						state.previous_step = false;
+					} else {
+						state.step++;
+					}
 				} else {
 					state.step++;
 				}
+
 				state.tick = 0;
 
 				if(state.step >= steps_per_generation) {
@@ -164,7 +171,7 @@ int evsim(int argc, char **argv) {
 			env->tick();
 		}
 		glfwPollEvents();
-		if(state.draw && !state.fast_forward) {
+		if(state.draw && !state.skip) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			env->draw();
 			glfwSwapBuffers(window);

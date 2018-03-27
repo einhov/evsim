@@ -10,6 +10,7 @@
 #include "evsim.h"
 #include "fixture_type.h"
 #include "neat_plot.h"
+#include "ui/gui.h"
 
 #include "env/multi_food/herbivore_neat.h"
 
@@ -17,7 +18,6 @@ namespace evsim {
 
 void input_init(GLFWwindow *window) {
 	glfwSetKeyCallback(window, [] (GLFWwindow*, int key, int, int action, int) {
-		std::scoped_lock<std::mutex> lock(evsim::state.mutex);
 		if(key == GLFW_KEY_F && action == GLFW_PRESS) {
 			state.draw = !state.draw;
 		}
