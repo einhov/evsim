@@ -87,12 +87,14 @@ void environment::tick() {
 }
 
 void environment::draw() {
+	const auto projection = state.camera.projection();
+
 	// Draw environmental objects
 	for(const auto &env_obj : boost::adaptors::reverse(environmental_objects)){
-		env_obj->draw(state.projection);
+		env_obj->draw(projection);
 	}
 	//draw agents
-	herbivores.draw(state.projection);
+	herbivores.draw(projection);
 }
 
 }

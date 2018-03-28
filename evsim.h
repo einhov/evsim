@@ -4,6 +4,7 @@
 #include <optional>
 #include <vector>
 #include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include <QCoreApplication>
 #include "entity.h"
@@ -28,8 +29,53 @@ struct simulation_state {
 	bool draw_yell;
 	bool draw_wall;
 
+	class {
+		public:
+			inline void move_to(glm::vec2 position, float zoom) {
+				centre = position;
+				scale = std::max(zoom, min_scale);
+				dirty = true;
+			}
+
+			inline void pan(glm::vec2 delta) {
+				centre += delta / scale;
+				dirty = true;
+			}
+
+			inline void zoom(float delta) {
+				scale = std::max(scale + (delta * scale), min_scale);
+				dirty = true;
+			}
+
+			glm::mat4 projection() const {
+				if(dirty) {
+					static const auto identity = glm::ortho(
+						-100.0f * (4.0f / 3.0f),
+						 100.0f * (4.0f / 3.0f),
+						-100.0f,
+						 100.0f
+					);
+
+					projection_ =
+						identity *
+						glm::scale(glm::vec3 { scale, scale, 1.0 }) *
+						glm::translate(glm::vec3 { centre, 0.0 })
+					;
+					dirty = false;
+				}
+				return projection_;
+			}
+		private:
+			const float min_scale = 0.1;
+
+			glm::vec2 centre;
+			float scale = 1.0;
+
+			mutable bool dirty = true;
+			mutable glm::mat4 projection_;
+	} camera;
+
 	float simulation_timestep;
-	glm::mat4 projection;
 	b2World *world;
 };
 
