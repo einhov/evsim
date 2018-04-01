@@ -18,7 +18,8 @@
 
 namespace evsim {
 
-static const fixture_type fixture_type = fixture_type::wall;
+static const fixture_type fixture_type_wall = fixture_type::wall;
+static const fixture_type fixture_type_wall_goal = fixture_type::wall_goal;
 
 void wall::init_body(b2World &world, b2Vec2& position, b2Vec2& scale, wall_type type) {
 	b2PolygonShape shape;
@@ -26,22 +27,24 @@ void wall::init_body(b2World &world, b2Vec2& position, b2Vec2& scale, wall_type 
 	b2FixtureDef fixture;
 
 	fixture.shape = &shape;
-	fixture.shape = &shape;
 	fixture.density = 1.0f;
 	fixture.isSensor = false;
 	this->type = type;
 	if(type == wall_type::right) {
 		fixture.filter.categoryBits = static_cast<uint16>(collision_types::WALL_RIGHT);
+		fixture.userData = const_cast<void*>(static_cast<const void*>(&fixture_type_wall));
 	} else if(type == wall_type::goal){
 		fixture.filter.categoryBits = static_cast<uint16>(collision_types::WALL_GOAL);
+		fixture.userData = const_cast<void*>(static_cast<const void*>(&fixture_type_wall_goal));
 	} else if(type == wall_type::standard){
 		fixture.filter.categoryBits = static_cast<uint16>(collision_types::WALL);
+		fixture.userData = const_cast<void*>(static_cast<const void*>(&fixture_type_wall));
 	} else {
 		throw std::runtime_error(
 			"Unknown wall_type sent to init_body (wall)"
 		);
 	}
-	fixture.userData = const_cast<void*>(static_cast<const void*>(&fixture_type));
+
 
 	b2BodyDef def;
 	def.type = b2_staticBody;

@@ -180,11 +180,6 @@ void herbivore_neat::tick() {
 		auto &body = agent.body;
 		const auto angle = body->GetAngle();
 		const auto pos = body->GetPosition();
-		if(pos.x > 100) {
-			agent.score +=  100;
-			agent.body->SetActive(false);
-			agent.active = false;
-		}
 
 		if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
 		if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
@@ -484,6 +479,10 @@ void herbivore_neat::agent::message(const std::any &msg) {
 				yell_detected = true;
 				yell_vector = yell_heard->body->GetPosition();
 			}
+		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::wall_goal) {
+			score +=  100;
+			body->SetActive(false);
+			active = false;
 		}
 	} else if(type == typeid(msg_kill)) {
 		const auto &consumer = std::any_cast<msg_kill>(msg).consumer;

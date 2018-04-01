@@ -72,6 +72,7 @@ void init_body_data() {
 		static_cast<uint16>(collision_types::SENSOR) |
 		static_cast<uint16>(collision_types::WALL) |
 		static_cast<uint16>(collision_types::WALL_RIGHT) |
+		static_cast<uint16>(collision_types::WALL_GOAL) |
 		static_cast<uint16>(collision_types::YELL)
 	;
 	torso_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&torso_type));
