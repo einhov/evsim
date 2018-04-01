@@ -40,6 +40,15 @@ add_executable (evsim
 	env/multi_move/predator_neat_draw.cc
 	env/multi_move/multi_move_predator_widget.cc
 
+	#Including door environment
+	env/door/environment.cc
+	env/door/herbivore_neat.cc
+	env/door/herbivore_neat_draw.cc
+	env/door/door_herbivore_widget.cc
+	env/door/predator_neat.cc
+	env/door/predator_neat_draw.cc
+	env/door/door_predator_widget.cc
+
 	ui/gui.cc
 	ui/fitness_graph.cc
 )
