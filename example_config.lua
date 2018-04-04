@@ -102,4 +102,14 @@ environments = {
 	multi_move = multi_move
 }
 
+physics = {
+	linear_damping = 10.0,
+	angular_damping = 10.0
+}
+
+sensors = {
+	length = 45.0,
+	fov = 60.0
+}
+
 environment = environments[arg[2]] or food
