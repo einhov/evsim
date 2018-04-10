@@ -105,7 +105,9 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 					case 1:
 					  return agent.vision_herbivore;
 					case 2:
-					  return agent.vision_predator;
+					  return agent.vision_goal;
+					case 3:
+					  return agent.vision_button;
 				}
 			}();
 			const auto body = agent.body;

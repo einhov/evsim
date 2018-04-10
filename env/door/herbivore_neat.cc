@@ -27,6 +27,7 @@
 
 #include "herbivore_neat.h"
 #include "door_herbivore_widget.h"
+#include "environment.h"
 
 namespace fs = boost::filesystem;
 
@@ -123,9 +124,10 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		conf.leave_table();
 		neat_params.PopulationSize = params.population_size;
 
-		//6: 1 angular vel, 1 linear vel, 1 x pos, 1 y pos, 1 direction, 1 bias
+		//5: 1 angular vel, 1 linear vel, 1 direction, 1 on_button 1 bias (1 x pos, 1 y pos removed for now)
+		//vision 4: = 1 goal, 1 button, 1 herbivore, 1 wall(and predator removed for now)
 		NEAT::Genome genesis(
-			0, 6 + agent::vision_segments * 3, 0, 2, false,
+			0, 5 + agent::vision_segments * 4, 0, 2, false,
 			NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 			0, neat_params, 0
 		);
@@ -163,6 +165,7 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 	} else {
 		distribute_genomes();
 	}
+	agents_in_goal = 0;
 	return true;
 }
 
@@ -171,20 +174,32 @@ void herbivore_neat::pre_tick() {
 		agent.vision_herbivore = {};
 		agent.vision_predator = {};
 		agent.vision_wall = {};
+		agent.vision_goal = {};
+		agent.vision_button = {};
+		agent.is_on_button = false;
+		agents_on_buttons.clear();
+		tick_goal_count = 0;
 	}
 }
 
 void herbivore_neat::tick() {
+	//calculate button score;
+	if(tick_goal_count > 0) {
+		for(auto agent : agents_on_buttons) {
+			agent->score += (100.0 * tick_goal_count) / agents_on_buttons.size();
+		}
+	}
+
 	for(auto &agent : agents) {
 		if(!agent.active) continue;
 		auto &body = agent.body;
 		const auto angle = body->GetAngle();
 		const auto pos = body->GetPosition();
 
-		if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
-		if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
-		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
-		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
+		//if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
+		//if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
+		//if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
+		//if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
 
 		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;
@@ -192,18 +207,33 @@ void herbivore_neat::tick() {
 
 		std::vector<double> inputs;
 
+
 		std::transform(
 			agent.vision_herbivore.cbegin(), agent.vision_herbivore.cend(),
 			std::back_inserter(inputs), vision_inserter
 		);
+		/*
 		std::transform(
 			agent.vision_predator.cbegin(), agent.vision_predator.cend(),
 			std::back_inserter(inputs), vision_inserter
 		);
+
+		*/
 		std::transform(
 			agent.vision_wall.cbegin(), agent.vision_wall.cend(),
 			std::back_inserter(inputs), vision_inserter
 		);
+
+		std::transform(
+			agent.vision_goal.cbegin(), agent.vision_goal.cend(),
+			std::back_inserter(inputs), vision_inserter
+		);
+
+		std::transform(
+			agent.vision_button.cbegin(), agent.vision_button.cend(),
+			std::back_inserter(inputs), vision_inserter
+		);
+
 		inputs.emplace_back([&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }());
 		inputs.emplace_back(body->GetAngularVelocity());
 		/*
@@ -219,9 +249,10 @@ void herbivore_neat::tick() {
 			inputs.emplace_back(0.0);
 		}
 		*/
-		inputs.emplace_back(pos.x);
-		inputs.emplace_back(pos.y);
+		//inputs.emplace_back(pos.x);
+		//inputs.emplace_back(pos.y);
 		inputs.emplace_back(agent.body->GetAngle());
+		inputs.emplace_back(agent.is_on_button);
 
 		agent.yell_detected = false;
 		inputs.emplace_back(1.0);
@@ -332,7 +363,7 @@ void herbivore_neat::epoch_shared(int epoch) {
 			)
 		);
 	}
-
+	agents_in_goal = 0;
 	if(params.train && params.save_path)
 		save(total / params.population_size, best_score, worst_score);
 
@@ -367,7 +398,7 @@ void herbivore_neat::epoch_normal(int epoch, int steps) {
 				epoch,
 				total/agents.size(),
 				best_score / static_cast<double>(steps),
-				worst_score / static_cast<double>(steps)
+				agents_in_goal / static_cast<double>(steps)
 			)
 		);
 	}
@@ -382,6 +413,7 @@ void herbivore_neat::epoch_normal(int epoch, int steps) {
 		fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
 		distribute_genomes();
 	}
+	agents_in_goal = 0;
 }
 
 QWidget *herbivore_neat::make_species_widget() {
@@ -420,6 +452,10 @@ void herbivore_neat::agent::on_sensor(const msg_contact &contact) {
 				return &vision_predator;
 			case fixture_type::wall:
 				return &vision_wall;
+			case fixture_type::wall_goal:
+				return &vision_goal;
+			case fixture_type::wall_button:
+				return &vision_button;
 			default:
 				return {};
 		}
@@ -483,6 +519,13 @@ void herbivore_neat::agent::message(const std::any &msg) {
 			score +=  100;
 			body->SetActive(false);
 			active = false;
+			species->agents_in_goal++;
+			species->tick_goal_count++;
+		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::wall_button) {
+			//change this to id;
+			is_on_button = true;
+			species->agents_on_buttons.emplace_back(this);
+			species->env.set_button_active(0);
 		}
 	} else if(type == typeid(msg_kill)) {
 		const auto &consumer = std::any_cast<msg_kill>(msg).consumer;

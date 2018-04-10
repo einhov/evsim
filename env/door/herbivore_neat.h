@@ -20,6 +20,8 @@ class door_herbivore_widget;
 namespace evsim {
 namespace door {
 
+class environment;
+
 struct msg_kill {
 	entity *consumer;
 };
@@ -30,8 +32,9 @@ struct msg_killed {
 class herbivore_neat : public species {
 	friend class ::door_herbivore_widget;
 	public:
-		herbivore_neat(b2World &world) :
-	        params{}, active_genomes(0), world(world) {}
+		herbivore_neat(b2World &world, environment &env) :
+			params{}, active_genomes(0), world(world), env(env)
+			{}
 		bool initialise(lua_conf &conf, int seed);
 		void pre_tick();
 		void tick();
@@ -69,7 +72,10 @@ class herbivore_neat : public species {
 				vision_texture vision_herbivore;
 				vision_texture vision_predator;
 				vision_texture vision_wall;
+				vision_texture vision_goal;
+				vision_texture vision_button;
 
+				bool is_on_button = false;
 				bool yell_detected = false;
 				b2Vec2 yell_vector;
 				int yell_cooldown = 0;
@@ -97,14 +103,17 @@ class herbivore_neat : public species {
 		} params;
 
 		size_t active_genomes;
+		size_t tick_goal_count;
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		std::vector<NEAT::Genome*> genotypes;
 		b2World &world;
-
+		environment &env;
+		std::vector<agent*> agents_on_buttons;
 		std::optional<door_herbivore_widget*> widget;
 		std::atomic_int vision_texture {};
 		std::atomic_bool draw_vision {};
+		size_t agents_in_goal;
 };
 
 }

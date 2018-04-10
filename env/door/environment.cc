@@ -13,14 +13,13 @@
 
 #include "environment.h"
 #include "herbivore_neat.h"
-#include "predator_neat.h"
 
 namespace evsim {
 namespace door {
 
 using training_model_type = evsim::species::training_model_type;
 
-environment::environment() : herbivores(*state.world), predator(*state.world) {}
+environment::environment() : herbivores(*state.world, *this) {}
 
 void environment::init(lua_conf &conf) {
 	params.ticks_per_step = conf.get_integer_default("ticks_per_step", 60 * 15);
@@ -29,84 +28,85 @@ void environment::init(lua_conf &conf) {
 	conf.enter_table_or_empty("herbivores");
 	herbivores.initialise(conf, static_cast<int>(glfwGetTime()));
 	conf.leave_table();
-	conf.enter_table_or_empty("predators");
-	predator.initialise(conf, static_cast<int>(glfwGetTime()+1));
-	conf.leave_table();
 
 	if(
-		herbivores.training_model() == herbivore_neat::training_model_type::shared &&
-		predator.training_model() == predator_neat::training_model_type::shared
-	) {
-		throw std::runtime_error("Both herbivore and predator have shared fitness, this is not allowed!");
-	}
-	if(
 		(herbivores.training_model() == herbivore_neat::training_model_type::shared &&
-		 params.steps_per_generation != herbivores.population_size()) ||
-		(predator.training_model() == predator_neat::training_model_type::shared &&
-		 params.steps_per_generation != predator.population_size())
-	) {
+		 params.steps_per_generation != herbivores.population_size())) {
 		throw std::runtime_error(
 			"The steps_per_generation must be equal to the population_size of the agent that is trained with shared_fitness"
 		);
 	}
 
 	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
-	QApplication::postEvent(main_gui, new gui::add_species_event(&predator));
+	//QApplication::postEvent(main_gui, new gui::add_species_event(&predator));
 
-	if(!herbivores.train() && !predator.train())
+	if(!herbivores.train())
 		QApplication::postEvent(main_gui, new gui::no_training_mode_event());
 
-	int y = -100;
-	int x = -134;
+	//Create doors
+	int y = -50;
+	int x = -20;
 	for(int i = 0; i < 2; i++) {
-		//Creating horisontal walls
-		for(int j = -134; j < 134; j+=2) {
+		//Creating horisontal doors
+		for(int j = -20; j < 20; j++) {
 			auto wall_instance = std::make_unique<wall>();
 			b2Vec2 p (j, y);
-			b2Vec2 s (2, 2);
+			b2Vec2 s (1, 1);
 			wall_instance->init_body(
 				(*state.world),
 				p,
 				s,
 				wall_type::standard
-				);
+			);
+			wall_instance->id = 0;
+			wall_instance->door = true;
 			environmental_objects.emplace_back(std::move(wall_instance));
 		}
-		y = 100;
-		//Creating vertical walls
-		for(int j = -100; j < 100; j+=2) {
+		y = 50;
+		//Creating vertical doors
+		for(int j = -50; j < 50; j+=1) {
 			auto wall_instance = std::make_unique<wall>();
 			b2Vec2 p (x, j);
-			b2Vec2 s (2, 2);
-			if(i == 0) {
-				wall_instance->init_body(
-					(*state.world), p, s, wall_type::standard
-				);
-			}
-			else {
-				wall_instance->init_body(
-					(*state.world), p, s, wall_type::right
-				);
-			}
-
+			b2Vec2 s (1, 1);
+			wall_instance->init_body(
+				(*state.world),
+				p,
+				s,
+				wall_type::standard
+			);
+			wall_instance->id = 0;
+			wall_instance->door = true;
 			environmental_objects.emplace_back(std::move(wall_instance));
 		}
-		x = 134;
+		x = 20;
 	}
 
 	//Create goal
+	for(int j = -40; j < 40; j++) {
+		auto wall_instance = std::make_unique<wall>();
+		b2Vec2 p (0, j);
+		b2Vec2 s (1, 1);
+		wall_instance->init_body(
+			(*state.world), p, s, wall_type::goal
+		);
+		environmental_objects.emplace_back(std::move(wall_instance));
+	}
+
+	//Create button
 	auto wall_instance = std::make_unique<wall>();
-	b2Vec2 p (101, 0);
-	b2Vec2 s (1, 100);
+	b2Vec2 p (50, 0);
+	b2Vec2 s (10, 10);
 	wall_instance->init_body(
-		(*state.world), p, s, wall_type::goal
+		(*state.world), p, s, wall_type::button
 	);
+	wall_instance->id = 0;
 	environmental_objects.emplace_back(std::move(wall_instance));
+
+	button_status.emplace_back(0);
 }
 
 void environment::pre_step() {
 	herbivores.pre_step();
-	predator.pre_step();
 
 	for(auto &env_obj : environmental_objects)
 		env_obj->pre_step();
@@ -121,15 +121,6 @@ void environment::step() {
 			herbivores.step_shared(state.step);
 			break;
 	}
-
-	switch(predator.training_model()) {
-		case training_model_type::normal:
-			predator.step_normal();
-			break;
-		case training_model_type::shared:
-			predator.step_shared(state.step);
-			break;
-	}
 }
 
 void environment::epoch() {
@@ -141,26 +132,16 @@ void environment::epoch() {
 			herbivores.epoch_shared(state.generation);
 			break;
 	}
-
-	switch(predator.training_model()) {
-		case training_model_type::normal:
-			predator.epoch_normal(state.generation, steps_per_generation());
-			break;
-		case training_model_type::shared:
-			predator.epoch_shared(state.generation);
-			break;
-	}
-
 }
 
 void environment::pre_tick() {
+	setDoorsActive();
+	reset_status();
 	herbivores.pre_tick();
-	predator.pre_tick();
 }
 
 void environment::tick() {
 	herbivores.tick();
-	predator.tick();
 	for(auto &env_obj : environmental_objects) {
 		env_obj->tick();
 	}
@@ -174,8 +155,27 @@ void environment::draw() {
 		env_obj->draw(projection);
 	}
 	//draw agents
-	predator.draw(projection);
 	herbivores.draw(projection);
+}
+
+void environment::reset_status() {
+	for(auto &status : button_status) {
+		status = 0;
+	}
+}
+
+void environment::set_button_active(int id) {
+	button_status[id]++;
+}
+
+void environment::setDoorsActive() {
+	for(int i = 0; i < button_status.size(); i++) {
+		for (auto &obj : environmental_objects) {
+			if(obj->door && obj->id == i) {
+				obj->set_active(button_status[i] <= 0);
+			}
+		}
+	}
 }
 
 }

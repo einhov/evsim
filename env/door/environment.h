@@ -4,7 +4,6 @@
 #include "../../environment_base.h"
 
 #include "herbivore_neat.h"
-#include "predator_neat.h"
 
 namespace evsim {
 namespace door {
@@ -23,12 +22,17 @@ class environment : public environment_base {
 		unsigned int steps_per_generation() override { return params.steps_per_generation; }
 		unsigned int ticks_per_step() override { return params.ticks_per_step; }
 		herbivore_neat herbivores;
-		predator_neat predator;
+		void set_button_active(int id);
+		std::vector<int> button_status;
 
 		struct {
 			unsigned int steps_per_generation;
 			unsigned int ticks_per_step;
 		} params;
+
+	private:
+		void reset_status();
+		void setDoorsActive();
 };
 
 }

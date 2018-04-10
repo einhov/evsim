@@ -56,7 +56,12 @@
        </item>
        <item>
         <property name="text">
-         <string>Predators</string>
+         <string>goal</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>button</string>
         </property>
        </item>
       </widget>

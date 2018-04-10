@@ -45,9 +45,6 @@ add_executable (evsim
 	env/door/herbivore_neat.cc
 	env/door/herbivore_neat_draw.cc
 	env/door/door_herbivore_widget.cc
-	env/door/predator_neat.cc
-	env/door/predator_neat_draw.cc
-	env/door/door_predator_widget.cc
 
 	ui/gui.cc
 	ui/fitness_graph.cc
