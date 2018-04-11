@@ -141,6 +141,11 @@ int evsim(int argc, char **argv) {
 				QApplication::postEvent(main_gui, new gui::step_event);
 			}
 
+			if(config::max_generations && state.generation >= *config::max_generations) {
+				state.quit = true;
+				continue;
+			}
+
 			env->pre_tick();
 			state.world->Step(state.simulation_timestep, 1, 1);
 

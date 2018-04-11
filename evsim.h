@@ -15,7 +15,7 @@ class b2World;
 namespace evsim {
 
 struct simulation_state {
-	int generation;
+	unsigned int generation;
 	unsigned int step;
 	unsigned int tick;
 
