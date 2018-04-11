@@ -42,7 +42,7 @@ static std::uniform_real_distribution<float> rotation_distribution(0.0f, glm::ra
 static void relocate_agent(b2Body *body) {
 	body->SetTransform(
 		b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)),
-		rotation_distribution(generator)
+		glm::radians(-90.0)
 	);
 }
 
@@ -146,10 +146,7 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 
 	for(auto &agent : agents) {
 		agent.body = build_body(world);
-		agent.body->SetTransform(
-			b2Vec2(pos_x_distribution(generator), pos_y_distribution(generator)),
-			agent.body->GetAngle()
-		);
+		relocate_agent(agent.body);
 		agent.body->SetUserData(reinterpret_cast<void*>(&agent));
 		agent.species = this;
 		agent.active = true;
@@ -317,7 +314,7 @@ void herbivore_neat::step_shared(size_t step) {
 		current_score += agent.score;
 		agent.score = 0;
 	}
-	const auto fitness = current_score / static_cast<double>(agents.size());
+	const double fitness = agents_in_goal;
 	genotypes[step]->SetFitness(fitness);
 	genotypes[step]->m_Evaluated = true;
 
@@ -339,6 +336,8 @@ void herbivore_neat::step_shared(size_t step) {
 		distribute_genomes_shared(step+1);
 	}
 	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
+
+	agents_in_goal = 0;
 }
 
 void herbivore_neat::epoch_shared(int epoch) {
@@ -363,9 +362,9 @@ void herbivore_neat::epoch_shared(int epoch) {
 			)
 		);
 	}
-	agents_in_goal = 0;
+
 	if(params.train && params.save_path)
-		save(total / params.population_size, best_score, worst_score);
+		save(total / params.population_size, best_score, worst_score, 0.0);
 
 	if(params.train) {
 		fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
@@ -404,7 +403,7 @@ void herbivore_neat::epoch_normal(int epoch, int steps) {
 	}
 
 	if(params.train && params.save_path)
-		save(total / params.population_size, best_score, worst_score);
+		save(total / params.population_size, best_score, worst_score, agents_in_goal / static_cast<double>(steps));
 
 	if(params.train) {
 		fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
@@ -420,7 +419,7 @@ QWidget *herbivore_neat::make_species_widget() {
 	return new door_herbivore_widget(this, params.avg_window);
 }
 
-void herbivore_neat::save(double avg, double high, double low) const {
+void herbivore_neat::save(double avg, double high, double low, double agents) const {
 	if(!params.save_path) return;
 	save_neat_population(
 		*params.save_path / fs::path(std::to_string(population->m_Generation)),
@@ -435,7 +434,7 @@ void herbivore_neat::save(double avg, double high, double low) const {
 	if(scores) {
 		scores <<
 			population->m_Generation << " " <<
-			high << " " << low  << " " << avg  << "\n"
+			high << " " << low  << " " << avg  <<  " " << agents << '\n'
 		;
 	}
 }
@@ -472,6 +471,8 @@ void herbivore_neat::agent::on_sensor(const msg_contact &contact) {
 	}();
 	if(diff == glm::vec2(0)) return;
 	const auto diff_angle = glm::orientedAngle(forward, glm::normalize(diff));
+	if(std::abs(diff_angle) > M_PI_2)
+		return;
 	const double offset =
 		vision_segments -
 		(std::clamp(tan(diff_angle) * sensor_length / (0.5f * sensor_width), -1.0f, 1.0f) + 1.0) /
@@ -534,6 +535,7 @@ void herbivore_neat::agent::message(const std::any &msg) {
 		active = false;
 		consumer->message(std::make_any<msg_killed>());
 	} else if(type == typeid(msg_plot)) {
+		draw_vision = !draw_vision;
 		plot_genome(*genotype, "selected_agent");
 	}
 }

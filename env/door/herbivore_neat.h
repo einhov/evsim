@@ -47,7 +47,7 @@ class herbivore_neat : public species {
 		QWidget *make_species_widget();
 		unsigned int population_size() const;
 		training_model_type training_model() const;
-		void save(double avg, double high, double low) const;
+		void save(double avg, double high, double low, double agents) const;
 
 		inline bool train() const { return params.train; }
 
@@ -67,6 +67,7 @@ class herbivore_neat : public species {
 				b2Body *body;
 				bool active;
 
+				bool draw_vision;
 				static constexpr int vision_segments = 3;
 				using vision_texture = std::array<float, vision_segments>;
 				vision_texture vision_herbivore;

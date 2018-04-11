@@ -96,6 +96,7 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 		glEnable(GL_TEXTURE_1D);
 		glBindTexture(GL_TEXTURE_1D, model.sensor_texture);
 		for(const auto &agent : agents) {
+			if(!agent.draw_vision) continue;
 			if(!agent.active) continue;
 			const auto &vision = [this,&agent] {
 				switch(vision_texture) {
