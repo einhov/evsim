@@ -7,7 +7,12 @@ max_generations = 50,
 neat_params = {
 	min_species = 3,
 	max_species = 20,
-	compat_thresh = 5.0
+	compat_thresh = 5.0,
+	crossover_rate = 0.7,
+	mutation_rate = 0.25,
+	tournament_size = 4,
+	elite_fraction = 0.01,
+	old_age_penalty = 0.5
 }
 
 food = {
