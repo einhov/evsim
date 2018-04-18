@@ -22,13 +22,6 @@ namespace door {
 
 class environment;
 
-struct msg_kill {
-	entity *consumer;
-};
-
-struct msg_killed {
-};
-
 class herbivore_neat : public species {
 	friend class ::door_herbivore_widget;
 	public:
@@ -57,8 +50,6 @@ class herbivore_neat : public species {
 			public:
 				void message(const std::any &msg) override;
 				void on_sensor(const msg_contact &contact);
-				void create_yell();
-				glm::vec2 find_yell_vector();
 
 				int score;
 				int generation_score;
@@ -77,9 +68,6 @@ class herbivore_neat : public species {
 				vision_texture vision_button;
 
 				bool is_on_button = false;
-				bool yell_detected = false;
-				b2Vec2 yell_vector;
-				int yell_cooldown = 0;
 
 				NEAT::Genome *genotype;
 				NEAT::NeuralNetwork phenotype;
@@ -97,7 +85,6 @@ class herbivore_neat : public species {
 			bool train;
 			float thrust;
 			float torque;
-			int yell_delay;
 			std::string initial_population;
 			std::optional<boost::filesystem::path> save_path;
 			size_t avg_window;

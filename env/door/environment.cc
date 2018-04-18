@@ -38,16 +38,15 @@ void environment::init(lua_conf &conf) {
 	}
 
 	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
-	//QApplication::postEvent(main_gui, new gui::add_species_event(&predator));
 
 	if(!herbivores.train())
 		QApplication::postEvent(main_gui, new gui::no_training_mode_event());
 
-	//Create doors
+	// Create doors
 	int y = -50;
 	int x = -20;
 	for(int i = 0; i < 2; i++) {
-		//Creating horisontal doors
+		// Creating horisontal doors
 		for(int j = -20; j < 20; j++) {
 			auto wall_instance = std::make_unique<wall>();
 			b2Vec2 p (j, y);
@@ -63,7 +62,7 @@ void environment::init(lua_conf &conf) {
 			environmental_objects.emplace_back(std::move(wall_instance));
 		}
 		y = 50;
-		//Creating vertical doors
+		// Creating vertical doors
 		for(int j = -50; j < 50; j+=1) {
 			auto wall_instance = std::make_unique<wall>();
 			b2Vec2 p (x, j);
@@ -81,7 +80,7 @@ void environment::init(lua_conf &conf) {
 		x = 20;
 	}
 
-	//Create goal
+	// Create goal
 	for(int j = -40; j < 40; j++) {
 		auto wall_instance = std::make_unique<wall>();
 		b2Vec2 p (0, j);
@@ -92,7 +91,7 @@ void environment::init(lua_conf &conf) {
 		environmental_objects.emplace_back(std::move(wall_instance));
 	}
 
-	//Create button
+	// Create button
 	auto wall_instance = std::make_unique<wall>();
 	b2Vec2 p (50, 0);
 	b2Vec2 s (10, 10);
@@ -150,11 +149,10 @@ void environment::tick() {
 void environment::draw() {
 	const auto projection = state.camera.projection();
 
-	// Draw environmental objects
 	for(const auto &env_obj : boost::adaptors::reverse(environmental_objects)){
 		env_obj->draw(projection);
 	}
-	//draw agents
+
 	herbivores.draw(projection);
 }
 
@@ -169,9 +167,9 @@ void environment::set_button_active(int id) {
 }
 
 void environment::setDoorsActive() {
-	for(int i = 0; i < button_status.size(); i++) {
+	for(size_t i = 0; i < button_status.size(); i++) {
 		for (auto &obj : environmental_objects) {
-			if(obj->door && obj->id == i) {
+			if(obj->door && static_cast<unsigned>(obj->id) == i) {
 				obj->set_active(button_status[i] <= 0);
 			}
 		}

@@ -21,7 +21,6 @@
 #include "../../neat_plot.h"
 #include "../../config.h"
 #include "../../evsim.h"
-#include "../../yell.h"
 #include "../../lua_conf.h"
 #include "../../neat.h"
 
@@ -93,7 +92,6 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 	params.thrust = conf.get_number_default("thrust", 1000.0);
 	params.torque = conf.get_number_default("torque", 45.0);
 	params.avg_window = conf.get_integer_default("avg_window", 21);
-	//params.yell_delay = conf.get_number_default("yell_delay", 30);
 	params.shared_fitness_simulate_count = conf.get_number_default("shared_fitness_simulate_count", 5.0);
 
 	const auto training_model = training_model_by_string.find(
@@ -124,8 +122,8 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		conf.leave_table();
 		neat_params.PopulationSize = params.population_size;
 
-		//5: 1 angular vel, 1 linear vel, 1 direction, 1 on_button 1 bias (1 x pos, 1 y pos removed for now)
-		//vision 4: = 1 goal, 1 button, 1 herbivore, 1 wall(and predator removed for now)
+		//5: 1 angular vel, 1 linear vel, 1 direction, 1 on_button, 1 bias (1 x pos, 1 y pos removed for now)
+		//vision 4: = 1 goal, 1 button, 1 herbivore, 1 wall
 		NEAT::Genome genesis(
 			0, 5 + agent::vision_segments * 4, 0, 2, false,
 			NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
@@ -180,7 +178,6 @@ void herbivore_neat::pre_tick() {
 }
 
 void herbivore_neat::tick() {
-	//calculate button score;
 	if(tick_goal_count > 0) {
 		for(auto agent : agents_on_buttons) {
 			agent->score += (100.0 * tick_goal_count) / agents_on_buttons.size();
@@ -191,12 +188,6 @@ void herbivore_neat::tick() {
 		if(!agent.active) continue;
 		auto &body = agent.body;
 		const auto angle = body->GetAngle();
-		const auto pos = body->GetPosition();
-
-		//if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
-		//if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
-		//if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
-		//if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
 
 		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;
@@ -204,18 +195,11 @@ void herbivore_neat::tick() {
 
 		std::vector<double> inputs;
 
-
 		std::transform(
 			agent.vision_herbivore.cbegin(), agent.vision_herbivore.cend(),
 			std::back_inserter(inputs), vision_inserter
 		);
-		/*
-		std::transform(
-			agent.vision_predator.cbegin(), agent.vision_predator.cend(),
-			std::back_inserter(inputs), vision_inserter
-		);
 
-		*/
 		std::transform(
 			agent.vision_wall.cbegin(), agent.vision_wall.cend(),
 			std::back_inserter(inputs), vision_inserter
@@ -233,25 +217,10 @@ void herbivore_neat::tick() {
 
 		inputs.emplace_back([&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }());
 		inputs.emplace_back(body->GetAngularVelocity());
-		/*
-		if(agent.hear_yell) {
-			inputs.emplace_back(1.0);
-			const auto vec = agent.find_yell_vector();
-			inputs.emplace_back(vec.x);
-			inputs.emplace_back(vec.y);
-		}
-		else {
-			inputs.emplace_back(0.0);
-			inputs.emplace_back(0.0);
-			inputs.emplace_back(0.0);
-		}
-		*/
-		//inputs.emplace_back(pos.x);
-		//inputs.emplace_back(pos.y);
 		inputs.emplace_back(agent.body->GetAngle());
+
 		inputs.emplace_back(agent.is_on_button);
 
-		agent.yell_detected = false;
 		inputs.emplace_back(1.0);
 
 		agent.phenotype.Flush();
@@ -267,30 +236,13 @@ void herbivore_neat::tick() {
 
 		body->ApplyForceToCenter(b2Vec2 { forward.x, forward.y }, true);
 		body->ApplyTorque(output[1] * params.torque, true);
-/*
-		if(output[2] >= 0.1) {
-			agent.create_yell();
-		}
-*/
-		if(agent.yell_cooldown > 0) {
-			agent.yell_cooldown--;
-		}
 	}
-}
-
-glm::vec2 herbivore_neat::agent::find_yell_vector() {
-	const auto c = yell_vector;
-	const auto a = body->GetPosition();
-	const auto ca = glm::vec2(c.x, c.y) - glm::vec2(a.x, a.y);
-	return glm::rotate(ca, -body->GetAngle());
 }
 
 void herbivore_neat::pre_step() {
 	for(auto &agent : agents) {
 		agent.body->SetActive(true);
 		agent.active = true;
-		agent.yell_detected = false;
-		agent.yell_cooldown = 0;
 		agent.body->SetAngularVelocity(0);
 		agent.body->SetLinearVelocity(b2Vec2(0,0));
 		relocate_agent(agent.body);
@@ -510,12 +462,6 @@ void herbivore_neat::agent::message(const std::any &msg) {
 
 		if(native_fixture_type == fixture_type::sensor) {
 			on_sensor(contact);
-		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::yell) {
-			const yell *yell_heard = static_cast<yell*>(contact.fixture_foreign->GetBody()->GetUserData());
-			if(yell_heard->hollerer != this) {
-				yell_detected = true;
-				yell_vector = yell_heard->body->GetPosition();
-			}
 		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::wall_goal) {
 			score +=  100;
 			body->SetActive(false);
@@ -523,29 +469,13 @@ void herbivore_neat::agent::message(const std::any &msg) {
 			species->agents_in_goal++;
 			species->tick_goal_count++;
 		} else if(native_fixture_type == fixture_type::torso && foreign_fixture_type == fixture_type::wall_button) {
-			//change this to id;
 			is_on_button = true;
 			species->agents_on_buttons.emplace_back(this);
 			species->env.set_button_active(0);
 		}
-	} else if(type == typeid(msg_kill)) {
-		const auto &consumer = std::any_cast<msg_kill>(msg).consumer;
-		score -= 2;
-		body->SetActive(false);
-		active = false;
-		consumer->message(std::make_any<msg_killed>());
 	} else if(type == typeid(msg_plot)) {
 		draw_vision = !draw_vision;
 		plot_genome(*genotype, "selected_agent");
-	}
-}
-
-void herbivore_neat::agent::create_yell() {
-	if(yell_cooldown == 0){
-		yell_cooldown = species->params.yell_delay;
-		auto yell_instance = std::make_unique<yell>();
-		yell_instance->init_body(species->world, this, body->GetPosition());
-		environmental_objects.push_back(std::move(yell_instance));
 	}
 }
 
