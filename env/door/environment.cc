@@ -48,34 +48,34 @@ void environment::init(lua_conf &conf) {
 	for(int i = 0; i < 2; i++) {
 		// Creating horisontal doors
 		for(int j = -20; j < 20; j++) {
-			auto wall_instance = std::make_unique<wall>();
+			auto door_instance = std::make_unique<wall>();
 			b2Vec2 p (j, y);
 			b2Vec2 s (1, 1);
-			wall_instance->init_body(
+			door_instance->init_body(
 				(*state.world),
 				p,
 				s,
 				wall_type::standard
 			);
-			wall_instance->id = 0;
-			wall_instance->door = true;
-			environmental_objects.emplace_back(std::move(wall_instance));
+			door_instance->door_id = 0;
+			doors.emplace_back(std::ref(*door_instance));
+			environmental_objects.emplace_back(std::move(door_instance));
 		}
 		y = 50;
 		// Creating vertical doors
 		for(int j = -50; j < 50; j+=1) {
-			auto wall_instance = std::make_unique<wall>();
+			auto door_instance = std::make_unique<wall>();
 			b2Vec2 p (x, j);
 			b2Vec2 s (1, 1);
-			wall_instance->init_body(
+			door_instance->init_body(
 				(*state.world),
 				p,
 				s,
 				wall_type::standard
 			);
-			wall_instance->id = 0;
-			wall_instance->door = true;
-			environmental_objects.emplace_back(std::move(wall_instance));
+			door_instance->door_id = 0;
+			doors.emplace_back(std::ref(*door_instance));
+			environmental_objects.emplace_back(std::move(door_instance));
 		}
 		x = 20;
 	}
@@ -98,9 +98,7 @@ void environment::init(lua_conf &conf) {
 	wall_instance->init_body(
 		(*state.world), p, s, wall_type::button
 	);
-	wall_instance->id = 0;
 	environmental_objects.emplace_back(std::move(wall_instance));
-
 	button_status.emplace_back(0);
 }
 
@@ -134,7 +132,7 @@ void environment::epoch() {
 }
 
 void environment::pre_tick() {
-	setDoorsActive();
+	set_door_state();
 	reset_status();
 	herbivores.pre_tick();
 }
@@ -166,11 +164,11 @@ void environment::set_button_active(int id) {
 	button_status[id]++;
 }
 
-void environment::setDoorsActive() {
+void environment::set_door_state() {
 	for(size_t i = 0; i < button_status.size(); i++) {
-		for (auto &obj : environmental_objects) {
-			if(obj->door && static_cast<unsigned>(obj->id) == i) {
-				obj->set_active(button_status[i] <= 0);
+		for (wall &door : doors) {
+			if(door.door_id == i) {
+				door.set_active(button_status[i] <= 0);
 			}
 		}
 	}

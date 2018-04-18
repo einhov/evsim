@@ -17,11 +17,7 @@ class environmental_entity : public entity {
 		virtual void tick() {}
 		virtual void pre_step() {}
 		virtual void draw(const glm::mat4 &projection) const = 0;
-		virtual void set_active(bool active) {}
 		virtual ~environmental_entity() {}
-		int id = -1;
-		bool door = false;
-		bool active = true;
 };
 
 struct msg_contact {

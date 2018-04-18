@@ -56,12 +56,12 @@
        </item>
        <item>
         <property name="text">
-         <string>goal</string>
+         <string>Goal</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>button</string>
+         <string>Button</string>
         </property>
        </item>
       </widget>

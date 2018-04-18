@@ -6,7 +6,10 @@
 #include "herbivore_neat.h"
 
 namespace evsim {
-namespace door {
+class wall;
+}
+
+namespace evsim::door {
 
 class environment : public environment_base {
 	public:
@@ -21,9 +24,7 @@ class environment : public environment_base {
 		void draw() override;
 		unsigned int steps_per_generation() override { return params.steps_per_generation; }
 		unsigned int ticks_per_step() override { return params.ticks_per_step; }
-		herbivore_neat herbivores;
 		void set_button_active(int id);
-		std::vector<int> button_status;
 
 		struct {
 			unsigned int steps_per_generation;
@@ -32,10 +33,12 @@ class environment : public environment_base {
 
 	private:
 		void reset_status();
-		void setDoorsActive();
+		void set_door_state();
+		herbivore_neat herbivores;
+		std::vector<int> button_status;
+		std::vector<std::reference_wrapper<wall>> doors;
 };
 
-}
 }
 
 #endif
