@@ -6,6 +6,7 @@
 #include "food/environment.h"
 #include "multi_food/environment.h"
 #include "multi_move/environment.h"
+#include "door/environment.h"
 
 #include "../lua_conf.h"
 #include "../environment_base.h"

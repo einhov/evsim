@@ -56,7 +56,9 @@ void init_body_data() {
 		static_cast<uint16>(collision_types::HERBIVORE) |
 		static_cast<uint16>(collision_types::CONSUMABLE) |
 		static_cast<uint16>(collision_types::PREDATOR) |
-		static_cast<uint16>(collision_types::WALL)
+		static_cast<uint16>(collision_types::WALL) |
+		static_cast<uint16>(collision_types::WALL_GOAL) |
+		static_cast<uint16>(collision_types::WALL_BUTTON)
 	;
 	sensor_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&sensor_type));
 
@@ -73,7 +75,8 @@ void init_body_data() {
 		static_cast<uint16>(collision_types::WALL) |
 		static_cast<uint16>(collision_types::WALL_RIGHT) |
 		static_cast<uint16>(collision_types::WALL_GOAL) |
-		static_cast<uint16>(collision_types::YELL)
+		static_cast<uint16>(collision_types::YELL) |
+		static_cast<uint16>(collision_types::WALL_BUTTON)
 	;
 	torso_def.fixture.userData = const_cast<void*>(static_cast<const void*>(&torso_type));
 

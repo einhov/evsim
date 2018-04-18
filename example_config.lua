@@ -98,10 +98,30 @@ multi_move = {
 	}
 }
 
+door = {
+	name = "door",
+	steps_per_generation = 1,
+	ticks_per_step = 60 * 15,
+
+	herbivores = {
+		population_size = 50,
+		training_model = "normal", -- "normal", "normal_none", "shared", "shared_none"
+		thrust = 1000.0,
+		torque = 45.0,
+		shared_fitness_simulate_count = 5,
+		save = nil, -- path to directory for storing the population every generation
+		initial_population = nil, -- path to file with initial population
+		avg_window = 21, -- size of window used for moving average in plot
+
+		neat_params = neat_params
+	}
+}
+
 environments = {
 	food = food,
 	multi_food = multi_food,
-	multi_move = multi_move
+	multi_move = multi_move,
+	door = door
 }
 
 physics = {

@@ -8,7 +8,8 @@ enum class fixture_type {
 	food,
 	yell,
 	wall,
-	wall_goal
+	wall_goal,
+	wall_button
 };
 
 #endif
