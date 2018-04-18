@@ -233,7 +233,6 @@ void herbivore_neat::step_normal() {
 		agent.generation_score += agent.score;
 		agent.score = 0;
 	}
-	fprintf(stderr, "NEAT :: Average score: %lf\n", total / agents.size());
 }
 
 void herbivore_neat::step_shared(size_t step) {
@@ -263,7 +262,6 @@ void herbivore_neat::step_shared(size_t step) {
 	if(step+1 < params.population_size) {
 		distribute_genomes_shared(step+1);
 	}
-	std::cout << "Shared_fitness_score: " << step << " = " << current_score << std::endl;
 }
 
 void herbivore_neat::epoch_shared(int epoch) {
@@ -293,10 +291,7 @@ void herbivore_neat::epoch_shared(int epoch) {
 		save(total / params.population_size, best_score, worst_score);
 
 	if(params.train) {
-		fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 		population->Epoch();
-		fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
-		fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
 		fill_genome_vector();
 	}
 	distribute_genomes_shared(0);
@@ -332,10 +327,7 @@ void herbivore_neat::epoch_normal(int epoch, int steps) {
 		save(total / params.population_size, best_score, worst_score);
 
 	if(params.train) {
-		fprintf(stderr, "NEAT :: Best genotype: %lf\n", population->GetBestGenome().GetFitness());
 		population->Epoch();
-		fprintf(stderr, "NEAT :: Best ever    : %lf\n", population->GetBestFitnessEver());
-		fprintf(stderr, "NEAT :: Species: %zu\n", population->m_Species.size());
 		distribute_genomes();
 	}
 }

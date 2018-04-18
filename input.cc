@@ -125,10 +125,6 @@ void input_init(GLFWwindow *window) {
 				const auto *fixture = *cb.found_fixture;
 				auto *agent = static_cast<entity*>(fixture->GetBody()->GetUserData());
 				agent->message(std::make_any<msg_plot>());
-				const b2Vec2 pos = fixture->GetBody()->GetPosition();
-				printf("Mouse pos : %f, %f : \n", transformed.x,transformed.y);
-				printf("Object found at : %f, %f\n", pos.x, pos.y);
-				fflush(stdout);
 			}
 		}
 	});
