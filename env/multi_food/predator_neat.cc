@@ -355,16 +355,21 @@ void predator_neat::epoch_normal(int epoch, int steps) {
 		QApplication::postEvent(
 			*widget, new multi_food_predator_widget::epoch_event(
 				epoch,
-				total/agents.size(),
+				total / params.population_size,
 				best_score / static_cast<double>(steps),
 				worst_score / static_cast<double>(steps)
 			)
 		);
 	}
 
-	if(params.train && params.save_path)
-		save(total / params.population_size, best_score, worst_score);
-
+	if(params.train && params.save_path) {
+		save(
+			total / params.population_size,
+			best_score / static_cast<double>(steps),
+			worst_score / static_cast<double>(steps)
+		);
+	}
+		
 	if(params.train) {
 		population->Epoch();
 		distribute_genomes();
