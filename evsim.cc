@@ -93,11 +93,9 @@ int evsim(int argc, char **argv) {
 	const auto ticks_per_step = env->ticks_per_step();
 	const auto steps_per_generation = env->steps_per_generation();
 
+	env->pre_step();
 	while(!state.quit) {
 		if(!state.pause) {
-			if(state.tick == 0)
-				env->pre_step();
-
 			// Remove environmental objects flagged for deletion
 			for(auto remove : to_be_destroyed) {
 				const auto found = std::find_if(
@@ -131,6 +129,7 @@ int evsim(int argc, char **argv) {
 				}
 
 				state.tick = 0;
+				env->pre_step();
 
 				if(state.step >= steps_per_generation) {
 					state.step = 0;
