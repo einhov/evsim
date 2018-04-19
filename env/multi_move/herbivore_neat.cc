@@ -310,7 +310,7 @@ void herbivore_neat::step_shared(size_t step) {
 
 void herbivore_neat::epoch_shared(int epoch) {
 	double total = 0;
-	double best_score = std::numeric_limits<double>::min();
+	double best_score = std::numeric_limits<double>::lowest();
 	double worst_score = std::numeric_limits<double>::max();
 	for(auto genotype : genotypes) {
 		const auto fitness = genotype->GetFitness();
@@ -343,7 +343,7 @@ void herbivore_neat::epoch_shared(int epoch) {
 
 void herbivore_neat::epoch_normal(int epoch, int steps) {
 	double total = 0;
-	double best_score = std::numeric_limits<double>::min();
+	double best_score = std::numeric_limits<double>::lowest();
 	double worst_score = std::numeric_limits<double>::max();
 	for(auto &agent : agents) {
 		if(agent.generation_score < worst_score)
