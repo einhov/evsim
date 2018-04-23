@@ -62,7 +62,7 @@ int evsim(int argc, char **argv) {
 	state.world = new b2World(b2Vec2(0.0f, 0.0f));
 	state.world->SetContinuousPhysics(true);
 	state.pause = false;
-	state.draw = false;
+	state.draw = conf.get_boolean_default("draw", true);
 	state.generation = 0;
 	state.step = 0;
 	state.tick = 0;
