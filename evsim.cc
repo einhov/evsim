@@ -45,6 +45,7 @@ int evsim(int argc, char **argv) {
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	state.camera.aspect_ratio(1024.0 / 768.0);
 	GLFWwindow *window = glfwCreateWindow(1024, 768, "evsim", nullptr, nullptr);
 	if(!window) {
 		glfwTerminate();
