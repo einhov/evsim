@@ -58,6 +58,11 @@ int evsim(int argc, char **argv) {
 		return -1;
 	}
 
+	glfwSetFramebufferSizeCallback(window, [](auto, int width, int height) {
+		state.camera.aspect_ratio(width / static_cast<float>(height));
+		glViewport(0, 0, width, height);
+	});
+
 	state.simulation_timestep = 1.0f/60.0f;
 	state.world = new b2World(b2Vec2(0.0f, 0.0f));
 	state.world->SetContinuousPhysics(true);

@@ -3,10 +3,11 @@
 
 #include <optional>
 #include <vector>
+
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-
 #include <QCoreApplication>
+
 #include "entity.h"
 
 class gui;
@@ -47,17 +48,15 @@ struct simulation_state {
 				dirty = true;
 			}
 
+			inline void aspect_ratio(float a) {
+				ratio = a;
+				dirty = true;
+			}
+
 			glm::mat4 projection() const {
 				if(dirty) {
-					static const auto identity = glm::ortho(
-						-100.0f * (4.0f / 3.0f),
-						 100.0f * (4.0f / 3.0f),
-						-100.0f,
-						 100.0f
-					);
-
 					projection_ =
-						identity *
+						glm::ortho(-100.0f * ratio, 100.0f * ratio, -100.0f, 100.0f) *
 						glm::scale(glm::vec3 { scale, scale, 1.0 }) *
 						glm::translate(glm::vec3 { centre, 0.0 })
 					;
@@ -70,6 +69,7 @@ struct simulation_state {
 
 			glm::vec2 centre;
 			float scale = 1.0;
+			float ratio = 4.0 / 3.0;
 
 			mutable bool dirty = true;
 			mutable glm::mat4 projection_;
