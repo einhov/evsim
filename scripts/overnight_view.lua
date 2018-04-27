@@ -36,7 +36,7 @@ environment = {
                 train = false,
                 population_size = species1_population_size,
                 shared_fitness_simulate_count = shared_fitness_simulate_count,
-                initial_population = storage .. "/p" .. generation
+                initial_population = storage .. "/p/" .. generation
         }
 }
 
