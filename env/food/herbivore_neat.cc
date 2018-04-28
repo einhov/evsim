@@ -81,6 +81,8 @@ void herbivore_neat::fill_genome_vector() {
 	for(auto &species : population->m_Species) {
 		for(auto &individual : species.m_Individuals) {
 			genotypes.emplace_back(&individual);
+			if(genotypes.size() >= params.population_size)
+				return;
 		}
 	}
 }
