@@ -18,8 +18,8 @@ namespace evsim {
 
 static std::default_random_engine generator(std::random_device{}());
 static std::uniform_real_distribution<float> velocity_distribution(-10.0f, 10.0f);
-static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
-static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
+static std::uniform_real_distribution<float> pos_x_distribution(-500.0f * (4.0f / 3.0f), 500.0f * (4.0f / 3.0f));
+static std::uniform_real_distribution<float> pos_y_distribution(-500.0f, 500.0f);
 static std::uniform_real_distribution<float> rotation_distribution(0.0f, glm::radians(360.0f));
 
 static const fixture_type food_type = fixture_type::food;

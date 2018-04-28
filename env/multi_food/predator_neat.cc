@@ -29,8 +29,8 @@ namespace evsim {
 namespace multi_food {
 
 static std::default_random_engine generator(std::random_device{}());
-static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
-static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
+static std::uniform_real_distribution<float> pos_x_distribution(-500.0f * (4.0f / 3.0f), 500.0f * (4.0f / 3.0f));
+static std::uniform_real_distribution<float> pos_y_distribution(-500.0f, 500.0f);
 static std::uniform_real_distribution<float> rotation_distribution(0.0f, glm::radians(360.0f));
 
 static void relocate_agent(b2Body *body) {
@@ -191,10 +191,12 @@ void predator_neat::tick() {
 		const auto angle = body->GetAngle();
 		const auto pos = body->GetPosition();
 
+		/*
 		if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
 		if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
 		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
 		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
+		*/
 
 		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;

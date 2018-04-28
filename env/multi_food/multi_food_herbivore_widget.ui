@@ -54,6 +54,11 @@
          <string>Predators</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Food</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>

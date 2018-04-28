@@ -101,9 +101,11 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 				switch(vision_texture) {
 					default: [[fallthrough]]
 					case 0:
-					  return agent.vision_herbivore;
+						return agent.vision_herbivore;
 					case 1:
-					  return agent.vision_predator;
+						return agent.vision_predator;
+					case 2:
+						return agent.vision_food;
 				}
 			}();
 			const auto body = agent.body;

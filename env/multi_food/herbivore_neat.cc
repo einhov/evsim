@@ -32,8 +32,8 @@ namespace evsim {
 namespace multi_food {
 
 static std::default_random_engine generator(std::random_device{}());
-static std::uniform_real_distribution<float> pos_x_distribution(-99.0f * (4.0f / 3.0f), 99.0f * (4.0f / 3.0f));
-static std::uniform_real_distribution<float> pos_y_distribution(-99.0f, 99.0f);
+static std::uniform_real_distribution<float> pos_x_distribution(-500.0f * (4.0f / 3.0f), 500.0f * (4.0f / 3.0f));
+static std::uniform_real_distribution<float> pos_y_distribution(-500.0f, 500.0f);
 static std::uniform_real_distribution<float> rotation_distribution(0.0f, glm::radians(360.0f));
 
 static void relocate_agent(b2Body *body) {
@@ -176,12 +176,12 @@ void herbivore_neat::tick() {
 		auto &body = agent.body;
 		const auto angle = body->GetAngle();
 		const auto pos = body->GetPosition();
-
+/*
 		if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
 		if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
 		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
 		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
-
+*/
 		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;
 		};
@@ -300,6 +300,7 @@ void herbivore_neat::epoch_shared(int epoch) {
 	double best_score = std::numeric_limits<double>::lowest();
 	double worst_score = std::numeric_limits<double>::max();
 	for(auto genotype : genotypes) {
+		genotype->SetFitness(100 + genotype->GetFitness());
 		const auto fitness = genotype->GetFitness();
 		if(fitness < worst_score)
 			worst_score = fitness;
