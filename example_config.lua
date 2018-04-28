@@ -12,7 +12,24 @@ neat_params = {
 	mutation_rate = 0.25,
 	tournament_size = 4,
 	elite_fraction = 0.01,
-	old_age_penalty = 0.5
+	old_age_penalty = 0.5,
+
+	MutateNeuronActivationTypeProb = 0.0,
+
+	ActivationFunction_SignedSigmoid_Prob = 0.0,
+	ActivationFunction_UnsignedSigmoid_Prob = 1.0,
+	ActivationFunction_Tanh_Prob = 0.0,
+	ActivationFunction_TanhCubic_Prob = 0.0,
+	ActivationFunction_SignedStep_Prob = 0.0,
+	ActivationFunction_UnsignedStep_Prob = 0.0,
+	ActivationFunction_SignedGauss_Prob = 0.0,
+	ActivationFunction_UnsignedGauss_Prob = 0.0,
+	ActivationFunction_Abs_Prob = 0.0,
+	ActivationFunction_SignedSine_Prob = 0.0,
+	ActivationFunction_UnsignedSine_Prob = 0.0,
+	ActivationFunction_Linear_Prob = 0.0,
+	ActivationFunction_Relu_Prob = 0.0,
+	ActivationFunction_Softplus_Prob = 0.0
 }
 
 food = {

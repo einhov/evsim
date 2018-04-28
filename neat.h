@@ -22,6 +22,23 @@ inline NEAT::Parameters make_neat_params(lua_conf &conf) {
 	params.EliteFraction = conf.get_number_default("elite_fraction", 0.01);
 	params.OldAgePenalty = conf.get_number_default("old_age_penalty", 0.5);
 
+	params.MutateNeuronActivationTypeProb = conf.get_number_default("MutateNeuronActivationTypeProb", 0.0);
+
+	params.ActivationFunction_SignedSigmoid_Prob = conf.get_number_default("ActivationFunction_SignedSigmoid_Prob", 0.0);
+	params.ActivationFunction_UnsignedSigmoid_Prob = conf.get_number_default("ActivationFunction_UnsignedSigmoid_Prob", 1.0);
+	params.ActivationFunction_Tanh_Prob = conf.get_number_default("ActivationFunction_Tanh_Prob", 0.0);
+	params.ActivationFunction_TanhCubic_Prob = conf.get_number_default("ActivationFunction_TanhCubic_Prob", 0.0);
+	params.ActivationFunction_SignedStep_Prob = conf.get_number_default("ActivationFunction_SignedStep_Prob", 0.0);
+	params.ActivationFunction_UnsignedStep_Prob = conf.get_number_default("ActivationFunction_UnsignedStep_Prob", 0.0);
+	params.ActivationFunction_SignedGauss_Prob = conf.get_number_default("ActivationFunction_SignedGauss_Prob", 0.0);
+	params.ActivationFunction_UnsignedGauss_Prob = conf.get_number_default("ActivationFunction_UnsignedGauss_Prob", 0.0);
+	params.ActivationFunction_Abs_Prob = conf.get_number_default("ActivationFunction_Abs_Prob", 0.0);
+	params.ActivationFunction_SignedSine_Prob = conf.get_number_default("ActivationFunction_SignedSine_Prob", 0.0);
+	params.ActivationFunction_UnsignedSine_Prob = conf.get_number_default("ActivationFunction_UnsignedSine_Prob", 0.0);
+	params.ActivationFunction_Linear_Prob = conf.get_number_default("ActivationFunction_Linear_Prob", 0.0);
+	params.ActivationFunction_Relu_Prob = conf.get_number_default("ActivationFunction_Relu_Prob", 0.0);
+	params.ActivationFunction_Softplus_Prob = conf.get_number_default("ActivationFunction_Softplus_Prob", 0.0);
+
 	return params;
 }
 
