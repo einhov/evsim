@@ -2,7 +2,7 @@
 
 -- Contains (or should contain) an exhaustive listing of parameters
 
-max_generations = 50,
+max_generations = 50
 
 neat_params = {
 	min_species = 3,
