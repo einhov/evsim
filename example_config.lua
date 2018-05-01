@@ -4,11 +4,6 @@
 
 max_generations = 50
 
-sensors = {
-	length = 300,
-	fov = 60
-}
-
 neat_params = {
 	min_species = 3,
 	max_species = 20,
