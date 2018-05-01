@@ -59,6 +59,11 @@
          <string>Predators</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Goal</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>

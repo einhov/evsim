@@ -126,8 +126,9 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		neat_params.PopulationSize = params.population_size;
 
 		//6: 1 angular vel, 1 linear vel, 1 x pos, 1 y pos, 1 direction, 1 bias
+		//4: herbivore, predator, wall, goal
 		NEAT::Genome genesis(
-			0, 6 + agent::vision_segments * 3, 0, 2, false,
+			0, 6 + agent::vision_segments * 4, 0, 2, false,
 			NEAT::SIGNED_SIGMOID, NEAT::SIGNED_SIGMOID,
 			0, neat_params, 0
 		);
@@ -173,6 +174,7 @@ void herbivore_neat::pre_tick() {
 		agent.vision_herbivore = {};
 		agent.vision_predator = {};
 		agent.vision_wall = {};
+		agent.vision_goal = {};
 	}
 }
 
@@ -182,12 +184,6 @@ void herbivore_neat::tick() {
 		auto &body = agent.body;
 		const auto angle = body->GetAngle();
 		const auto pos = body->GetPosition();
-
-		if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
-		if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
-		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
-		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
-
 		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;
 		};
@@ -204,6 +200,10 @@ void herbivore_neat::tick() {
 		);
 		std::transform(
 			agent.vision_wall.cbegin(), agent.vision_wall.cend(),
+			std::back_inserter(inputs), vision_inserter
+		);
+		std::transform(
+			agent.vision_goal.cbegin(), agent.vision_goal.cend(),
 			std::back_inserter(inputs), vision_inserter
 		);
 		inputs.emplace_back([&body] { auto vel = body->GetLinearVelocity(); return sqrt(vel.x * vel.x + vel.y * vel.y); }());
@@ -419,6 +419,8 @@ void herbivore_neat::agent::on_sensor(const msg_contact &contact) {
 				return &vision_predator;
 			case fixture_type::wall:
 				return &vision_wall;
+			case fixture_type::wall_goal:
+				return &vision_goal;
 			default:
 				return {};
 		}

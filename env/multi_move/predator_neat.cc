@@ -193,11 +193,6 @@ void predator_neat::tick() {
 		const auto angle = body->GetAngle();
 		const auto pos = body->GetPosition();
 
-		if(pos.y < -100.0f) body->SetTransform(b2Vec2(pos.x, 100.0f), angle);
-		if(pos.y > 100.0f) body->SetTransform(b2Vec2(pos.x, -100.0f), angle);
-		if(pos.x < -100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(100.0f * (4.0 / 3.0), pos.y), angle);
-		if(pos.x > 100.0f * (4.0 / 3.0)) body->SetTransform(b2Vec2(-100.0f * (4.0 / 3.0), pos.y), angle);
-
 		static const auto vision_inserter = [](const auto &elem) {
 			return elem * 100.0f;
 		};

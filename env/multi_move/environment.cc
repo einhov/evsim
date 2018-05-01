@@ -95,13 +95,15 @@ void environment::init(lua_conf &conf) {
 	}
 
 	//Create goal
-	auto wall_instance = std::make_unique<wall>();
-	b2Vec2 p (101, 0);
-	b2Vec2 s (1, 100);
-	wall_instance->init_body(
-		(*state.world), p, s, wall_type::goal
-	);
-	environmental_objects.emplace_back(std::move(wall_instance));
+	for(int y = -100; y < 100; y++) {
+		auto wall_instance = std::make_unique<wall>();
+		b2Vec2 p (101, y);
+		b2Vec2 s (1, 1);
+		wall_instance->init_body(
+			(*state.world), p, s, wall_type::goal
+		);
+		environmental_objects.emplace_back(std::move(wall_instance));
+	}
 }
 
 void environment::pre_step() {

@@ -69,6 +69,7 @@ class herbivore_neat : public species {
 				vision_texture vision_herbivore;
 				vision_texture vision_predator;
 				vision_texture vision_wall;
+				vision_texture vision_goal;
 
 				bool yell_detected = false;
 				b2Vec2 yell_vector;
