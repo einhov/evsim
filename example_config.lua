@@ -5,6 +5,7 @@
 max_generations = 50
 
 neat_params = {
+	dynamic_compatibility = true,
 	min_species = 3,
 	max_species = 20,
 	compat_thresh = 5.0,
