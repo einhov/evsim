@@ -255,6 +255,10 @@ void herbivore_neat::pre_step() {
 		agent.score = 0;
 		relocate_agent(agent.body);
 	}
+
+	if(params.training_model == training_model_type::shared) {
+		distribute_genomes_shared(state.step);
+	}
 }
 
 void herbivore_neat::step_normal() {
@@ -288,10 +292,6 @@ void herbivore_neat::step_shared(size_t step) {
 		if(scores.good()) {
 			scores << step << " " << fitness << "\n";
 		}
-	}
-
-	if(step+1 < params.population_size) {
-		distribute_genomes_shared(step+1);
 	}
 }
 
