@@ -244,6 +244,10 @@ void predator_neat::pre_step() {
 		relocate_agent(agent.body);
 		agent.score = 0;
 	}
+
+	if(params.training_model == training_model_type::shared) {
+		distribute_genomes_shared(state.step);
+	}
 }
 
 void predator_neat::step_normal() {
@@ -279,10 +283,6 @@ void predator_neat::step_shared(size_t step) {
 		if(scores.good()) {
 			scores << step << " " << fitness << "\n";
 		}
-	}
-
-	if(step+1 < params.population_size) {
-		distribute_genomes_shared(step+1);
 	}
 }
 
