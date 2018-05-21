@@ -128,15 +128,16 @@ int evsim(int argc, char **argv) {
 					state.step++;
 				}
 
-				state.tick = 0;
-				env->pre_step();
-
 				if(state.step >= steps_per_generation) {
 					state.step = 0;
 					fprintf(stderr, "Generation: %d\n", state.generation);
 					env->epoch();
 					state.generation++;
 				}
+
+				state.tick = 0;
+				env->pre_step();
+
 				QApplication::postEvent(main_gui, new gui::step_event);
 			}
 
