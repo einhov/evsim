@@ -138,7 +138,8 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		switch(params.training_model) {
 			case training_model_type::normal:
 				return params.population_size;
-			case training_model_type::shared:
+			case training_model_type::shared: [[fallthrough]]
+			case training_model_type::shared_eval:
 				return params.shared_fitness_simulate_count;
 			default: return 0;
 		}
@@ -152,16 +153,21 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		agent.active = true;
 		agent.body->SetAngularVelocity(0);
 		agent.body->SetLinearVelocity(b2Vec2(0,0));
-		if(params.training_model == training_model_type::shared)
+		agent.generation_score = 0;
+		if(is_sharedish(params.training_model))
 			agent.internal_species = 0;
 	}
 
-	if(params.training_model == training_model_type::shared) {
+	if(params.training_model == training_model_type::shared_eval)
+		shared_eval_scores.resize(env.params.steps_per_generation);
+
+	if(is_sharedish(params.training_model)) {
 		fill_genome_vector();
 		distribute_genomes_shared(0);
 	} else {
 		distribute_genomes();
 	}
+
 	agents_in_goal = 0;
 	return true;
 }
@@ -266,11 +272,6 @@ void herbivore_neat::step_normal() {
 }
 
 void herbivore_neat::step_shared(size_t step) {
-	int current_score = 0;
-	for(auto &agent : agents) {
-		current_score += agent.score;
-		agent.score = 0;
-	}
 	const double fitness = agents_in_goal;
 	genotypes[step]->SetFitness(fitness);
 	genotypes[step]->m_Evaluated = true;
@@ -289,6 +290,11 @@ void herbivore_neat::step_shared(size_t step) {
 		}
 	}
 
+	agents_in_goal = 0;
+}
+
+void herbivore_neat::step_shared_eval(size_t step) {
+	shared_eval_scores[step] = agents_in_goal;
 	agents_in_goal = 0;
 }
 
@@ -323,6 +329,33 @@ void herbivore_neat::epoch_shared(int epoch) {
 		fill_genome_vector();
 	}
 	distribute_genomes_shared(0);
+}
+
+void herbivore_neat::epoch_shared_eval(int epoch) {
+	double total = 0;
+	double best_score = std::numeric_limits<double>::lowest();
+	double worst_score = std::numeric_limits<double>::max();
+	for(auto score : shared_eval_scores) {
+		if(score < worst_score)
+			worst_score = score;
+		if(score > best_score)
+			best_score = score;
+		total += score;
+	}
+
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new door_herbivore_widget::epoch_event(
+				epoch,
+				total / env.params.steps_per_generation,
+				best_score,
+				worst_score
+			)
+		);
+	}
+
+	save_shared_eval(epoch, total / env.params.steps_per_generation, best_score, worst_score);
+	distribute_genomes_shared(epoch + 1);
 }
 
 void herbivore_neat::epoch_normal(int epoch, int steps) {
@@ -388,6 +421,17 @@ void herbivore_neat::save(double avg, double high, double low, double agents) co
 			population->m_Generation << " " <<
 			high << " " << low  << " " << avg  <<  " " << agents << '\n'
 		;
+	}
+}
+
+void herbivore_neat::save_shared_eval(int id, double avg, double high, double low) const {
+	std::ofstream scores(
+		fs::path(params.initial_population + ".eval").c_str(),
+		std::ofstream::app | std::ofstream::out
+	);
+
+	if(scores) {
+		scores << id << " " << avg << " " << high  << " " << low  << '\n';
 	}
 }
 

@@ -33,17 +33,20 @@ void environment::init(lua_conf &conf) {
 	predator.initialise(conf, static_cast<int>(glfwGetTime()+1));
 	conf.leave_table();
 
-	if(
-		herbivores.training_model() == herbivore_neat::training_model_type::shared &&
-		predator.training_model() == predator_neat::training_model_type::shared
-	) {
+	const bool herbivore_shared =
+		(herbivores.training_model() == training_model_type::shared) ||
+		(herbivores.training_model() == training_model_type::shared_eval)
+	;
+	const bool predator_shared =
+		(herbivores.training_model() == training_model_type::shared) ||
+		(herbivores.training_model() == training_model_type::shared_eval)
+	;
+	if(herbivore_shared && predator_shared) {
 		throw std::runtime_error("Both herbivore and predator have shared fitness, this is not allowed!");
 	}
 	if(
-		(herbivores.training_model() == herbivore_neat::training_model_type::shared &&
-		 params.steps_per_generation != herbivores.population_size()) ||
-		(predator.training_model() == predator_neat::training_model_type::shared &&
-		 params.steps_per_generation != predator.population_size())
+		(herbivore_shared && params.steps_per_generation != herbivores.population_size()) ||
+		(predator_shared && params.steps_per_generation != predator.population_size())
 	) {
 		throw std::runtime_error(
 			"The steps_per_generation must be equal to the population_size of the agent that is trained with shared_fitness"
@@ -80,6 +83,8 @@ void environment::step() {
 		case training_model_type::shared:
 			herbivores.step_shared(state.step);
 			break;
+		case training_model_type::shared_eval:
+			throw std::runtime_error("Invalid training model");
 	}
 
 	switch(predator.training_model()) {
@@ -89,6 +94,8 @@ void environment::step() {
 		case training_model_type::shared:
 			predator.step_shared(state.step);
 			break;
+		case training_model_type::shared_eval:
+			throw std::runtime_error("Invalid training model");
 	}
 }
 
@@ -100,6 +107,8 @@ void environment::epoch() {
 		case training_model_type::shared:
 			herbivores.epoch_shared(state.generation);
 			break;
+		case training_model_type::shared_eval:
+			throw std::runtime_error("Invalid training model");
 	}
 
 	switch(predator.training_model()) {
@@ -109,6 +118,8 @@ void environment::epoch() {
 		case training_model_type::shared:
 			predator.epoch_shared(state.generation);
 			break;
+		case training_model_type::shared_eval:
+			throw std::runtime_error("Invalid training model");
 	}
 }
 

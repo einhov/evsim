@@ -34,13 +34,16 @@ class herbivore_neat : public species {
 		void pre_step();
 		void step_normal();
 		void step_shared(size_t epoch_step);
+		void step_shared_eval(size_t epoch_step);
 		void epoch_normal(int epoch, int steps);
 		void epoch_shared(int epoch);
+		void epoch_shared_eval(int epoch);
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget();
 		unsigned int population_size() const;
 		training_model_type training_model() const;
 		void save(double avg, double high, double low, double agents) const;
+		void save_shared_eval(int id, double avg, double high, double low) const;
 
 		inline bool train() const { return params.train; }
 
@@ -92,16 +95,18 @@ class herbivore_neat : public species {
 
 		size_t active_genomes;
 		size_t tick_goal_count;
+		size_t agents_in_goal;
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		std::vector<NEAT::Genome*> genotypes;
 		b2World &world;
 		environment &env;
 		std::vector<agent*> agents_on_buttons;
+		std::vector<double> shared_eval_scores;
+
 		std::optional<door_herbivore_widget*> widget;
 		std::atomic_int vision_texture {};
 		std::atomic_bool draw_vision {};
-		size_t agents_in_goal;
 };
 
 }

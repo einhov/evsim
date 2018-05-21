@@ -20,7 +20,7 @@ namespace multi_move {
 
 using training_model_type = evsim::species::training_model_type;
 
-environment::environment() : herbivores(*state.world), predator(*state.world) {}
+environment::environment() : herbivores(*state.world, *this), predator(*state.world, *this) {}
 
 void environment::init(lua_conf &conf) {
 	params.ticks_per_step = conf.get_integer_default("ticks_per_step", 60 * 15);
@@ -33,17 +33,15 @@ void environment::init(lua_conf &conf) {
 	predator.initialise(conf, static_cast<int>(glfwGetTime()+1));
 	conf.leave_table();
 
-	if(
-		herbivores.training_model() == herbivore_neat::training_model_type::shared &&
-		predator.training_model() == predator_neat::training_model_type::shared
-	) {
+	if(herbivores.is_sharedish(herbivores.training_model()) && predator.is_sharedish(predator.training_model())) {
 		throw std::runtime_error("Both herbivore and predator have shared fitness, this is not allowed!");
 	}
+
+	const bool herbivore_shared = herbivores.training_model() == training_model_type::shared;
+	const bool predator_shared = predator.training_model() == training_model_type::shared;
 	if(
-		(herbivores.training_model() == herbivore_neat::training_model_type::shared &&
-		 params.steps_per_generation != herbivores.population_size()) ||
-		(predator.training_model() == predator_neat::training_model_type::shared &&
-		 params.steps_per_generation != predator.population_size())
+		(herbivore_shared && params.steps_per_generation != herbivores.population_size()) ||
+		(predator_shared && params.steps_per_generation != predator.population_size())
 	) {
 		throw std::runtime_error(
 			"The steps_per_generation must be equal to the population_size of the agent that is trained with shared_fitness"
@@ -53,7 +51,12 @@ void environment::init(lua_conf &conf) {
 	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
 	QApplication::postEvent(main_gui, new gui::add_species_event(&predator));
 
-	if(!herbivores.train() && !predator.train())
+	const bool no_training_mode =
+		!herbivores.train() && !predator.train() &&
+		(herbivores.training_model() != training_model_type::shared_eval) &&
+		(predator.training_model() != training_model_type::shared_eval)
+	;
+	if(no_training_mode)
 		QApplication::postEvent(main_gui, new gui::no_training_mode_event());
 
 	int y = -100;
@@ -122,6 +125,8 @@ void environment::step() {
 		case training_model_type::shared:
 			herbivores.step_shared(state.step);
 			break;
+		case training_model_type::shared_eval:
+			herbivores.step_shared_eval(state.step);
 	}
 
 	switch(predator.training_model()) {
@@ -131,6 +136,8 @@ void environment::step() {
 		case training_model_type::shared:
 			predator.step_shared(state.step);
 			break;
+		case training_model_type::shared_eval:
+			predator.step_shared_eval(state.step);
 	}
 }
 
@@ -142,6 +149,8 @@ void environment::epoch() {
 		case training_model_type::shared:
 			herbivores.epoch_shared(state.generation);
 			break;
+		case training_model_type::shared_eval:
+			herbivores.epoch_shared_eval(state.generation);
 	}
 
 	switch(predator.training_model()) {
@@ -151,6 +160,8 @@ void environment::epoch() {
 		case training_model_type::shared:
 			predator.epoch_shared(state.generation);
 			break;
+		case training_model_type::shared_eval:
+			predator.epoch_shared_eval(state.generation);
 	}
 
 }

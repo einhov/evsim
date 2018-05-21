@@ -23,6 +23,7 @@
 #include "herbivore_neat.h"
 #include "predator_neat.h"
 #include "multi_move_predator_widget.h"
+#include "environment.h"
 
 namespace fs = boost::filesystem;
 
@@ -142,7 +143,8 @@ bool predator_neat::initialise(lua_conf &conf, int seed) {
 		switch(params.training_model) {
 			case training_model_type::normal:
 				return params.population_size;
-			case training_model_type::shared:
+			case training_model_type::shared: [[fallthrough]]
+			case training_model_type::shared_eval:
 				return params.shared_fitness_simulate_count;
 			default: return 0;
 		}
@@ -159,11 +161,14 @@ bool predator_neat::initialise(lua_conf &conf, int seed) {
 		agent.body->SetAngularVelocity(0);
 		agent.body->SetLinearVelocity(b2Vec2(0,0));
 		agent.species = this;
-		if(params.training_model == training_model_type::shared)
+		if(is_sharedish(params.training_model))
 			agent.internal_species = 0;
 	}
 
-	if(params.training_model == training_model_type::shared) {
+	if(params.training_model == training_model_type::shared_eval)
+		shared_eval_scores.resize(env.params.steps_per_generation);
+
+	if(is_sharedish(params.training_model)) {
 		fill_genome_vector();
 		distribute_genomes_shared(0);
 	} else {
@@ -260,6 +265,15 @@ void predator_neat::step_normal() {
 	}
 }
 
+void predator_neat::step_shared_eval(size_t step) {
+	shared_eval_scores[step] = [this] {
+		double score = 0.0;
+		for(const auto &agent : agents)
+			score += agent.score;
+		return score / agents.size();
+	}();
+}
+
 void predator_neat::step_shared(size_t step) {
 	int current_score = 0;
 	for(auto &agent : agents) {
@@ -323,6 +337,32 @@ void predator_neat::epoch_shared(int epoch) {
 	distribute_genomes_shared(0);
 }
 
+void predator_neat::epoch_shared_eval(int epoch) {
+	double total = 0;
+	double best_score = std::numeric_limits<double>::lowest();
+	double worst_score = std::numeric_limits<double>::max();
+	for(auto score : shared_eval_scores) {
+		if(score < worst_score)
+			worst_score = score;
+		if(score > best_score)
+			best_score = score;
+		total += score;
+	}
+
+	if(widget) {
+		QApplication::postEvent(
+			*widget, new multi_move_predator_widget::epoch_event(
+				epoch,
+				total / env.params.steps_per_generation,
+				best_score,
+				worst_score
+			)
+		);
+	}
+
+	save_shared_eval(epoch, total / env.params.steps_per_generation, best_score, worst_score);
+	distribute_genomes_shared(epoch + 1);
+}
 
 void predator_neat::epoch_normal(int epoch, int steps) {
 	double total = 0;
@@ -380,6 +420,17 @@ void predator_neat::save(double avg, double high, double low) const {
 			population->m_Generation << " " <<
 			high << " " << low  << " " << avg  << "\n"
 		;
+	}
+}
+
+void predator_neat::save_shared_eval(int id, double avg, double high, double low) const {
+	std::ofstream scores(
+		fs::path(params.initial_population + ".eval").c_str(),
+		std::ofstream::app | std::ofstream::out
+	);
+
+	if(scores) {
+		scores << id << " " << avg << " " << high  << " " << low  << '\n';
 	}
 }
 
