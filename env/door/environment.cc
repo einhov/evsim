@@ -37,9 +37,12 @@ void environment::init(lua_conf &conf) {
 		);
 	}
 
+	if(herbivores.training_model() == training_model_type::shared_eval)
+		config::max_generations = herbivores.population_size();
+
 	QApplication::postEvent(main_gui, new gui::add_species_event(&herbivores));
 
-	if(!herbivores.train())
+	if(!herbivores.train() && (herbivores.training_model() != training_model_type::shared_eval))
 		QApplication::postEvent(main_gui, new gui::no_training_mode_event());
 
 	// Create doors
@@ -117,6 +120,8 @@ void environment::step() {
 		case training_model_type::shared:
 			herbivores.step_shared(state.step);
 			break;
+		case training_model_type::shared_eval:
+			herbivores.step_shared_eval(state.step);
 	}
 }
 
@@ -128,6 +133,8 @@ void environment::epoch() {
 		case training_model_type::shared:
 			herbivores.epoch_shared(state.generation);
 			break;
+		case training_model_type::shared_eval:
+			herbivores.epoch_shared_eval(state.generation);
 	}
 }
 

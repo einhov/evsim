@@ -135,7 +135,8 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		switch(params.training_model) {
 			case training_model_type::normal:
 				return params.population_size;
-			case training_model_type::shared:
+			case training_model_type::shared: [[fallthrough]]
+			case training_model_type::shared_eval:
 				return params.shared_fitness_simulate_count;
 			default: return 0;
 		}
@@ -154,14 +155,11 @@ bool herbivore_neat::initialise(lua_conf &conf, int seed) {
 		agent.internal_species = 0;
 	}
 
-	switch(params.training_model) {
-		case training_model_type::shared:
-			fill_genome_vector();
-			distribute_genomes_shared(0);
-			break;
-		case training_model_type::normal:
-			distribute_genomes();
-			break;
+	if(is_sharedish(params.training_model)) {
+		fill_genome_vector();
+		distribute_genomes_shared(0);
+	} else {
+		distribute_genomes();
 	}
 	return true;
 }

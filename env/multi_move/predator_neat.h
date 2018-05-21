@@ -20,32 +20,35 @@ class multi_move_predator_widget;
 namespace evsim {
 namespace multi_move {
 
+class environment;
 
 class predator_neat : public species {
 	friend class ::multi_move_predator_widget;
 	public:
-
 		enum class consume_options {
 			once,
 			delay,
 			no_delay
 		};
 
-		predator_neat(b2World &world) :
-			params{}, active_genomes(0), world(world) {}
+		predator_neat(b2World &world, environment &env) :
+			params{}, active_genomes(0), world(world), env(env) {}
 		bool initialise(lua_conf &conf, int seed);
 		void pre_tick();
 		void tick();
 		void pre_step();
 		void step_normal();
 		void step_shared(size_t epoch_step);
+		void step_shared_eval(size_t epoch_step);
 		void epoch_normal(int epoch, int steps);
 		void epoch_shared(int epoch);
+		void epoch_shared_eval(int epoch);
 		void draw(const glm::mat4 &projection) const;
 		QWidget *make_species_widget() override;
 		unsigned int population_size() const;
 		training_model_type training_model() const;
 		void save(double avg, double high, double low) const;
+		void save_shared_eval(int id, double avg, double high, double low) const;
 
 		inline bool train() const { return params.train; }
 
@@ -95,7 +98,9 @@ class predator_neat : public species {
 		std::unique_ptr<NEAT::Population> population;
 		std::vector<agent> agents;
 		std::vector<NEAT::Genome*> genotypes;
+		std::vector<double> shared_eval_scores;
 		b2World &world;
+		environment &env;
 
 		std::optional<multi_move_predator_widget*> widget;
 		std::atomic_int vision_texture {};

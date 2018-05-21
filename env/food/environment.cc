@@ -61,6 +61,8 @@ void environment::step() {
 		case training_model_type::shared:
 			herbivores.step_shared(state.step);
 			break;
+		case training_model_type::shared_eval:
+			throw std::runtime_error("Invalid training model");
 	}
 }
 
@@ -72,6 +74,8 @@ void environment::epoch() {
 		case training_model_type::shared:
 			herbivores.epoch_shared(state.generation);
 			break;
+		case training_model_type::shared_eval:
+			throw std::runtime_error("Invalid training model");
 	}
 }
 
