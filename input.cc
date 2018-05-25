@@ -36,6 +36,10 @@ void input_init(GLFWwindow *window) {
 		if(key == GLFW_KEY_R && action == GLFW_PRESS) {
 			state.camera.move_to(glm::vec2 {}, 1.0f);
 		}
+		if(key == GLFW_KEY_V && action == GLFW_PRESS) {
+			static bool sync = true;
+			glfwSwapInterval((sync = !sync) ? 1 : 0);
+		}
 		QCoreApplication::postEvent(main_gui, new gui::refresh_event);
 	});
 
