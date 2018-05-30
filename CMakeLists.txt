@@ -68,10 +68,11 @@ include(lib/lua.cmake)
 #git submodule Box2d has to be build first with "premake ifndef config=release"
 
 set(BOX2D_INCLUDED_INCLUDE_DIR
-    ${CMAKE_SOURCE_DIR}/Box2D/Box2D/
+    ${CMAKE_SOURCE_DIR}/lib/Box2D/Box2D/
 )
 
-set(BOX2D_INCLUDED_LIBRARY ${CMAKE_SOURCE_DIR}/Box2D/Box2D/Build/gmake/bin/Release/libBox2D.a)
+set(BOX2D_INCLUDED_LIBRARY ${CMAKE_SOURCE_DIR}/lib/Box2D/Box2D/Build/gmake/bin/Release/libBox2D.a)
 
 include_directories (SYSTEM ${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${BOX2D_INCLUDED_INCLUDE_DIR} ${GLM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} lib/MultiNEAT/src)
+target_include_directories (evsim PRIVATE ${CMAKE_SOURCE_DIR}/ui)
 target_link_libraries (evsim ${GLEW_LIBRARIES} glfw ${OPENGL_gl_LIBRARY} ${BOX2D_INCLUDED_LIBRARY} MultiNEAT Qt5::Widgets Qt5::Charts lua)

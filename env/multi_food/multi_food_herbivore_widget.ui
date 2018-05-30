@@ -85,7 +85,7 @@
   <customwidget>
    <class>fitness_graph</class>
    <extends>QWidget</extends>
-   <header>../../ui/fitness_graph.h</header>
+   <header>fitness_graph.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
