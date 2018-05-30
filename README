@@ -1,0 +1,28 @@
+Build instructions
+
+1. Install the necessary requirements for building:
+  - CMake premake5 glfw3 GLEW glm boost Qt5
+
+2. Populate lib/ with additional external dependencies:
+  - Fetch and extract a release of Lua 5.3 to lib/lua-5.3
+    https://www.lua.org/versions.html#5.3
+  - Check out customised fork of MultiNEAT to lib/MultiNEAT
+    https://github.com/andrewei/MultiNEAT
+  - Check out customised fork of Box2D to lib/Box2D
+    https://github.com/andrewei/Box2D
+  - Build Box2D:
+    $ cd lib/Box2D
+    $ premake gmake
+    $ make -C Build/gmake -f Box2D.make config=release
+
+3. Build Evsim:
+    $ mkdir build && cd build
+    $ cmake -DCMAKE_BUILD_TYPE=Release ..
+    $ make
+
+4. Copy the shaders directory to the build directory
+    $ cp -r shaders build/
+
+5. Run evsim
+    $ cd build
+    $ ./evsim ../example_config.lua door

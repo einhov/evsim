@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-set(lua_SOURCE_DIR "${PROJECT_SOURCE_DIR}/lib/lua-5.3.4")
+set(lua_SOURCE_DIR "${PROJECT_SOURCE_DIR}/lib/lua-5.3")
 
 set(lua_SOURCES
 	"${lua_SOURCE_DIR}/src/lobject.c"
