@@ -70,13 +70,13 @@ static struct {
 		glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, vision_segments, 0, GL_RED, GL_FLOAT, nullptr);
 
 		program = std::make_unique<gfx::program>();
-		program->attach(load_text_file("../box.vert"), gfx::program::shader_type::VERTEX);
-		program->attach(load_text_file("../box.frag"), gfx::program::shader_type::FRAGMENT);
+		program->attach(load_text_file("shaders/box.vert"), gfx::program::shader_type::VERTEX);
+		program->attach(load_text_file("shaders/box.frag"), gfx::program::shader_type::FRAGMENT);
 		program->link();
 
 		program_sensor = std::make_unique<gfx::program>();
-		program_sensor->attach(load_text_file("../sensor.vert"), gfx::program::shader_type::VERTEX);
-		program_sensor->attach(load_text_file("../sensor.frag"), gfx::program::shader_type::FRAGMENT);
+		program_sensor->attach(load_text_file("shaders/sensor.vert"), gfx::program::shader_type::VERTEX);
+		program_sensor->attach(load_text_file("shaders/sensor.frag"), gfx::program::shader_type::FRAGMENT);
 		program_sensor->link();
 
 		hot = true;

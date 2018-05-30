@@ -14,7 +14,7 @@
 #include "herbivore_neat.h"
 
 namespace evsim {
-namespace door {
+namespace multi_move {
 
 static const std::string load_text_file(std::string_view filename) {
 	std::ifstream file(filename.data());
@@ -70,13 +70,13 @@ static struct {
 		glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, vision_segments, 0, GL_RED, GL_FLOAT, nullptr);
 
 		program = std::make_unique<gfx::program>();
-		program->attach(load_text_file("../box.vert"), gfx::program::shader_type::VERTEX);
-		program->attach(load_text_file("../box.frag"), gfx::program::shader_type::FRAGMENT);
+		program->attach(load_text_file("shaders/box.vert"), gfx::program::shader_type::VERTEX);
+		program->attach(load_text_file("shaders/box.frag"), gfx::program::shader_type::FRAGMENT);
 		program->link();
 
 		program_sensor = std::make_unique<gfx::program>();
-		program_sensor->attach(load_text_file("../sensor.vert"), gfx::program::shader_type::VERTEX);
-		program_sensor->attach(load_text_file("../sensor.frag"), gfx::program::shader_type::FRAGMENT);
+		program_sensor->attach(load_text_file("shaders/sensor.vert"), gfx::program::shader_type::VERTEX);
+		program_sensor->attach(load_text_file("shaders/sensor.frag"), gfx::program::shader_type::FRAGMENT);
 		program_sensor->link();
 
 		hot = true;
@@ -96,19 +96,18 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 		glEnable(GL_TEXTURE_1D);
 		glBindTexture(GL_TEXTURE_1D, model.sensor_texture);
 		for(const auto &agent : agents) {
-			if(!agent.draw_vision) continue;
 			if(!agent.active) continue;
 			const auto &vision = [this,&agent] {
 				switch(vision_texture) {
 					default: [[fallthrough]]
 					case 0:
-					  return agent.vision_wall;
+						return agent.vision_wall;
 					case 1:
-					  return agent.vision_herbivore;
+						return agent.vision_herbivore;
 					case 2:
-					  return agent.vision_goal;
+						return agent.vision_predator;
 					case 3:
-					  return agent.vision_button;
+						return agent.vision_goal;
 				}
 			}();
 			const auto body = agent.body;

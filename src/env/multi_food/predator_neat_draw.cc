@@ -11,7 +11,7 @@
 #include "../../body.h"
 #include "../../gfx_program.h"
 
-#include "herbivore_neat.h"
+#include "predator_neat.h"
 
 namespace evsim {
 namespace multi_food {
@@ -70,24 +70,25 @@ static struct {
 		glTexImage1D(GL_TEXTURE_1D, 0, GL_R32F, vision_segments, 0, GL_RED, GL_FLOAT, nullptr);
 
 		program = std::make_unique<gfx::program>();
-		program->attach(load_text_file("../box.vert"), gfx::program::shader_type::VERTEX);
-		program->attach(load_text_file("../box.frag"), gfx::program::shader_type::FRAGMENT);
+		program->attach(load_text_file("shaders/box.vert"), gfx::program::shader_type::VERTEX);
+		program->attach(load_text_file("shaders/box.frag"), gfx::program::shader_type::FRAGMENT);
 		program->link();
 
 		program_sensor = std::make_unique<gfx::program>();
-		program_sensor->attach(load_text_file("../sensor.vert"), gfx::program::shader_type::VERTEX);
-		program_sensor->attach(load_text_file("../sensor.frag"), gfx::program::shader_type::FRAGMENT);
+		program_sensor->attach(load_text_file("shaders/sensor.vert"), gfx::program::shader_type::VERTEX);
+		program_sensor->attach(load_text_file("shaders/sensor.frag"), gfx::program::shader_type::FRAGMENT);
 		program_sensor->link();
 
 		hot = true;
 	}
-
 } model;
 
-void herbivore_neat::draw(const glm::mat4 &projection) const {
+void predator_neat::draw(const glm::mat4 &projection) const {
 	using uniform_type = gfx::program::uniform_type;
 
 	if(!model.hot) model.init(agent::vision_segments);
+	model.program->activate();
+	model.program->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 
 	// Draw sensors
 	if(draw_vision) {
@@ -101,11 +102,9 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 				switch(vision_texture) {
 					default: [[fallthrough]]
 					case 0:
-						return agent.vision_herbivore;
+					  return agent.vision_herbivore;
 					case 1:
-						return agent.vision_predator;
-					case 2:
-						return agent.vision_food;
+					  return agent.vision_predator;
 				}
 			}();
 			const auto body = agent.body;
@@ -123,8 +122,6 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 	}
 
 	// Draw torsi
-	model.program->activate();
-	model.program->set_uniform<uniform_type::MAT4>("projection", glm::value_ptr(projection));
 	glBindVertexArray(model.vertex_arrays.torso);
 	for(const auto &agent : agents) {
 		const auto box = agent.body;
@@ -134,17 +131,10 @@ void herbivore_neat::draw(const glm::mat4 &projection) const {
 			glm::translate(glm::vec3(pos.x, pos.y, 0.0f)) *
 			glm::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));
 		model.program->set_uniform<uniform_type::MAT4>("model", glm::value_ptr(mat_model));
-		static const std::array<glm::vec3, 21> colours {{
-			{ 64,255,115 }, { 204,51,92 }, { 242,129,0 },
-			{ 0,29,217 }, { 0,109,204 }, { 64,255,242 },
-			{ 204,51,133 }, { 0,162,242 }, { 217,0,202 },
-			{ 64,217,255 }, { 255,238,0 }, { 0,242,162 },
-			{ 217,145,0 }, { 172,57,230 }, { 242,65,0 },
-			{ 229,184,0 }, { 0,204,163 }, { 229,57,57 },
-			{ 97,242,0 }, { 184,230,0 }, { 0,82,204 }
-		}};
-		const auto &c = colours[agent.internal_species % colours.size()];
-		model.program->set_uniform<uniform_type::FLOAT3>("box_colour", c.x / 255.0f, c.y / 255.0f, c.z / 255.0f);
+		if(agent.eat_delay > 0)
+			model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 0.5f, 0.1f, 0.1f);
+		else
+			model.program->set_uniform<uniform_type::FLOAT3>("box_colour", 1.0f, 0.0f, 0.0f);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}
 }

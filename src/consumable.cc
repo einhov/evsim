@@ -94,8 +94,8 @@ static struct {
 		glDeleteBuffers(1, &buffers.body);
 
 		program = std::make_unique<gfx::program>();
-		program->attach(load_text_file("../box.vert"), gfx::program::shader_type::VERTEX);
-		program->attach(load_text_file("../box.frag"), gfx::program::shader_type::FRAGMENT);
+		program->attach(load_text_file("shaders/box.vert"), gfx::program::shader_type::VERTEX);
+		program->attach(load_text_file("shaders/box.frag"), gfx::program::shader_type::FRAGMENT);
 		program->link();
 		hot = true;
 	}

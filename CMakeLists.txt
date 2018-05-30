@@ -5,49 +5,49 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
 add_executable (evsim
-	evsim.cc
-	gfx_program.cc
-	consumable.cc
-	body.cc
-	neat_plot.cc
-	yell.cc
-	input.cc
-	wall.cc
-	lua_conf.cc
-	env/environments.cc
+	src/evsim.cc
+	src/gfx_program.cc
+	src/consumable.cc
+	src/body.cc
+	src/neat_plot.cc
+	src/yell.cc
+	src/input.cc
+	src/wall.cc
+	src/lua_conf.cc
+	src/env/environments.cc
 
 	#Including food environment
-	env/food/environment.cc
-	env/food/herbivore_neat.cc
-	env/food/herbivore_neat_draw.cc
-	env/food/food_herbivore_widget.cc
+	src/env/food/environment.cc
+	src/env/food/herbivore_neat.cc
+	src/env/food/herbivore_neat_draw.cc
+	src/env/food/food_herbivore_widget.cc
 
 	#Including multi_food environment
-	env/multi_food/environment.cc
-	env/multi_food/herbivore_neat.cc
-	env/multi_food/herbivore_neat_draw.cc
-	env/multi_food/multi_food_herbivore_widget.cc
-	env/multi_food/predator_neat.cc
-	env/multi_food/predator_neat_draw.cc
-	env/multi_food/multi_food_predator_widget.cc
+	src/env/multi_food/environment.cc
+	src/env/multi_food/herbivore_neat.cc
+	src/env/multi_food/herbivore_neat_draw.cc
+	src/env/multi_food/multi_food_herbivore_widget.cc
+	src/env/multi_food/predator_neat.cc
+	src/env/multi_food/predator_neat_draw.cc
+	src/env/multi_food/multi_food_predator_widget.cc
 
 	#Including multi_move environment
-	env/multi_move/environment.cc
-	env/multi_move/herbivore_neat.cc
-	env/multi_move/herbivore_neat_draw.cc
-	env/multi_move/multi_move_herbivore_widget.cc
-	env/multi_move/predator_neat.cc
-	env/multi_move/predator_neat_draw.cc
-	env/multi_move/multi_move_predator_widget.cc
+	src/env/multi_move/environment.cc
+	src/env/multi_move/herbivore_neat.cc
+	src/env/multi_move/herbivore_neat_draw.cc
+	src/env/multi_move/multi_move_herbivore_widget.cc
+	src/env/multi_move/predator_neat.cc
+	src/env/multi_move/predator_neat_draw.cc
+	src/env/multi_move/multi_move_predator_widget.cc
 
 	#Including door environment
-	env/door/environment.cc
-	env/door/herbivore_neat.cc
-	env/door/herbivore_neat_draw.cc
-	env/door/door_herbivore_widget.cc
+	src/env/door/environment.cc
+	src/env/door/herbivore_neat.cc
+	src/env/door/herbivore_neat_draw.cc
+	src/env/door/door_herbivore_widget.cc
 
-	ui/gui.cc
-	ui/fitness_graph.cc
+	src/ui/gui.cc
+	src/ui/fitness_graph.cc
 )
 
 set_property (TARGET evsim PROPERTY CXX_STANDARD 17)
@@ -74,5 +74,5 @@ set(BOX2D_INCLUDED_INCLUDE_DIR
 set(BOX2D_INCLUDED_LIBRARY ${CMAKE_SOURCE_DIR}/lib/Box2D/Box2D/Build/gmake/bin/Release/libBox2D.a)
 
 include_directories (SYSTEM ${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${BOX2D_INCLUDED_INCLUDE_DIR} ${GLM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} lib/MultiNEAT/src)
-target_include_directories (evsim PRIVATE ${CMAKE_SOURCE_DIR}/ui)
+target_include_directories (evsim PRIVATE ${CMAKE_SOURCE_DIR}/src/ui)
 target_link_libraries (evsim ${GLEW_LIBRARIES} glfw ${OPENGL_gl_LIBRARY} ${BOX2D_INCLUDED_LIBRARY} MultiNEAT Qt5::Widgets Qt5::Charts lua)
