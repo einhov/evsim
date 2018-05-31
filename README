@@ -11,8 +11,8 @@ Build instructions
   - Check out customised fork of Box2D to lib/Box2D
     https://github.com/andrewei/Box2D
   - Build Box2D:
-    $ cd lib/Box2D
-    $ premake gmake
+    $ cd lib/Box2D/Box2D
+    $ premake5 gmake
     $ make -C Build/gmake -f Box2D.make config=release
 
 3. Build Evsim:
